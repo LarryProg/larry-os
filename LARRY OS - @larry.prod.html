@@ -1,0 +1,2329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<title>Larry OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<style>
+/* ─── RESET & SHELL ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; font-size: 14px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #C8C0AE; border-radius: 3px; }
+
+/* ─── LAYOUT ───────────────────────────────────────────────────── */
+#larry-shell { display: flex; height: 100vh; overflow: hidden; }
+
+/* ─── SIDEBAR ──────────────────────────────────────────────────── */
+#sidebar {
+  width: 210px; min-width: 210px; height: 100vh;
+  background: #EDE8DB; border-right: 1px solid #CFC9B8;
+  display: flex; flex-direction: column; flex-shrink: 0; z-index: 50;
+}
+.sb-logo { padding: 26px 22px 22px; border-bottom: 1px solid #CFC9B8; }
+.sb-brand { font-family: 'Syne', sans-serif; font-size: 21px; font-weight: 800; color: #C9A84C; letter-spacing: .08em; }
+.sb-sub   { font-size: 9px; color: #9A8A6A; font-family: 'IBM Plex Mono', monospace; letter-spacing: .25em; margin-top: 2px; }
+
+.sb-section { padding: 14px 0 4px; }
+.sb-section-label { font-size: 9px; color: #9A8A6A; font-family: 'IBM Plex Mono', monospace; letter-spacing: .2em; padding: 0 22px; margin-bottom: 4px; }
+
+.sb-btn {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 10px 22px;
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 500;
+  color: #7A6A50; background: transparent; border: none; cursor: pointer;
+  border-left: 2px solid transparent; transition: all .15s; text-align: left;
+  letter-spacing: .02em;
+}
+.sb-btn:hover { color: #6A5A40; background: rgba(44,32,16,0.03); }
+.sb-btn.active { color: #C9A84C; background: #EAE4D6; border-left-color: #C9A84C; font-weight: 700; }
+.sb-icon { font-size: 15px; width: 18px; text-align: center; }
+
+.sb-footer { margin-top: auto; padding: 16px 22px; border-top: 1px solid #CFC9B8; }
+.sb-year { display: block; background: rgba(201,168,76,0.12); color: #C9A84C; font-size: 10px; font-weight: 700; letter-spacing: 3px; padding: 4px 0; border-radius: 4px; margin-bottom: 10px; text-align: center; font-family: 'IBM Plex Mono', monospace; }
+.sb-month-label { font-size: 9px; color: #9A8A6A; font-family: 'IBM Plex Mono', monospace; letter-spacing: .15em; margin-bottom: 6px; }
+.sb-month-select {
+  background: rgba(44,32,16,0.05); border: 1px solid #BDB5A5; color: #6A5A40;
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+  padding: 7px 10px; border-radius: 6px; width: 100%; cursor: pointer; appearance: none;
+}
+
+/* ─── MAIN CONTENT ─────────────────────────────────────────────── */
+#main-content { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+/* ─── MODULE PANELS ────────────────────────────────────────────── */
+.module { display: none; flex: 1; overflow: hidden; height: 100%; }
+.module.active { display: flex; flex-direction: column; }
+
+/* ─── TOAST ────────────────────────────────────────────────────── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: #DDD7C8; color: #2C2010; border: 1px solid #BDB5A5;
+  padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  box-shadow: 0 8px 32px rgba(44,32,16,0.2); z-index: 9999; display: none;
+  font-family: 'DM Sans', sans-serif;
+}
+#toast.show { display: block; animation: toastIn .3s ease; }
+@keyframes toastIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ═══════════════════════════════════════════════════════════════════
+   FINANZAS MODULE  (Larry Balance styles, adapted for dark shell)
+═══════════════════════════════════════════════════════════════════ */
+#module-finanzas {
+  --bg: #F0EBE0; --surface: #EAE4D6; --surface2: #DDD7C8; --border: #C8C0AE;
+  --gold: #B8882A; --gold-light: #C9A84C; --dark: #2C2010; --mid: #6A5A40; --muted: #7A6A50;
+  --green: #3FB950; --green-bg: rgba(63,185,80,0.12); --red: #F85149; --red-bg: rgba(248,81,73,0.12);
+  --amber: #C9A84C; --amber-bg: rgba(201,168,76,0.12);
+  --shadow: 0 2px 12px rgba(44,32,16,0.1); --shadow-lg: 0 8px 32px rgba(44,32,16,0.2);
+  --radius: 10px; --radius-sm: 7px;
+}
+#module-finanzas { background: var(--bg); overflow: hidden; }
+#module-finanzas .fin-wrap { display: flex; height: 100%; overflow: hidden; }
+#module-finanzas .fin-main { flex: 1; overflow-y: auto; padding: 28px 32px; }
+
+/* Sub-nav inside finanzas */
+#module-finanzas .sub-nav { display: flex; flex-direction: column; }
+#module-finanzas .sub-nav-btn {
+  display: flex; align-items: center; gap: 8px; padding: 9px 16px;
+  color: var(--muted); cursor: pointer; transition: all 0.2s; font-size: 12px;
+  font-weight: 500; border-left: 2px solid transparent; border: none; background: transparent;
+  font-family: 'DM Sans', sans-serif; width: 100%; text-align: left;
+}
+#module-finanzas .sub-nav-btn:hover { color: var(--mid); }
+#module-finanzas .sub-nav-btn.active { color: var(--gold-light); background: rgba(201,168,76,0.06); }
+
+#module-finanzas .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+#module-finanzas .page-title { font-family:'Playfair Display',serif; font-size:26px; font-weight:700; color: var(--dark); }
+#module-finanzas .page-subtitle { font-size:12px; color:var(--muted); margin-top:2px; }
+
+#module-finanzas .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+#module-finanzas .kpi-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
+#module-finanzas .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--gold); opacity:0.5; }
+#module-finanzas .kpi-card.green::before { background:var(--green); opacity:0.7; }
+#module-finanzas .kpi-card.red::before { background:var(--red); opacity:0.7; }
+#module-finanzas .kpi-card.amber::before { background:var(--amber); opacity:0.7; }
+#module-finanzas .kpi-label { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-bottom:8px; font-weight:600; font-family:'IBM Plex Mono',monospace; }
+#module-finanzas .kpi-value { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; line-height:1; color:var(--dark); }
+#module-finanzas .kpi-value.green { color:var(--green); } 
+#module-finanzas .kpi-value.red { color:var(--red); } 
+#module-finanzas .kpi-value.amber { color:var(--amber); }
+#module-finanzas .kpi-sub { font-size:11px; color:var(--muted); margin-top:5px; }
+
+#module-finanzas .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); margin-bottom:16px; }
+#module-finanzas .card-title { font-family:'Playfair Display',serif; font-size:16px; font-weight:600; color:var(--dark); margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; }
+
+#module-finanzas table { width:100%; border-collapse:collapse; }
+#module-finanzas th { text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); font-weight:600; padding:0 10px 10px; border-bottom:1px solid var(--border); font-family:'IBM Plex Mono',monospace; }
+#module-finanzas td { padding:11px 10px; border-bottom:1px solid rgba(37,32,24,0.7); font-size:13px; vertical-align:middle; color:var(--dark); }
+#module-finanzas tr:last-child td { border-bottom:none; }
+#module-finanzas tr:hover td { background:rgba(201,168,76,0.03); }
+#module-finanzas .empty-row td { text-align:center; color:var(--muted); padding:28px; font-style:italic; font-size:12px; }
+
+#module-finanzas .badge { display:inline-flex; align-items:center; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; }
+#module-finanzas .badge-green { background:var(--green-bg); color:var(--green); }
+#module-finanzas .badge-red { background:var(--red-bg); color:var(--red); }
+#module-finanzas .badge-amber { background:var(--amber-bg); color:var(--amber); }
+#module-finanzas .badge-gray { background:var(--surface2); color:var(--mid); }
+
+#module-finanzas .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.18s; border:none; }
+#module-finanzas .btn-primary { background:var(--gold); color:#0B0A09; }
+#module-finanzas .btn-primary:hover { background:#9A7020; }
+#module-finanzas .btn-ghost { background:transparent; color:var(--mid); border:1.5px solid var(--border); }
+#module-finanzas .btn-ghost:hover { border-color:var(--gold); color:var(--gold); }
+#module-finanzas .btn-danger { background:transparent; color:var(--red); border:1.5px solid var(--red-bg); font-size:11px; padding:4px 8px; }
+#module-finanzas .btn-danger:hover { background:var(--red-bg); }
+#module-finanzas .btn-sm { padding:4px 10px; font-size:11px; }
+#module-finanzas .btn-green { background:var(--green); color:#0B0A09; }
+
+#module-finanzas .modal-overlay { display:none; position:fixed; inset:0; background:rgba(44,32,16,0.5); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(3px); }
+#module-finanzas .modal-overlay.open { display:flex; animation:fadeIn 0.2s ease; }
+#module-finanzas .modal { background:var(--surface); border-radius:14px; padding:28px; width:460px; max-width:95vw; box-shadow:var(--shadow-lg); border:1px solid var(--border); max-height:90vh; overflow-y:auto; }
+#module-finanzas .modal-title { font-family:'Playfair Display',serif; font-size:18px; font-weight:700; margin-bottom:20px; color:var(--dark); }
+#module-finanzas .form-group { margin-bottom:14px; }
+#module-finanzas .form-label { display:block; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:5px; font-family:'IBM Plex Mono',monospace; }
+#module-finanzas .form-input, #module-finanzas .form-select, #module-finanzas .form-textarea { width:100%; padding:9px 12px; background:var(--bg); border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-size:13px; color:var(--dark); outline:none; transition:border-color 0.15s; }
+#module-finanzas .form-input:focus, #module-finanzas .form-select:focus, #module-finanzas .form-textarea:focus { border-color:var(--gold); }
+#module-finanzas .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+#module-finanzas .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+#module-finanzas .progress-wrap { background:var(--surface2); border-radius:4px; height:5px; overflow:hidden; margin-top:4px; }
+#module-finanzas .progress-bar { height:100%; border-radius:4px; background:var(--green); transition:width 0.4s; }
+#module-finanzas .progress-bar.amber { background:var(--amber); }
+#module-finanzas .progress-bar.red { background:var(--red); }
+#module-finanzas .amount-pos { color:var(--green); font-weight:600; }
+#module-finanzas .amount-neg { color:var(--red); font-weight:600; }
+#module-finanzas .dash-grid { display:grid; grid-template-columns:1.4fr 1fr; gap:16px; }
+#module-finanzas .charts-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+#module-finanzas .cat-pill { padding:4px 12px; border-radius:20px; border:1.5px solid var(--border); font-size:11px; font-weight:500; cursor:pointer; transition:all 0.15s; color:var(--mid); background:transparent; }
+#module-finanzas .cat-pill.active, #module-finanzas .cat-pill:hover { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,0.08); }
+#module-finanzas .cat-grid { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:14px; }
+#module-finanzas .search-input { padding:8px 12px; background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-size:12px; color:var(--dark); outline:none; width:200px; transition:border-color 0.15s; }
+#module-finanzas .search-input:focus { border-color:var(--gold); }
+#module-finanzas .pago-item { display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:12px; color:var(--dark); }
+#module-finanzas .pago-item:last-child { border-bottom:none; }
+#module-finanzas .anual-kpi { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:24px; }
+#module-finanzas .anual-kpi .kpi-card { padding:14px 16px; }
+#module-finanzas .anual-kpi .kpi-value { font-size:20px; }
+#module-finanzas .chart-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); margin-bottom:16px; }
+#module-finanzas .chart-card-title { font-family:'Playfair Display',serif; font-size:15px; font-weight:600; color:var(--dark); margin-bottom:2px; }
+#module-finanzas .chart-card-sub { font-size:11px; color:var(--muted); margin-bottom:14px; }
+#module-finanzas .bal-cliente { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; margin-bottom:10px; }
+#module-finanzas .bal-cliente-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+#module-finanzas .form-select option { background: #161410; }
+#module-finanzas .form-input::placeholder { color: var(--muted); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   TAREAS MODULE
+═══════════════════════════════════════════════════════════════════ */
+#module-tareas {
+  background: #F0EBE0; overflow-y: auto; padding: 0;
+}
+#module-tareas .t-wrap { padding: 28px 32px 48px; max-width: 820px; }
+#module-tareas .t-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid #CFC9B8; }
+#module-tareas .t-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: #2C2010; }
+#module-tareas .t-sub { font-size: 10px; color: #9A8A6A; font-family: 'IBM Plex Mono', monospace; letter-spacing: .12em; margin-top: 2px; }
+#module-tareas .criticos-badge { display: flex; align-items: center; background: rgba(226,75,74,0.10); border: 1px solid rgba(226,75,74,0.3); border-radius: 20px; padding: 5px 12px; gap: 6px; }
+#module-tareas .criticos-badge span { font-size: 12px; font-weight: 700; color: #E24B4A; }
+#module-tareas .counts { font-size: 12px; color: #9A8A6A; font-weight: 500; font-family: 'IBM Plex Mono', monospace; }
+@keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+#module-tareas .live-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 2px; animation: pulse-dot 1.8s ease-in-out infinite; background: #E24B4A; }
+#module-tareas .hero { margin-bottom: 20px; border-radius: 12px; padding: 18px 20px; }
+#module-tareas .hero-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; margin-bottom: 6px; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; }
+#module-tareas .hero h2 { font-size: 17px; font-weight: 700; color: #2C2010; margin-bottom: 5px; letter-spacing: -0.01em; font-family: 'Syne', sans-serif; }
+#module-tareas .hero p { font-size: 12px; color: #7A6A50; line-height: 1.5; margin-bottom: 8px; }
+#module-tareas .hero-footer { display: flex; align-items: center; gap: 8px; }
+#module-tareas .chip { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; padding: 3px 8px; border-radius: 4px; display: inline-block; font-family: 'IBM Plex Mono', monospace; }
+#module-tareas .controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+#module-tareas .filtros { display: flex; gap: 6px; }
+#module-tareas .filtro-btn { background: transparent; border: 1px solid #CFC9B8; color: #9A8A6A; font-size: 12px; font-weight: 500; letter-spacing: 0.05em; padding: 5px 13px; border-radius: 20px; cursor: pointer; transition: all 0.15s; font-family: 'IBM Plex Mono', monospace; }
+#module-tareas .filtro-btn.activo { background: #DDD7C8; border-color: #C9A84C; color: #C9A84C; }
+#module-tareas .filtro-btn:hover:not(.activo) { border-color: #BDB5A5; color: #7A6A50; }
+#module-tareas .new-btn { border: none; cursor: pointer; font-family: 'Syne', sans-serif; background: #C9A84C; color: #0B0A09; font-size: 13px; font-weight: 700; padding: 8px 18px; border-radius: 8px; letter-spacing: 0.02em; transition: opacity 0.15s; }
+#module-tareas .new-btn:hover { opacity: 0.85; }
+#module-tareas .new-btn.open { background: #DDD7C8; color: #C9A84C; }
+#module-tareas .form-wrap { background: #EAE4D6; border: 1px solid #CFC9B8; border-radius: 10px; padding: 18px; margin-bottom: 18px; }
+#module-tareas .form-title { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #C9A84C; margin-bottom: 14px; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; }
+#module-tareas .form-grid { display: grid; gap: 10px; }
+#module-tareas .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+#module-tareas input, #module-tareas textarea, #module-tareas select { background: #EDE8DB; border: 1px solid #CFC9B8; color: #2C2010; border-radius: 7px; padding: 9px 11px; width: 100%; font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; transition: border-color 0.2s; }
+#module-tareas input:focus, #module-tareas textarea:focus, #module-tareas select:focus { border-color: #C9A84C55; }
+#module-tareas select option { background: #EDE8DB; }
+#module-tareas textarea { resize: none; }
+#module-tareas .field-label { font-size: 10px; color: #9A8A6A; margin-bottom: 5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; }
+#module-tareas .pr-btns { display: flex; gap: 5px; }
+#module-tareas .pr-btn { flex: 1; padding: 5px 4px; border-radius: 5px; font-size: 9px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; border: 1px solid #CFC9B8; background: transparent; color: #9A8A6A; font-family: 'IBM Plex Mono', monospace; transition: all 0.15s; }
+#module-tareas .form-actions { display: flex; justify-content: flex-end; margin-top: 4px; }
+#module-tareas .submit-btn { border: none; cursor: pointer; font-family: 'Syne', sans-serif; color: #0B0A09; font-size: 13px; font-weight: 700; padding: 8px 20px; border-radius: 7px; transition: opacity 0.15s; }
+#module-tareas .submit-btn:hover { opacity: 0.85; }
+#module-tareas .summary { display: flex; gap: 7px; margin-bottom: 18px; }
+#module-tareas .summary-item { flex: 1; background: #EAE4D6; border: 1px solid #CFC9B8; border-radius: 7px; padding: 7px 9px; text-align: center; }
+#module-tareas .summary-item .num { font-size: 17px; font-weight: 700; font-family: 'Syne', sans-serif; }
+#module-tareas .summary-item .lbl { font-size: 9px; color: #9A8A6A; font-weight: 700; letter-spacing: 0.08em; margin-top: 1px; font-family: 'IBM Plex Mono', monospace; }
+#module-tareas .task-list { display: grid; gap: 7px; }
+#module-tareas .task-card { background: #EAE4D6; border-radius: 9px; padding: 12px 14px; transition: transform 0.15s ease, opacity 0.2s; }
+#module-tareas .task-card:hover { transform: translateY(-1px); }
+#module-tareas .task-card.done { opacity: 0.4; }
+#module-tareas .task-inner { display: flex; align-items: flex-start; gap: 10px; }
+#module-tareas .pr-bar { width: 3px; min-height: 38px; border-radius: 2px; flex-shrink: 0; margin-top: 2px; }
+#module-tareas .task-body { flex: 1; min-width: 0; }
+#module-tareas .task-title { font-size: 13px; font-weight: 600; color: #2C2010; word-break: break-word; margin-bottom: 3px; }
+#module-tareas .task-title.done { text-decoration: line-through; color: #9A8A6A; }
+#module-tareas .task-desc { font-size: 11px; color: #9A8A6A; line-height: 1.5; margin-bottom: 7px; word-break: break-word; }
+#module-tareas .task-chips { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+#module-tareas .task-actions { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+#module-tareas .estado-btn { font-size: 9px; font-weight: 700; letter-spacing: 0.06em; padding: 3px 7px; border-radius: 4px; border: 1px solid; cursor: pointer; font-family: 'IBM Plex Mono', monospace; transition: opacity 0.15s; }
+#module-tareas .estado-btn:hover { opacity: 0.8; }
+#module-tareas .icon-btn { background: transparent; border: none; cursor: pointer; color: #9A8A6A; font-size: 12px; padding: 3px 6px; border-radius: 4px; transition: color 0.15s, background 0.15s; }
+#module-tareas .icon-btn:hover { color: #7A6A50; background: #DDD7C8; }
+#module-tareas .icon-btn.del:hover { color: #F85149; background: rgba(248,81,73,0.1); }
+#module-tareas .t-empty { text-align: center; padding: 48px 0; color: #9A8A6A; font-size: 13px; font-family: 'IBM Plex Mono', monospace; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+#module-tareas .slide-in { animation: slideIn 0.22s ease forwards; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   CRM MODULE  (React rendered inside #crm-root)
+═══════════════════════════════════════════════════════════════════ */
+#module-crm { overflow: hidden; }
+#crm-root { height: 100%; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   AGENDA DE CONTENIDO MODULE
+═══════════════════════════════════════════════════════════════════ */
+/* Layout — NOTE: display is controlled by .module / .module.active */
+#module-agenda { overflow: hidden; flex-direction: column; }
+#module-agenda.active { display: flex !important; }
+#agenda-app { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+#agenda-header { flex-shrink: 0; background: rgba(250,248,242,.97); border-bottom: 1px solid #E4DCCC; }
+#agenda-calendar { flex: 1; overflow-y: auto; overflow-x: auto; min-height: 0; }
+#agenda-list-view { flex: 1; overflow-y: auto; padding: 20px 24px; display: none; }
+#agenda-list-view.visible { display: block; }
+#agenda-fab { position: fixed; bottom: 28px; right: 28px; display: none; }
+
+  #module-agenda {
+    --bg:        #FAF8F2;
+    --bg2:       #F4EFE5;
+    --bg3:       #EDE6D8;
+    --bg4:       #DDD3C0;
+    --line:      #E4DCCC;
+    --text:      #261D10;
+    --muted:     #9A8870;
+    --muted2:    #7C6E58;
+    --reel:      #D42B48;
+    --historia:  #C87A00;
+    --secuencia: #8B3FD4;
+    --post:      #1A9438;
+    --carrusel:  #0A6ED4;
+    --live:      #D43530;
+    --shadow-sm: 0 1px 3px rgba(38,29,16,.08), 0 1px 2px rgba(38,29,16,.06);
+    --shadow-md: 0 4px 16px rgba(38,29,16,.10), 0 1px 4px rgba(38,29,16,.06);
+    --shadow-lg: 0 12px 40px rgba(38,29,16,.14), 0 4px 12px rgba(38,29,16,.08);
+  }
+  #module-agenda *, #module-agenda *::before, #module-agenda *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  #module-agenda html { font-size: 16px; }
+  #module-agenda body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    /* subtle warm paper texture */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  }
+  #module-agenda ::-webkit-scrollbar { width: 5px; height: 5px; }
+  #module-agenda ::-webkit-scrollbar-track { background: var(--bg2); }
+  #module-agenda ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+  #module-agenda ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* ── LAYOUT ── */
+  #agenda-app { display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* ── HEADER ── */
+  #agenda-header {
+    position: sticky; top: 0; z-index: 40;
+    background: rgba(250,248,242,.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--line);
+    padding: 16px 24px 0;
+    box-shadow: var(--shadow-sm);
+  }
+  #module-agenda .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
+
+  #module-agenda .logo {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 22px; font-weight: 900; letter-spacing: -0.5px; line-height: 1;
+    color: var(--text);
+  }
+  #module-agenda .logo span { color: var(--reel); font-style: italic; }
+  #module-agenda .logo small {
+    display: block;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px; font-weight: 500;
+    color: var(--muted); margin-top: 3px;
+    letter-spacing: 1.5px; text-transform: uppercase;
+  }
+
+  #module-agenda .header-actions { display: flex; gap: 6px; align-items: center; }
+
+  /* stats bar */
+  #module-agenda .stats-bar { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  #module-agenda .stat-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 11px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    border: 1.5px solid; cursor: pointer; transition: all .18s;
+    box-shadow: var(--shadow-sm);
+  }
+  #module-agenda .stat-chip:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+  /* controls bar */
+  #module-agenda .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding-bottom: 14px; }
+  #module-agenda .tabs {
+    display: flex; background: var(--bg3);
+    border-radius: 10px; padding: 3px; gap: 2px;
+    border: 1px solid var(--line); box-shadow: inset 0 1px 3px rgba(38,29,16,.07);
+  }
+  #module-agenda .tab {
+    padding: 6px 14px; border-radius: 7px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: none; font-family: 'DM Sans', sans-serif;
+    color: var(--muted); background: transparent; transition: all .15s;
+  }
+  #module-agenda .tab.active {
+    background: var(--bg); color: var(--text);
+    box-shadow: var(--shadow-sm);
+  }
+
+  #module-agenda .period-nav { display: flex; align-items: center; gap: 4px; }
+  #module-agenda .nav-btn {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--bg); border: 1px solid var(--line);
+    color: var(--text); cursor: pointer; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s; line-height: 1;
+    box-shadow: var(--shadow-sm);
+  }
+  #module-agenda .nav-btn:hover { background: var(--bg3); box-shadow: var(--shadow-md); }
+  #module-agenda .period-label {
+    font-size: 13px; font-weight: 600; min-width: 180px; text-align: center;
+    font-family: 'Playfair Display', serif; font-style: italic; color: var(--muted2);
+  }
+
+  /* filter pills */
+  #module-agenda .filters { display: flex; gap: 5px; flex-wrap: wrap; margin-left: auto; }
+  #module-agenda .filter-pill {
+    padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700;
+    cursor: pointer; border: 1.5px solid; background: transparent;
+    font-family: 'DM Sans', sans-serif; transition: all .15s;
+    letter-spacing: .3px; text-transform: uppercase;
+  }
+
+  /* ── CALENDAR ── */
+  #agenda-calendar { flex: 1; overflow-x: auto; }
+  #module-agenda .day-headers {
+    display: flex; border-bottom: 1px solid var(--line);
+    background: var(--bg2);
+  }
+  #module-agenda .day-header {
+    flex: 1; min-width: 0; padding: 10px 6px; text-align: center;
+    border-right: 1px solid var(--line);
+  }
+  #module-agenda .day-header:last-child { border-right: none; }
+  #module-agenda .day-header .dow {
+    font-size: 9px; color: var(--muted); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px;
+  }
+  #module-agenda .day-header .num { font-size: 19px; font-weight: 700; margin-top: 2px; color: var(--muted2); }
+  #module-agenda .day-header .num.today-circle {
+    background: var(--reel); color: #fff;
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 2px auto 0; font-size: 16px;
+    box-shadow: 0 2px 10px rgba(212,43,72,.35);
+  }
+
+  /* week grid */
+  #module-agenda .week-grid { display: flex; min-height: 58vh; }
+  #module-agenda .week-col {
+    flex: 1; min-width: 0; border-right: 1px solid var(--line); padding-top: 8px;
+    transition: background .15s;
+  }
+  #module-agenda .week-col:last-child { border-right: none; }
+  #module-agenda .week-col.is-today { background: rgba(212,43,72,.03); }
+
+  /* month grid */
+  #module-agenda .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+  #module-agenda .month-cell {
+    min-height: 88px; border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line); padding: 6px 5px;
+    cursor: pointer; transition: background .12s;
+  }
+  #module-agenda .month-cell:hover { background: var(--bg2); }
+  #module-agenda .month-cell:nth-child(7n) { border-right: none; }
+  #module-agenda .month-cell.other-month { opacity: .35; }
+  #module-agenda .month-cell.is-today .mday { color: var(--reel); font-weight: 800; }
+  #module-agenda .mday { font-size: 13px; font-weight: 500; margin-bottom: 4px; color: var(--muted2); }
+
+  /* entry cards */
+  #module-agenda .entry-card {
+    border-radius: 8px; padding: 6px 8px; margin: 0 4px 4px;
+    cursor: pointer; border-left: 3px solid;
+    transition: transform .12s, box-shadow .12s;
+    animation: fadeIn .2s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  #module-agenda .entry-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform:none; } }
+  #module-agenda .entry-type-label { font-size: 9px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 2px; }
+  #module-agenda .entry-title { font-size: 12px; font-weight: 600; line-height: 1.3; color: var(--text); }
+  #module-agenda .entry-time { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  #module-agenda .entry-status { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 10px; margin-top: 3px; }
+
+  #module-agenda .month-entry {
+    border-radius: 4px; padding: 2px 5px; margin-bottom: 2px;
+    font-size: 10px; font-weight: 600; color: #fff;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    cursor: pointer; box-shadow: 0 1px 3px rgba(38,29,16,.15);
+  }
+  #module-agenda .month-more { font-size: 9px; color: var(--muted); margin-top: 1px; }
+
+  #module-agenda .add-btn-day { display: flex; justify-content: center; padding: 5px 0; }
+  #module-agenda .add-dot {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--bg3); border: 1px solid var(--line);
+    color: var(--muted); cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s; line-height: 1;
+  }
+  #module-agenda .add-dot:hover { background: var(--bg4); color: var(--text); box-shadow: var(--shadow-sm); }
+
+  /* ── LIST VIEW ── */
+  #agenda-list-view { padding: 20px 24px; display: none; }
+  #agenda-list-view.visible { display: block; }
+  #module-agenda .list-filters { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  #module-agenda .list-item {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 13px 15px; background: var(--bg);
+    border-radius: 12px; margin-bottom: 8px;
+    cursor: pointer; border-left: 3px solid;
+    transition: all .15s; animation: fadeIn .2s ease;
+    box-shadow: var(--shadow-sm);
+    border-top: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  #module-agenda .list-item:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  #module-agenda .list-date { text-align: center; min-width: 40px; }
+  #module-agenda .list-date .ld { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; line-height: 1; }
+  #module-agenda .list-date .lm { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+  #module-agenda .list-body { flex: 1; }
+  #module-agenda .list-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+  #module-agenda .list-title { font-size: 15px; font-weight: 600; color: var(--text); }
+  #module-agenda .list-notes { font-size: 12px; color: var(--muted2); margin-top: 3px; }
+  #module-agenda .empty-state {
+    text-align: center; padding: 70px 20px; color: var(--muted);
+    font-size: 14px; line-height: 1.8;
+    font-family: 'Playfair Display', serif; font-style: italic;
+  }
+
+  /* ── MODAL ── */
+  #module-agenda .overlay {
+    position: fixed; inset: 0;
+    background: rgba(38,29,16,.45);
+    backdrop-filter: blur(12px);
+    z-index: 100; display: flex; align-items: center; justify-content: center;
+    padding: 20px; opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  #module-agenda .overlay.open { opacity: 1; pointer-events: all; }
+  #module-agenda .modal {
+    background: var(--bg); border: 1px solid var(--line);
+    border-radius: 20px; padding: 28px; width: 100%; max-width: 460px;
+    max-height: 90vh; overflow-y: auto;
+    transform: translateY(16px) scale(.97); transition: transform .2s;
+    box-shadow: var(--shadow-lg);
+  }
+  #module-agenda .overlay.open .modal { transform: none; }
+  #module-agenda .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px; font-weight: 900; letter-spacing: -.2px;
+    margin-bottom: 20px; color: var(--text);
+  }
+  #module-agenda .field { margin-bottom: 14px; }
+  #module-agenda .field label {
+    display: block; font-size: 9px; color: var(--muted);
+    font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 7px;
+  }
+  #module-agenda .field input, #module-agenda .field textarea, #module-agenda .field select {
+    background: var(--bg2); border: 1.5px solid var(--line); color: var(--text);
+    border-radius: 9px; padding: 9px 12px; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; width: 100%; outline: none; transition: border-color .15s, box-shadow .15s;
+  }
+  #module-agenda .field input:focus, #module-agenda .field textarea:focus, #module-agenda .field select:focus {
+    border-color: var(--muted); box-shadow: 0 0 0 3px rgba(154,136,112,.12);
+  }
+  #module-agenda .field textarea { resize: vertical; min-height: 70px; }
+  #module-agenda .field select option { background: var(--bg2); color: var(--text); }
+  #module-agenda .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  #module-agenda .type-grid { display: flex; gap: 6px; flex-wrap: wrap; }
+  #module-agenda .type-pill {
+    padding: 6px 11px; border-radius: 20px; font-size: 10px; font-weight: 700;
+    letter-spacing: .4px; cursor: pointer; border: 2px solid transparent;
+    transition: all .15s; text-transform: uppercase; font-family: 'DM Sans', sans-serif;
+    box-shadow: var(--shadow-sm);
+  }
+  #module-agenda .type-pill:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+  #module-agenda .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+  #module-agenda .btn {
+    cursor: pointer; border: none; border-radius: 9px;
+    font-family: 'DM Sans', sans-serif; font-weight: 600;
+    transition: all .15s; font-size: 13px; padding: 9px 18px;
+  }
+  #module-agenda .btn:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  #module-agenda .btn-ghost {
+    background: transparent; color: var(--muted2);
+    border: 1.5px solid var(--line);
+  }
+  #module-agenda .btn-ghost:hover { background: var(--bg3); color: var(--text); }
+  #module-agenda .btn-danger { background: #FCE8EB; color: var(--reel); border: 1.5px solid #F5C2C9; }
+  #module-agenda .btn-today {
+    background: transparent; color: var(--muted); font-size: 12px;
+    padding: 6px 10px; border: none; border-radius: 7px;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; transition: all .15s;
+  }
+  #module-agenda .btn-today:hover { background: var(--bg3); color: var(--text); }
+  #module-agenda .btn-icon {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: var(--bg); border: 1.5px solid var(--line);
+    color: var(--muted2); cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s; box-shadow: var(--shadow-sm);
+  }
+  #module-agenda .btn-icon:hover { background: var(--bg3); color: var(--text); box-shadow: var(--shadow-md); }
+
+  /* FAB */
+  #agenda-fab {
+    position: fixed; bottom: 28px; right: 28px;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--reel);
+    border: none; color: #fff; font-size: 26px; cursor: pointer;
+    box-shadow: 0 8px 28px rgba(212,43,72,.4), 0 2px 8px rgba(212,43,72,.3);
+    z-index: 50; display: flex; align-items: center; justify-content: center;
+    transition: transform .15s, box-shadow .15s;
+    line-height: 1;
+  }
+  #agenda-fab:hover { transform: scale(1.1); box-shadow: 0 14px 40px rgba(212,43,72,.55); }
+
+  /* ── DECORATIVE RULE ── */
+  #module-agenda .section-rule {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--line), transparent);
+    margin: 0;
+  }
+
+  /* responsive */
+  @media (max-width: 600px) {
+    #agenda-header { padding: 12px 14px 0; }
+    #module-agenda .period-label { min-width: 120px; font-size: 11px; }
+    #module-agenda .entry-title { font-size: 10px; }
+    #module-agenda .modal { padding: 20px 16px; }
+    #module-agenda .row2 { grid-template-columns: 1fr; }
+    #agenda-list-view { padding: 14px; }
+  }
+
+
+</style>
+</head>
+<body>
+
+<div id="larry-shell">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-brand">LARRY</div>
+      <div class="sb-sub">PRODUCER · OS</div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">MÓDULOS</div>
+      <button class="sb-btn active" onclick="switchModule('finanzas')" id="sb-finanzas">
+        <span class="sb-icon">💰</span> Finanzas
+      </button>
+      <button class="sb-btn" onclick="switchModule('crm')" id="sb-crm">
+        <span class="sb-icon">⬡</span> CRM
+      </button>
+      <button class="sb-btn" onclick="switchModule('agenda')" id="sb-agenda">
+        <span class="sb-icon">📅</span> Agenda
+      </button>
+      <button class="sb-btn" onclick="switchModule('tareas')" id="sb-tareas">
+        <span class="sb-icon">🎛️</span> Tareas
+      </button>
+    </div>
+
+    <div class="sb-footer">
+      <span class="sb-year">2 0 2 6</span>
+      <div class="sb-month-label">MES ACTIVO</div>
+      <select class="sb-month-select" id="globalMonth" onchange="onMonthChange()"></select>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <div id="main-content">
+
+    <!-- ── FINANZAS MODULE ── -->
+    <div id="module-finanzas" class="module active">
+      <div class="fin-wrap">
+        <div class="fin-main">
+
+          <!-- Pages -->
+          <div id="fin-page-dashboard" class="fin-page">
+            <div class="page-header">
+              <div><div class="page-title">Dashboard</div><div class="page-subtitle" id="dash-period">—</div></div>
+            </div>
+            <div class="kpi-grid">
+              <div class="kpi-card green"><div class="kpi-label">Ingresos cobrados</div><div class="kpi-value green" id="kpi-ingresos">€0</div><div class="kpi-sub">del mes seleccionado</div></div>
+              <div class="kpi-card red"><div class="kpi-label">Total gastos</div><div class="kpi-value red" id="kpi-gastos">€0</div><div class="kpi-sub">del mes seleccionado</div></div>
+              <div class="kpi-card"><div class="kpi-label">Balance neto</div><div class="kpi-value" id="kpi-balance">€0</div><div class="kpi-sub">ingresos − gastos</div></div>
+              <div class="kpi-card amber"><div class="kpi-label">Pendiente cobro</div><div class="kpi-value amber" id="kpi-pendiente">€0</div><div class="kpi-sub" id="kpi-pendiente-sub">en todos los clientes</div></div>
+            </div>
+            <div class="dash-grid">
+              <div class="card"><div class="card-title">Últimos cobros</div>
+                <table><thead><tr><th>Cliente</th><th>Fecha</th><th>Monto</th></tr></thead><tbody id="dash-cobros-body"></tbody></table>
+              </div>
+              <div class="card"><div class="card-title">Últimos gastos</div>
+                <table><thead><tr><th>Descripción</th><th>Cat.</th><th>Monto</th></tr></thead><tbody id="dash-gastos-body"></tbody></table>
+              </div>
+            </div>
+            <div class="card"><div class="card-title">Clientes con cobro pendiente</div>
+              <table><thead><tr><th>Cliente</th><th>Servicio</th><th>Total</th><th>Cobrado</th><th>Pendiente</th><th>Estado</th></tr></thead><tbody id="dash-pendientes-body"></tbody></table>
+            </div>
+          </div>
+
+          <div id="fin-page-graficas" class="fin-page" style="display:none">
+            <div class="page-header">
+              <div><div class="page-title">Gráficas 2026</div><div class="page-subtitle">Visión anual completa</div></div>
+            </div>
+            <div class="anual-kpi">
+              <div class="kpi-card green"><div class="kpi-label">Ingresos año</div><div class="kpi-value green" id="g-anual-ingresos">€0</div></div>
+              <div class="kpi-card red"><div class="kpi-label">Gastos año</div><div class="kpi-value red" id="g-anual-gastos">€0</div></div>
+              <div class="kpi-card"><div class="kpi-label">Resultado año</div><div class="kpi-value" id="g-anual-neto">€0</div></div>
+              <div class="kpi-card amber"><div class="kpi-label">Mejor mes</div><div class="kpi-value amber" id="g-mejor-mes">—</div><div class="kpi-sub" id="g-mejor-mes-val"></div></div>
+              <div class="kpi-card"><div class="kpi-label">Pendiente total</div><div class="kpi-value" id="g-pendiente-total">€0</div></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-card-title">Ingresos vs Gastos — mes a mes</div>
+              <div class="chart-card-sub">Comparativa mensual 2026</div>
+              <div style="position:relative;height:240px"><canvas id="chart-barras"></canvas></div>
+            </div>
+            <div class="charts-grid-2">
+              <div class="chart-card">
+                <div class="chart-card-title">Balance neto acumulado</div>
+                <div class="chart-card-sub">Resultado acumulado a lo largo del año</div>
+                <div style="position:relative;height:200px"><canvas id="chart-acumulado"></canvas></div>
+              </div>
+              <div class="chart-card">
+                <div class="chart-card-title">Gastos por categoría</div>
+                <div class="chart-card-sub">Año completo 2026</div>
+                <div style="position:relative;height:200px"><canvas id="chart-categorias"></canvas></div>
+              </div>
+            </div>
+            <div class="card"><div class="card-title">Resumen mes a mes 2026</div>
+              <table><thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Resultado</th><th>Acumulado</th></tr></thead><tbody id="tabla-mensual"></tbody></table>
+            </div>
+          </div>
+
+          <div id="fin-page-clientes" class="fin-page" style="display:none">
+            <div class="page-header">
+              <div><div class="page-title">Clientes</div><div class="page-subtitle">Proyectos y cobros 2026</div></div>
+              <div style="display:flex;gap:10px;align-items:center">
+                <input type="text" class="search-input" placeholder="Buscar cliente..." id="search-clientes" oninput="renderClientes()">
+                <button class="btn btn-primary" onclick="openModalCliente()">+ Nuevo cliente</button>
+              </div>
+            </div>
+            <div class="card">
+              <table><thead><tr><th>Nombre</th><th>Servicio</th><th>Precio total</th><th>Cobrado</th><th>Pendiente</th><th>Progreso</th><th>Estado</th><th></th></tr></thead>
+              <tbody id="clientes-body"></tbody></table>
+            </div>
+          </div>
+
+          <div id="fin-page-gastos" class="fin-page" style="display:none">
+            <div class="page-header">
+              <div><div class="page-title">Gastos</div><div class="page-subtitle" id="gastos-period">—</div></div>
+              <button class="btn btn-primary" onclick="openModalGasto()">+ Nuevo gasto</button>
+            </div>
+            <div class="cat-grid" id="cat-filters"></div>
+            <div class="card">
+              <table><thead><tr><th>Descripción</th><th>Categoría</th><th>Fecha</th><th>Monto</th><th></th></tr></thead>
+              <tbody id="gastos-body"></tbody></table>
+            </div>
+          </div>
+
+          <div id="fin-page-balance" class="fin-page" style="display:none">
+            <div class="page-header">
+              <div><div class="page-title">Balance</div><div class="page-subtitle" id="balance-period">—</div></div>
+            </div>
+            <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+              <div class="kpi-card green"><div class="kpi-label">Ingresos del mes</div><div class="kpi-value green" id="bal-ingresos">€0</div></div>
+              <div class="kpi-card red"><div class="kpi-label">Gastos del mes</div><div class="kpi-value red" id="bal-gastos">€0</div></div>
+              <div class="kpi-card"><div class="kpi-label">Resultado neto</div><div class="kpi-value" id="bal-neto">€0</div></div>
+            </div>
+            <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;margin-bottom:14px;color:#2C2010">Balance por cliente</div>
+            <div id="balance-clientes-list" style="margin-bottom:16px"></div>
+            <div class="card">
+              <div class="card-title">Gastos por categoría <span id="balance-month-label" style="font-size:12px;font-weight:400;color:#7A6A50"></span></div>
+              <table><thead><tr><th>Categoría</th><th>N°</th><th>Total</th></tr></thead><tbody id="balance-cat-body"></tbody></table>
+            </div>
+          </div>
+
+        </div><!-- /fin-main -->
+
+        <!-- Finanzas sub-nav (right sidebar style, hidden - using top nav instead) -->
+      </div><!-- /fin-wrap -->
+
+      <!-- Finanzas sub-nav as top tabs -->
+      <style>
+        #fin-subnav { position:absolute; top:0; left:210px; right:0; background:#EDE8DB; border-bottom:1px solid #1A1814; display:flex; gap:0; z-index:10; }
+        #fin-subnav button { padding:12px 20px; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:500; letter-spacing:.1em; color:#9A8A6A; background:transparent; border:none; cursor:pointer; border-bottom:2px solid transparent; transition:all .15s; text-transform:uppercase; }
+        #fin-subnav button:hover { color:#8B7A60; }
+        #fin-subnav button.active { color:#C9A84C; border-bottom-color:#C9A84C; }
+        #module-finanzas .fin-main { padding-top: 56px; }
+      </style>
+      <div id="fin-subnav" style="display:none">
+        <button class="active" onclick="navigateFin('dashboard',this)">◈ Dashboard</button>
+        <button onclick="navigateFin('graficas',this)">◉ Gráficas</button>
+        <button onclick="navigateFin('clientes',this)">◎ Clientes</button>
+        <button onclick="navigateFin('gastos',this)">◐ Gastos</button>
+        <button onclick="navigateFin('balance',this)">◑ Balance</button>
+      </div>
+
+      <!-- Finanzas Modals -->
+      <div id="modal-cliente" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-title" id="modal-cliente-title">Nuevo cliente</div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="c-nombre" placeholder="Nombre del cliente"></div>
+            <div class="form-group"><label class="form-label">Servicio</label><input class="form-input" id="c-servicio" placeholder="Tipo de servicio"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Precio total (€)</label><input class="form-input" type="number" id="c-precio" placeholder="0"></div>
+            <div class="form-group"><label class="form-label">Estado</label>
+              <select class="form-select" id="c-estado">
+                <option value="activo">Activo</option>
+                <option value="completado">Completado</option>
+                <option value="pausado">Pausado</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group"><label class="form-label">Notas</label><textarea class="form-textarea" id="c-notas" rows="2" placeholder="Notas opcionales"></textarea></div>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal('modal-cliente')">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveCliente()">Guardar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="modal-pago" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-title">Registrar cobro — <span id="pago-cliente-nombre"></span></div>
+          <div style="font-size:12px;color:#7A6A50;margin-bottom:16px;font-family:'IBM Plex Mono',monospace">Pendiente: <strong id="pago-pendiente-display" style="color:#F85149"></strong></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Monto (€)</label><input class="form-input" type="number" id="p-monto" placeholder="0"></div>
+            <div class="form-group"><label class="form-label">Fecha</label><input class="form-input" type="date" id="p-fecha"></div>
+          </div>
+          <div class="form-group"><label class="form-label">Nota (opcional)</label><input class="form-input" id="p-nota" placeholder="Ej: Señal, segunda cuota..."></div>
+          <div id="pago-historial" style="margin-top:14px;max-height:160px;overflow-y:auto"></div>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal('modal-pago')">Cerrar</button>
+            <button class="btn btn-green" onclick="savePago()">Registrar cobro</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="modal-gasto" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-title">Nuevo gasto</div>
+          <div class="form-group"><label class="form-label">Descripción</label><input class="form-input" id="g-desc" placeholder="¿En qué gastaste?"></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Categoría</label>
+              <select class="form-select" id="g-cat">
+                <option>Meta Ads</option><option>Software</option><option>Equipamiento</option>
+                <option>Formación</option><option>Servicios</option><option>Otros</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Monto (€)</label><input class="form-input" type="number" id="g-monto" placeholder="0"></div>
+          </div>
+          <div class="form-group"><label class="form-label">Fecha</label><input class="form-input" type="date" id="g-fecha"></div>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal('modal-gasto')">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveGasto()">Guardar gasto</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /module-finanzas -->
+
+    <!-- ── TAREAS MODULE ── -->
+    <div id="module-tareas" class="module">
+      <div class="t-wrap">
+        <div class="t-header">
+          <div>
+            <div class="t-title">Tareas @larry.prod</div>
+            <div class="t-sub">SISTEMA DE CONTROL</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px">
+            <div id="criticos-badge" class="criticos-badge" style="display:none">
+              <span class="live-dot"></span>
+              <span id="criticos-text"></span>
+            </div>
+            <div id="counts" class="counts"></div>
+          </div>
+        </div>
+
+        <div id="t-hero"></div>
+
+        <div class="controls">
+          <div class="filtros">
+            <button class="filtro-btn activo" data-filtro="pendientes" onclick="setFiltro('pendientes',this)">Pendientes</button>
+            <button class="filtro-btn" data-filtro="en curso" onclick="setFiltro('en curso',this)">En curso</button>
+            <button class="filtro-btn" data-filtro="hecho" onclick="setFiltro('hecho',this)">Resueltas</button>
+          </div>
+          <button class="new-btn" id="new-btn" onclick="toggleForm()">+ Nueva tarea</button>
+        </div>
+
+        <div id="form-wrap" class="form-wrap slide-in" style="display:none">
+          <div class="form-title" id="form-title">Nueva tarea</div>
+          <div class="form-grid">
+            <input id="f-titulo" type="text" placeholder="¿Qué tenés que hacer?" onkeydown="if(event.key==='Enter')submitForm()" />
+            <textarea id="f-desc" rows="2" placeholder="Descripción o contexto (opcional)"></textarea>
+            <div class="form-row">
+              <div>
+                <div class="field-label">Prioridad</div>
+                <div class="pr-btns" id="pr-btns"></div>
+              </div>
+              <div>
+                <div class="field-label">Categoría</div>
+                <select id="f-cat">
+                  <option>Ads</option><option>ManyChat</option><option>Landing</option>
+                  <option>Ventas</option><option>Música</option><option>Admin</option><option>Otro</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="submit-btn" id="submit-btn" onclick="submitForm()" style="background:#C9A84C">Agregar tarea</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="t-summary" class="summary"></div>
+        <div id="task-list" class="task-list"></div>
+      </div>
+    </div>
+
+    <!-- ── CRM MODULE ── -->
+    <div id="module-crm" class="module">
+      <div id="crm-root"></div>
+    </div>
+
+
+    <!-- ── AGENDA DE CONTENIDO MODULE ── -->
+    <div id="module-agenda" class="module">
+<div id="agenda-app">
+
+  <!-- HEADER -->
+  <header id="agenda-header">
+    <div class="header-top">
+      <div class="logo">
+        Agenda <span>Contenido</span>
+        <small id="agenda-total-label">0 piezas planificadas</small>
+      </div>
+      <div class="header-actions">
+        <button class="btn-icon" id="agenda-btn-list" title="Vista lista">📋</button>
+        <button class="btn-icon" id="agenda-btn-export" title="Exportar JSON">💾</button>
+        <button class="btn-icon" id="agenda-btn-import-trigger" title="Importar JSON">📂</button>
+        <input type="file" id="agenda-btn-import" accept=".json" style="display:none" />
+      </div>
+    </div>
+
+    <div class="stats-bar" id="agenda-stats-bar"></div>
+
+    <div class="controls">
+      <div class="tabs">
+        <button class="tab active" data-view="semana">Semana</button>
+        <button class="tab" data-view="mes">Mes</button>
+      </div>
+      <div class="period-nav">
+        <button class="nav-btn" id="agenda-btn-prev">‹</button>
+        <span class="period-label" id="agenda-period-label"></span>
+        <button class="nav-btn" id="agenda-btn-next">›</button>
+        <button class="btn-today" id="agenda-btn-today">Hoy</button>
+      </div>
+      <div class="filters" id="agenda-type-filters"></div>
+    </div>
+  </header>
+
+  <!-- CALENDAR -->
+  <div id="agenda-calendar">
+    <div class="day-headers" id="agenda-day-headers"></div>
+    <div id="agenda-grid-area"></div>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div id="agenda-list-view">
+    <div class="list-filters" id="agenda-status-filters"></div>
+    <div id="agenda-list-items"></div>
+  </div>
+
+  <!-- FAB -->
+  <button id="agenda-fab" title="Nuevo contenido">+</button>
+
+  <!-- MODAL -->
+  <div class="overlay" id="agenda-overlay">
+    <div class="modal" id="agenda-modal">
+      <div class="modal-title" id="agenda-modal-title">➕ Nuevo Contenido</div>
+
+      <div class="field">
+        <label>Tipo de Contenido</label>
+        <div class="type-grid" id="agenda-type-grid"></div>
+      </div>
+
+      <div class="field">
+        <label>Título / Tema</label>
+        <input type="text" id="agenda-f-title" placeholder="Ej: Tutorial de edición en 60 segs..." />
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="agenda-f-date" />
+        </div>
+        <div class="field">
+          <label>Hora</label>
+          <input type="time" id="agenda-f-time" value="12:00" />
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Plataforma</label>
+          <select id="agenda-f-platform">
+            <option>Instagram</option>
+            <option>TikTok</option>
+            <option>YouTube</option>
+            <option>Facebook</option>
+            <option>Twitter/X</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Estado</label>
+          <select id="agenda-f-status">
+            <option value="idea">💡 Idea</option>
+            <option value="produccion">🔧 En producción</option>
+            <option value="listo">✅ Listo</option>
+            <option value="publicado">🚀 Publicado</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Notas / Descripción</label>
+        <textarea id="agenda-f-notes" placeholder="Concepto, referencias, hashtags, copy..."></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-danger" id="agenda-btn-delete" style="display:none">Eliminar</button>
+        <button class="btn btn-ghost" id="agenda-btn-cancel">Cancelar</button>
+        <button class="btn" id="agenda-btn-save" style="background:var(--reel);color:#fff">Agregar</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /larry-shell -->
+
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     GLOBAL JS
+═══════════════════════════════════════════════════════════════════ -->
+<script>
+// ─── MODULE SWITCHER ───────────────────────────────────────────
+let activeModule = 'finanzas';
+
+function switchModule(name) {
+  document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('module-' + name).classList.add('active');
+  document.getElementById('sb-' + name).classList.add('active');
+
+  const finSubnav = document.getElementById('fin-subnav');
+  if (name === 'finanzas') {
+    finSubnav.style.display = 'flex';
+    renderDashboard();
+  } else {
+    finSubnav.style.display = 'none';
+  }
+
+  // Agenda FAB: only visible inside Agenda module
+  const agendaFab = document.getElementById('agenda-fab');
+  if (agendaFab) agendaFab.style.display = name === 'agenda' ? 'flex' : 'none';
+
+  activeModule = name;
+}
+
+// ─── TOAST ───────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─── MONTH SELECTOR (shared) ─────────────────────────────────
+const YEAR = 2026;
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function initMonthSelect() {
+  const sel = document.getElementById('globalMonth');
+  MONTHS.forEach((m, i) => {
+    const o = document.createElement('option');
+    o.value = i + 1; o.textContent = m;
+    sel.appendChild(o);
+  });
+  sel.value = new Date().getMonth() + 1;
+}
+function getSelectedMonth() { return parseInt(document.getElementById('globalMonth').value); }
+function getMonthLabel() { return MONTHS[getSelectedMonth()-1]; }
+function onMonthChange() {
+  if (activeModule === 'finanzas') {
+    renderDashboard(); renderGastos(); renderBalance(); renderGraficas();
+  }
+}
+initMonthSelect();
+document.getElementById('fin-subnav').style.display = 'flex';
+renderDashboard();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FINANZAS JS
+═══════════════════════════════════════════════════════════════════ -->
+<script>
+// ─── DATA ────────────────────────────────────────────────────
+let appData = { clientes: [], gastos: [] };
+let editingClienteId = null, editingPagoClienteId = null;
+let activeCat = 'todas';
+let finCharts = {};
+
+function save() { localStorage.setItem('larryOS_finanzas', JSON.stringify(appData)); }
+function load() {
+  const d = localStorage.getItem('larryOS_finanzas');
+  if (d) appData = JSON.parse(d);
+}
+
+// ─── HELPERS ────────────────────────────────────────────────
+const fmt = n => '€' + (n||0).toLocaleString('es-ES',{minimumFractionDigits:0,maximumFractionDigits:0});
+const fmtDate = d => d ? new Date(d+'T12:00:00').toLocaleDateString('es-ES',{day:'2-digit',month:'short'}) : '—';
+
+function totalCobrado(c) { return (c.pagos||[]).reduce((s,p)=>s+Number(p.monto),0); }
+function totalPendiente(c) { return Math.max(0, Number(c.precio||0) - totalCobrado(c)); }
+function cobradoEnMes(c, mes) {
+  return (c.pagos||[]).filter(p=>{const d=new Date(p.fecha+'T12:00:00');return d.getFullYear()===YEAR&&d.getMonth()+1===mes;}).reduce((s,p)=>s+Number(p.monto),0);
+}
+function gastosEnMes(mes) {
+  return appData.gastos.filter(g=>{const d=new Date(g.fecha+'T12:00:00');return d.getFullYear()===YEAR&&d.getMonth()+1===mes;});
+}
+function totalGastosEnMes(mes) { return gastosEnMes(mes).reduce((s,g)=>s+Number(g.monto),0); }
+function ingresosEnMes(mes) { return appData.clientes.reduce((s,c)=>s+cobradoEnMes(c,mes),0); }
+
+function estadoBadge(estado) {
+  const map = { activo:'badge-green', completado:'badge-amber', pausado:'badge-gray', cancelado:'badge-red' };
+  return `<span class="badge ${map[estado]||'badge-gray'}">${estado||'—'}</span>`;
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────
+function navigateFin(page, btn) {
+  document.querySelectorAll('.fin-page').forEach(p=>p.style.display='none');
+  document.getElementById('fin-page-'+page).style.display='block';
+  document.querySelectorAll('#fin-subnav button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(page==='dashboard') renderDashboard();
+  else if(page==='graficas') renderGraficas();
+  else if(page==='clientes') renderClientes();
+  else if(page==='gastos') renderGastos();
+  else if(page==='balance') renderBalance();
+}
+
+// ─── DASHBOARD ───────────────────────────────────────────────
+function renderDashboard() {
+  const mes = getSelectedMonth();
+  document.getElementById('dash-period').textContent = getMonthLabel() + ' ' + YEAR;
+  const ing = ingresosEnMes(mes), gas = totalGastosEnMes(mes), neto = ing - gas;
+  const pend = appData.clientes.reduce((s,c)=>s+totalPendiente(c),0);
+  document.getElementById('kpi-ingresos').textContent = fmt(ing);
+  document.getElementById('kpi-gastos').textContent = fmt(gas);
+  const nb = document.getElementById('kpi-balance');
+  nb.textContent = fmt(neto); nb.className = 'kpi-value '+(neto>=0?'green':'red');
+  document.getElementById('kpi-pendiente').textContent = fmt(pend);
+
+  // Últimos cobros
+  let cobros = [];
+  appData.clientes.forEach(c=>(c.pagos||[]).forEach(p=>cobros.push({nombre:c.nombre,fecha:p.fecha,monto:Number(p.monto)})));
+  cobros.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  document.getElementById('dash-cobros-body').innerHTML = cobros.slice(0,6).map(c=>`<tr><td><strong>${c.nombre}</strong></td><td style="color:#7A6A50">${fmtDate(c.fecha)}</td><td class="amount-pos">${fmt(c.monto)}</td></tr>`).join('')||'<tr class="empty-row"><td colspan="3">Sin cobros</td></tr>';
+
+  // Últimos gastos
+  const gastosM = [...appData.gastos].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  document.getElementById('dash-gastos-body').innerHTML = gastosM.slice(0,6).map(g=>`<tr><td><strong>${g.desc}</strong></td><td><span class="badge badge-gray">${g.cat}</span></td><td class="amount-neg">${fmt(g.monto)}</td></tr>`).join('')||'<tr class="empty-row"><td colspan="3">Sin gastos</td></tr>';
+
+  // Pendientes
+  const conPend = appData.clientes.filter(c=>totalPendiente(c)>0);
+  document.getElementById('dash-pendientes-body').innerHTML = conPend.map(c=>`<tr><td><strong>${c.nombre}</strong></td><td style="color:#7A6A50">${c.servicio||'—'}</td><td>${fmt(c.precio)}</td><td class="amount-pos">${fmt(totalCobrado(c))}</td><td class="amount-neg">${fmt(totalPendiente(c))}</td><td>${estadoBadge(c.estado)}</td></tr>`).join('')||'<tr class="empty-row"><td colspan="6">Sin cobros pendientes 🎉</td></tr>';
+}
+
+// ─── GRAFICAS ─────────────────────────────────────────────────
+const CHART_DEFAULTS = {
+  color: '#C9A84C',
+  grid: 'rgba(201,168,76,0.07)',
+  tick: '#9A8A6A',
+};
+
+function renderGraficas() {
+  const allIng = MONTHS.map((_,i)=>ingresosEnMes(i+1));
+  const allGas = MONTHS.map((_,i)=>totalGastosEnMes(i+1));
+  const allNet = MONTHS.map((_,i)=>allIng[i]-allGas[i]);
+  let acum=0; const allAcum = allNet.map(n=>{acum+=n;return acum;});
+  const totalIng=allIng.reduce((s,v)=>s+v,0);
+  const totalGas=allGas.reduce((s,v)=>s+v,0);
+  const mejorI=allIng.indexOf(Math.max(...allIng));
+  document.getElementById('g-anual-ingresos').textContent=fmt(totalIng);
+  document.getElementById('g-anual-gastos').textContent=fmt(totalGas);
+  const gn=document.getElementById('g-anual-neto'); gn.textContent=fmt(totalIng-totalGas); gn.className='kpi-value '+(totalIng>=totalGas?'green':'red');
+  document.getElementById('g-mejor-mes').textContent=MONTHS[mejorI].slice(0,3);
+  document.getElementById('g-mejor-mes-val').textContent=fmt(allIng[mejorI]);
+  document.getElementById('g-pendiente-total').textContent=fmt(appData.clientes.reduce((s,c)=>s+totalPendiente(c),0));
+
+  const chartOpts = { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{color:CHART_DEFAULTS.grid},ticks:{color:CHART_DEFAULTS.tick,font:{size:10}}},y:{grid:{color:CHART_DEFAULTS.grid},ticks:{color:CHART_DEFAULTS.tick,font:{size:10},callback:v=>'€'+v.toLocaleString('es-ES')}}} };
+
+  const shortMonths = MONTHS.map(m=>m.slice(0,3));
+  
+  if(finCharts.barras) finCharts.barras.destroy();
+  finCharts.barras = new Chart(document.getElementById('chart-barras'),{type:'bar',data:{labels:shortMonths,datasets:[{label:'Ingresos',data:allIng,backgroundColor:'rgba(63,185,80,0.7)',borderRadius:4},{label:'Gastos',data:allGas,backgroundColor:'rgba(248,81,73,0.6)',borderRadius:4}]},options:{...chartOpts,plugins:{legend:{display:true,labels:{color:'#7A6A50',font:{size:11}}}}}});
+
+  if(finCharts.acumulado) finCharts.acumulado.destroy();
+  finCharts.acumulado = new Chart(document.getElementById('chart-acumulado'),{type:'line',data:{labels:shortMonths,datasets:[{data:allAcum,borderColor:'#C9A84C',backgroundColor:'rgba(201,168,76,0.08)',tension:0.4,fill:true,pointBackgroundColor:'#C9A84C',pointRadius:4}]},options:{...chartOpts}});
+
+  // Gastos por cat
+  const porCat={};
+  appData.gastos.forEach(g=>{if(!porCat[g.cat])porCat[g.cat]=0;porCat[g.cat]+=Number(g.monto);});
+  const cats=Object.keys(porCat), vals=Object.values(porCat);
+  const colors=['#C9A84C','#3FB950','#58A6FF','#F0B429','#F85149','#A371F7','#79C0FF'];
+  if(finCharts.categorias) finCharts.categorias.destroy();
+  finCharts.categorias = new Chart(document.getElementById('chart-categorias'),{type:'doughnut',data:{labels:cats,datasets:[{data:vals,backgroundColor:colors,borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#7A6A50',font:{size:10},padding:12}}}}});
+
+  // Tabla mensual
+  let runAcum=0;
+  document.getElementById('tabla-mensual').innerHTML=MONTHS.map((m,i)=>{
+    const ing=allIng[i],gas=allGas[i],net=ing-gas; runAcum+=net;
+    return `<tr><td style="color:#6A5A40">${m}</td><td class="amount-pos">${fmt(ing)}</td><td class="amount-neg">${fmt(gas)}</td><td class="${net>=0?'amount-pos':'amount-neg'}">${fmt(net)}</td><td style="color:${runAcum>=0?'#3FB950':'#F85149'};font-weight:600">${fmt(runAcum)}</td></tr>`;
+  }).join('');
+}
+
+// ─── CLIENTES ─────────────────────────────────────────────────
+function renderClientes() {
+  const q = (document.getElementById('search-clientes').value||'').toLowerCase();
+  let list = appData.clientes.filter(c=>!q||c.nombre.toLowerCase().includes(q)||(c.servicio||'').toLowerCase().includes(q));
+  document.getElementById('clientes-body').innerHTML = list.map(c=>{
+    const ct=totalCobrado(c),pend=totalPendiente(c),pct=c.precio>0?Math.min(100,(ct/c.precio)*100):0;
+    const barClass=pct>=100?'progress-bar':pct>=50?'progress-bar amber':'progress-bar red';
+    return `<tr>
+      <td><strong>${c.nombre}</strong></td>
+      <td style="color:#7A6A50">${c.servicio||'—'}</td>
+      <td>${fmt(c.precio)}</td>
+      <td class="amount-pos">${fmt(ct)}</td>
+      <td class="${pend>0?'amount-neg':''}">${fmt(pend)}</td>
+      <td style="width:100px"><div class="progress-wrap"><div class="${barClass}" style="width:${pct}%"></div></div><span style="font-size:10px;color:#7A6A50">${Math.round(pct)}%</span></td>
+      <td>${estadoBadge(c.estado)}</td>
+      <td style="display:flex;gap:5px;padding:8px">
+        <button class="btn btn-green btn-sm" onclick="openModalPago('${c.id}')">💰 Cobrar</button>
+        <button class="btn btn-ghost btn-sm" onclick="openModalCliente('${c.id}')">✎</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCliente('${c.id}')">✕</button>
+      </td>
+    </tr>`;
+  }).join('')||'<tr class="empty-row"><td colspan="8">Sin clientes. Añade el primero.</td></tr>';
+}
+
+function openModalCliente(id=null) {
+  editingClienteId=id;
+  document.getElementById('modal-cliente-title').textContent=id?'Editar cliente':'Nuevo cliente';
+  if(id){const c=appData.clientes.find(x=>x.id===id);document.getElementById('c-nombre').value=c.nombre;document.getElementById('c-servicio').value=c.servicio||'';document.getElementById('c-precio').value=c.precio||'';document.getElementById('c-estado').value=c.estado||'activo';document.getElementById('c-notas').value=c.notas||'';}
+  else{['c-nombre','c-servicio','c-precio','c-notas'].forEach(i=>document.getElementById(i).value='');document.getElementById('c-estado').value='activo';}
+  document.getElementById('modal-cliente').classList.add('open');
+}
+function saveCliente() {
+  const nombre=document.getElementById('c-nombre').value.trim();
+  if(!nombre){alert('Nombre obligatorio');return;}
+  const obj={nombre,servicio:document.getElementById('c-servicio').value.trim(),precio:parseFloat(document.getElementById('c-precio').value)||0,estado:document.getElementById('c-estado').value,notas:document.getElementById('c-notas').value.trim()};
+  if(editingClienteId){const i=appData.clientes.findIndex(x=>x.id===editingClienteId);appData.clientes[i]={...appData.clientes[i],...obj};}
+  else{appData.clientes.push({id:Date.now().toString(),...obj,pagos:[]});}
+  save();closeModal('modal-cliente');renderClientes();renderDashboard();showToast(editingClienteId?'Cliente actualizado':'Cliente creado ✓');
+}
+function deleteCliente(id){if(!confirm('¿Eliminar este cliente?'))return;appData.clientes=appData.clientes.filter(c=>c.id!==id);save();renderClientes();renderDashboard();showToast('Cliente eliminado');}
+
+// ─── PAGOS ────────────────────────────────────────────────────
+function openModalPago(clienteId) {
+  editingPagoClienteId=clienteId;
+  const c=appData.clientes.find(x=>x.id===clienteId);
+  document.getElementById('pago-cliente-nombre').textContent=c.nombre;
+  document.getElementById('pago-pendiente-display').textContent=fmt(totalPendiente(c));
+  document.getElementById('p-monto').value='';
+  document.getElementById('p-fecha').value=new Date().toISOString().split('T')[0];
+  document.getElementById('p-nota').value='';
+  const hist=document.getElementById('pago-historial');
+  hist.innerHTML=(!c.pagos||!c.pagos.length)
+    ?'<div style="color:#9A8A6A;font-size:11px;font-style:italic;font-family:\'IBM Plex Mono\',monospace">Sin pagos registrados</div>'
+    :[...c.pagos].reverse().map(p=>`<div class="pago-item"><div><span style="font-weight:600">${fmt(p.monto)}</span>${p.nota?`<span style="color:#9A8A6A;margin-left:8px">${p.nota}</span>`:''}</div><div style="display:flex;align-items:center;gap:6px"><span style="color:#9A8A6A">${fmtDate(p.fecha)}</span><button class="btn btn-danger btn-sm" onclick="deletePago('${clienteId}','${p.id}')">✕</button></div></div>`).join('');
+  document.getElementById('modal-pago').classList.add('open');
+}
+function savePago() {
+  const monto=parseFloat(document.getElementById('p-monto').value),fecha=document.getElementById('p-fecha').value;
+  if(!monto||monto<=0){alert('Monto inválido');return;}if(!fecha){alert('Selecciona una fecha');return;}
+  const c=appData.clientes.find(x=>x.id===editingPagoClienteId);
+  if(!c.pagos)c.pagos=[];
+  c.pagos.push({id:Date.now().toString(),monto,fecha,nota:document.getElementById('p-nota').value.trim()});
+  save();openModalPago(editingPagoClienteId);renderClientes();renderDashboard();showToast(`Cobro de ${fmt(monto)} registrado ✓`);
+}
+function deletePago(clienteId,pagoId){const c=appData.clientes.find(x=>x.id===clienteId);c.pagos=c.pagos.filter(p=>p.id!==pagoId);save();openModalPago(clienteId);renderClientes();renderDashboard();showToast('Pago eliminado');}
+
+// ─── GASTOS ───────────────────────────────────────────────────
+function renderGastos() {
+  const mes=getSelectedMonth();
+  document.getElementById('gastos-period').textContent=getMonthLabel()+' '+YEAR;
+  let gm=gastosEnMes(mes);
+  if(activeCat!=='todas')gm=gm.filter(g=>g.cat===activeCat);
+  gm.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const allCats=[...new Set(gastosEnMes(mes).map(g=>g.cat))];
+  document.getElementById('cat-filters').innerHTML=`<button class="cat-pill ${activeCat==='todas'?'active':''}" onclick="filterCat('todas')">Todas</button>`+allCats.map(c=>`<button class="cat-pill ${activeCat===c?'active':''}" onclick="filterCat('${c}')">${c}</button>`).join('');
+  document.getElementById('gastos-body').innerHTML=gm.map(g=>`<tr><td><strong>${g.desc}</strong></td><td><span class="badge badge-gray">${g.cat}</span></td><td style="color:#7A6A50">${fmtDate(g.fecha)}</td><td class="amount-neg">${fmt(g.monto)}</td><td><button class="btn btn-danger btn-sm" onclick="deleteGasto('${g.id}')">✕</button></td></tr>`).join('')||'<tr class="empty-row"><td colspan="5">Sin gastos en este mes</td></tr>';
+}
+function filterCat(cat){activeCat=cat;renderGastos();}
+function openModalGasto(){['g-desc','g-monto'].forEach(i=>document.getElementById(i).value='');document.getElementById('g-fecha').value=new Date().toISOString().split('T')[0];document.getElementById('modal-gasto').classList.add('open');}
+function saveGasto(){const desc=document.getElementById('g-desc').value.trim(),monto=parseFloat(document.getElementById('g-monto').value)||0;if(!desc){alert('Descripción obligatoria');return;}if(!monto){alert('Ingresa un monto');return;}appData.gastos.push({id:Date.now().toString(),desc,cat:document.getElementById('g-cat').value,monto,fecha:document.getElementById('g-fecha').value});save();closeModal('modal-gasto');renderGastos();renderDashboard();showToast('Gasto guardado ✓');}
+function deleteGasto(id){appData.gastos=appData.gastos.filter(g=>g.id!==id);save();renderGastos();renderDashboard();showToast('Gasto eliminado');}
+
+// ─── BALANCE ──────────────────────────────────────────────────
+function renderBalance() {
+  const mes=getSelectedMonth(),label=getMonthLabel();
+  document.getElementById('balance-period').textContent=label+' '+YEAR;
+  document.getElementById('balance-month-label').textContent=label;
+  const ing=ingresosEnMes(mes),gas=totalGastosEnMes(mes),neto=ing-gas;
+  document.getElementById('bal-ingresos').textContent=fmt(ing);
+  document.getElementById('bal-gastos').textContent=fmt(gas);
+  const ne=document.getElementById('bal-neto');ne.textContent=fmt(neto);ne.className='kpi-value '+(neto>=0?'green':'red');
+  const list=document.getElementById('balance-clientes-list');
+  list.innerHTML=!appData.clientes.length?'<div style="color:#9A8A6A;font-style:italic;font-size:12px;font-family:\'IBM Plex Mono\',monospace">Sin clientes registrados</div>':appData.clientes.map(c=>{
+    const cm=cobradoEnMes(c,mes),ct=totalCobrado(c),pend=totalPendiente(c),pct=c.precio>0?Math.min(100,(ct/c.precio)*100):0;
+    return `<div class="bal-cliente"><div class="bal-cliente-header"><div><div style="font-weight:600;font-size:14px;color:#2C2010">${c.nombre}</div><div style="font-size:11px;color:#7A6A50">${c.servicio||'—'}</div></div><div>${estadoBadge(c.estado)}</div></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:4px">
+      <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#9A8A6A;margin-bottom:3px;font-family:'IBM Plex Mono',monospace">Precio total</div><div style="font-weight:600;color:#2C2010">${fmt(c.precio)}</div></div>
+      <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#9A8A6A;margin-bottom:3px;font-family:'IBM Plex Mono',monospace">Cobrado total</div><div style="font-weight:600;color:#3FB950">${fmt(ct)}</div></div>
+      <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#9A8A6A;margin-bottom:3px;font-family:'IBM Plex Mono',monospace">Cobrado ${label}</div><div style="font-weight:600;color:${cm>0?'#3FB950':'#9A8A6A'}">${fmt(cm)}</div></div>
+      <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#9A8A6A;margin-bottom:3px;font-family:'IBM Plex Mono',monospace">Pendiente</div><div style="font-weight:600;color:${pend>0?'#F85149':'#3FB950'}">${fmt(pend)}</div></div>
+    </div>
+    <div style="margin-top:8px"><div class="progress-wrap"><div class="${pct>=100?'progress-bar':pct>=50?'progress-bar amber':'progress-bar red'}" style="width:${pct}%"></div></div><span style="font-size:10px;color:#9A8A6A">${Math.round(pct)}% cobrado</span></div></div>`;
+  }).join('');
+  const porCat={};gastosEnMes(mes).forEach(g=>{if(!porCat[g.cat])porCat[g.cat]={count:0,total:0};porCat[g.cat].count++;porCat[g.cat].total+=Number(g.monto);});
+  document.getElementById('balance-cat-body').innerHTML=Object.entries(porCat).sort((a,b)=>b[1].total-a[1].total).map(([cat,v])=>`<tr><td><span class="badge badge-gray">${cat}</span></td><td style="color:#7A6A50">${v.count}</td><td class="amount-neg">${fmt(v.total)}</td></tr>`).join('')||'<tr class="empty-row"><td colspan="3">Sin gastos en este mes</td></tr>';
+}
+
+// ─── MODALS ───────────────────────────────────────────────────
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+// ─── INIT FINANZAS ────────────────────────────────────────────
+load();
+renderDashboard();
+document.getElementById('fin-subnav').style.display = 'flex';
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TAREAS JS
+═══════════════════════════════════════════════════════════════════ -->
+<script>
+const PRIORIDADES = [
+  { id: 5, label: "CRÍTICO", color: "#E24B4A", bg: "rgba(226,75,74,0.10)", border: "rgba(226,75,74,0.30)" },
+  { id: 4, label: "ALTO",    color: "#EF9F27", bg: "rgba(239,159,39,0.10)", border: "rgba(239,159,39,0.30)" },
+  { id: 3, label: "MEDIO",   color: "#1D9E75", bg: "rgba(29,158,117,0.10)", border: "rgba(29,158,117,0.30)" },
+  { id: 2, label: "BAJO",    color: "#378ADD", bg: "rgba(55,138,221,0.10)", border: "rgba(55,138,221,0.30)" },
+  { id: 1, label: "IDEA",    color: "#7F77DD", bg: "rgba(127,119,221,0.10)", border: "rgba(127,119,221,0.30)" },
+];
+
+let tareas = JSON.parse(localStorage.getItem("larry_os_tasks") || "[]");
+let filtro = "pendientes";
+let editandoId = null;
+let formPrioridad = 3;
+
+function saveT() { localStorage.setItem("larry_os_tasks", JSON.stringify(tareas)); }
+function getId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function pr(id) { return PRIORIDADES.find(p => p.id === id); }
+
+function setFiltro(f, btn) {
+  filtro = f;
+  document.querySelectorAll("#module-tareas .filtro-btn").forEach(b => b.classList.remove("activo"));
+  btn.classList.add("activo");
+  renderTareas();
+}
+
+function toggleForm() {
+  const fw = document.getElementById("form-wrap");
+  const nb = document.getElementById("new-btn");
+  const visible = fw.style.display !== "none";
+  fw.style.display = visible ? "none" : "block";
+  nb.textContent = visible ? "+ Nueva tarea" : "✕ Cancelar";
+  nb.classList.toggle("open", !visible);
+  if (!visible) {
+    editandoId = null;
+    document.getElementById("f-titulo").value = "";
+    document.getElementById("f-desc").value = "";
+    document.getElementById("f-cat").value = "Otro";
+    setFormPrioridad(3);
+    document.getElementById("form-title").textContent = "Nueva tarea";
+    document.getElementById("submit-btn").textContent = "Agregar tarea";
+    document.getElementById("f-titulo").focus();
+  }
+}
+
+function setFormPrioridad(id) {
+  formPrioridad = id;
+  document.querySelectorAll(".pr-btn").forEach(b => {
+    const pid = parseInt(b.dataset.id);
+    const p = pr(pid);
+    if (pid === id) {
+      b.style.background = p.bg; b.style.borderColor = p.border; b.style.color = p.color;
+    } else {
+      b.style.background = "transparent"; b.style.borderColor = "#CFC9B8"; b.style.color = "#9A8A6A";
+    }
+  });
+  const sb = document.getElementById("submit-btn");
+  sb.style.background = pr(id).color;
+}
+
+function submitForm() {
+  const titulo = document.getElementById("f-titulo").value.trim();
+  if (!titulo) { document.getElementById("f-titulo").focus(); return; }
+  const t = { titulo, descripcion: document.getElementById("f-desc").value.trim(), prioridad: formPrioridad, categoria: document.getElementById("f-cat").value };
+  if (editandoId) {
+    tareas = tareas.map(x => x.id === editandoId ? { ...x, ...t } : x);
+    editandoId = null;
+  } else {
+    tareas.push({ id: getId(), ...t, estado: "pendiente", creadoEn: Date.now() });
+  }
+  saveT(); toggleForm(); renderTareas();
+}
+
+function cambiarEstado(id) {
+  tareas = tareas.map(t => {
+    if (t.id !== id) return t;
+    const next = t.estado === "pendiente" ? "en curso" : t.estado === "en curso" ? "hecho" : "pendiente";
+    return { ...t, estado: next };
+  });
+  saveT(); renderTareas();
+}
+
+function borrarTarea(id) {
+  if (!confirm("¿Borrar esta tarea?")) return;
+  tareas = tareas.filter(t => t.id !== id);
+  saveT(); renderTareas();
+}
+
+function editarTarea(id) {
+  const t = tareas.find(x => x.id === id);
+  if (!t) return;
+  const fw = document.getElementById("form-wrap");
+  const nb = document.getElementById("new-btn");
+  fw.style.display = "block";
+  nb.textContent = "✕ Cancelar";
+  nb.classList.add("open");
+  document.getElementById("f-titulo").value = t.titulo;
+  document.getElementById("f-desc").value = t.descripcion || "";
+  document.getElementById("f-cat").value = t.categoria;
+  setFormPrioridad(t.prioridad);
+  editandoId = id;
+  document.getElementById("form-title").textContent = "Editando tarea";
+  document.getElementById("submit-btn").textContent = "Guardar cambios";
+  document.getElementById("f-titulo").focus();
+}
+
+function getEstadoBtnStyle(estado) {
+  if (estado === "pendiente") return { bg: "#DDD7C8", color: "#9A8A6A", border: "#CFC9B8", label: "Pendiente" };
+  if (estado === "en curso")  return { bg: "rgba(29,158,117,0.12)", color: "#1D9E75", border: "rgba(29,158,117,0.3)", label: "En curso" };
+  return { bg: "rgba(55,138,221,0.12)", color: "#378ADD", border: "rgba(55,138,221,0.3)", label: "Hecho" };
+}
+
+function renderTareas() {
+  const pendientes = tareas.filter(t => t.estado !== "hecho");
+  const criticos = pendientes.filter(t => t.prioridad === 5);
+  const hechos = tareas.filter(t => t.estado === "hecho");
+  const cb = document.getElementById("criticos-badge");
+  if (criticos.length > 0) { cb.style.display = "flex"; document.getElementById("criticos-text").textContent = `${criticos.length} crítico${criticos.length > 1 ? "s" : ""}`; }
+  else { cb.style.display = "none"; }
+  document.getElementById("counts").textContent = `${pendientes.length} pendientes · ${hechos.length} resueltas`;
+
+  // Hero
+  const topTarea = [...pendientes].sort((a,b) => b.prioridad - a.prioridad)[0];
+  const heroEl = document.getElementById("t-hero");
+  if (topTarea && filtro !== "hecho") {
+    const p = pr(topTarea.prioridad);
+    heroEl.innerHTML = `<div class="hero slide-in" style="background:linear-gradient(135deg,${p.bg},rgba(20,18,16,0.8));border:1px solid ${p.border}">
+      <div class="hero-label" style="color:${p.color}">→ Próxima acción</div>
+      <h2>${escT(topTarea.titulo)}</h2>
+      ${topTarea.descripcion ? `<p>${escT(topTarea.descripcion)}</p>` : ""}
+      <div class="hero-footer">
+        <span class="chip" style="background:${p.bg};color:${p.color};border:1px solid ${p.border}">${p.label}</span>
+        <span class="chip" style="background:#DDD7C8;color:#9A8A6A;border:1px solid #CFC9B8">${escT(topTarea.categoria)}</span>
+        <button onclick="cambiarEstado('${topTarea.id}')" style="margin-left:auto;background:${p.color};color:#0B0A09;font-size:11px;font-weight:700;padding:5px 14px;border-radius:6px;border:none;cursor:pointer;font-family:'Syne',sans-serif">Marcar en curso →</button>
+      </div></div>`;
+  } else { heroEl.innerHTML = ""; }
+
+  // Summary
+  const summaryEl = document.getElementById("t-summary");
+  if (filtro !== "hecho") {
+    const bars = PRIORIDADES.slice().reverse().map(p => {
+      const cnt = tareas.filter(t => t.prioridad === p.id && t.estado !== "hecho").length;
+      if (!cnt) return "";
+      return `<div class="summary-item"><div class="num" style="color:${p.color}">${cnt}</div><div class="lbl">${p.label}</div></div>`;
+    }).join("");
+    summaryEl.innerHTML = bars;
+    summaryEl.style.display = bars ? "flex" : "none";
+  } else { summaryEl.style.display = "none"; }
+
+  // Task list
+  let lista = tareas.filter(t =>
+    filtro === "hecho" ? t.estado === "hecho" :
+    filtro === "en curso" ? t.estado === "en curso" :
+    t.estado === "pendiente"
+  ).sort((a,b) => b.prioridad - a.prioridad);
+
+  const listEl = document.getElementById("task-list");
+  if (!lista.length) {
+    listEl.innerHTML = `<div class="t-empty">${filtro === "hecho" ? "No hay tareas resueltas todavía." : "Todo limpio. Agregá una tarea nueva."}</div>`;
+    return;
+  }
+  listEl.innerHTML = lista.map((t, i) => {
+    const p = pr(t.prioridad);
+    const hecho = t.estado === "hecho";
+    const est = getEstadoBtnStyle(t.estado);
+    return `<div class="task-card${hecho ? " done" : ""} slide-in" style="border:1px solid ${hecho ? "#DDD7C8" : p.border};animation-delay:${i*0.03}s">
+      <div class="task-inner">
+        <div class="pr-bar" style="background:${hecho ? "#BDB5A5" : p.color}"></div>
+        <div class="task-body">
+          <div class="task-title${hecho ? " done" : ""}">${escT(t.titulo)}</div>
+          ${t.descripcion ? `<div class="task-desc">${escT(t.descripcion)}</div>` : ""}
+          <div class="task-chips">
+            <span class="chip" style="background:${hecho ? "#DDD7C8" : p.bg};color:${hecho ? "#9A8A6A" : p.color};border:1px solid ${hecho ? "#CFC9B8" : p.border}">${p.label}</span>
+            <span class="chip" style="background:#DDD7C8;color:#9A8A6A;border:1px solid #CFC9B8">${escT(t.categoria)}</span>
+          </div>
+        </div>
+        <div class="task-actions">
+          <button class="estado-btn" onclick="cambiarEstado('${t.id}')" style="background:${est.bg};color:${est.color};border-color:${est.border}">${est.label}</button>
+          <button class="icon-btn" onclick="editarTarea('${t.id}')" title="Editar">✎</button>
+          <button class="icon-btn del" onclick="borrarTarea('${t.id}')" title="Borrar">✕</button>
+        </div>
+      </div></div>`;
+  }).join("");
+}
+
+function escT(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// Build priority buttons
+const prBtns = document.getElementById("pr-btns");
+[...PRIORIDADES].reverse().forEach(p => {
+  const btn = document.createElement("button");
+  btn.className = "pr-btn";
+  btn.dataset.id = p.id;
+  btn.textContent = p.label.slice(0, 3);
+  btn.type = "button";
+  btn.onclick = () => setFormPrioridad(p.id);
+  prBtns.appendChild(btn);
+});
+setFormPrioridad(3);
+renderTareas();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     CRM JS  (React)
+═══════════════════════════════════════════════════════════════════ -->
+<script type="text/babel">
+  const { useState, useEffect } = React;
+
+  const ETAPAS = [
+    { id: "lead",       label: "Lead",            color: "#8B949E", bg: "#DDD7C8" },
+    { id: "interesado", label: "Interesado",       color: "#F0B429", bg: "#231C0E" },
+    { id: "llamada",    label: "Llamada Agendada", color: "#58A6FF", bg: "#0D1B2A" },
+    { id: "cerrado",    label: "Cerrado",          color: "#3FB950", bg: "#0D2014" },
+    { id: "perdido",    label: "Perdido",          color: "#F85149", bg: "#2A0D0D" },
+  ];
+  const SERVICIOS = ["Beatmaking","Producción Completa","EP/Lanzamiento","Master por Stems","Edición + Mezcla","Edición + Mezcla + Master","Análisis de Marca Artística"];
+  const FUENTES   = ["Meta Ads","Orgánico","Referido","DM Outreach"];
+  const GUIONES   = ["Guión 1 v2","Guión 2 v2","Guión 3 v2"];
+
+  const fmtC = (n) => "€" + (n||0).toLocaleString("es-ES",{minimumFractionDigits:0,maximumFractionDigits:0});
+  const fmtDateC = (d) => d ? new Date(d).toLocaleDateString("es-ES",{day:"2-digit",month:"short"}) : "";
+
+  function sget(key){ try{ const v=localStorage.getItem(key); return v?JSON.parse(v):null; }catch{ return null; } }
+  function sset(key,val){ try{ localStorage.setItem(key,JSON.stringify(val)); }catch{} }
+
+  const CRM_CSS = `
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+    .crm-wrap *, .crm-wrap *::before, .crm-wrap *::after { box-sizing: border-box; }
+    .crm-wrap input, .crm-wrap select, .crm-wrap textarea { outline: none; border: none; font-family: 'IBM Plex Mono', monospace; }
+    .crm-wrap button { cursor: pointer; border: none; background: none; font-family: 'Syne', sans-serif; }
+    .crm-btn-gold { background: #C9A84C; color: #0B0A09; padding: 9px 18px; border-radius: 4px; font-weight: 700; font-size: 12px; letter-spacing: .05em; transition: all .2s; font-family: 'Syne', sans-serif; border: none; cursor: pointer; }
+    .crm-btn-gold:hover { background: #E0BD6A; transform: translateY(-1px); }
+    .crm-btn-ghost { background: transparent; color: #C9A84C; padding: 9px 16px; border-radius: 4px; border: 1px solid #C9A84C33; font-weight: 600; font-size: 12px; transition: all .2s; font-family: 'Syne', sans-serif; cursor: pointer; }
+    .crm-btn-ghost:hover { border-color: #C9A84C88; background: #C9A84C11; }
+    .crm-btn-danger { background: #F8514922; color: #F85149; padding: 9px 14px; border-radius: 4px; border: 1px solid #F8514933; font-weight: 600; font-size: 12px; transition: all .2s; font-family: 'Syne', sans-serif; cursor: pointer; }
+    .crm-btn-danger:hover { background: #F8514944; }
+    .crm-input { background: #DDD7C8; border: 1px solid #BDB5A5; border-radius: 4px; color: #2C2010; padding: 9px 12px; font-size: 13px; width: 100%; transition: border-color .2s; }
+    .crm-input:focus { border-color: #C9A84C55; }
+    .crm-input::placeholder { color: #8A7A60; }
+    .crm-modal-overlay { position: fixed; inset: 0; background: #2C201088; z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .crm-modal-box { background: #EAE4D6; border: 1px solid #BDB5A5; border-radius: 8px; padding: 28px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; animation: crmFadeUp .2s ease; }
+    @keyframes crmFadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    .crm-nav-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 20px; font-size: 13px; font-weight: 500; letter-spacing: .03em; transition: all .15s; text-align: left; background: transparent; border-left: 2px solid transparent; color: #7A6A50; font-family: 'Syne', sans-serif; border-top: none; border-right: none; border-bottom: none; cursor: pointer; }
+    .crm-nav-btn:hover { color: #6A5A40; }
+    .crm-nav-btn.active { color: #C9A84C; background: #E5DFCF; border-left-color: #C9A84C; font-weight: 700; }
+    .crm-kpi { background: #E8E2D4; border: 1px solid #C8C0AE; border-radius: 6px; padding: 20px 24px; position: relative; overflow: hidden; transition: border-color .2s; }
+    .crm-kpi:hover { border-color: #BDB5A5; }
+    .crm-lead-card { background: #E8E2D4; border: 1px solid #C8C0AE; border-radius: 6px; padding: 13px 14px; cursor: pointer; transition: all .15s; }
+    .crm-lead-card:hover { border-color: #BDB5A5; transform: translateY(-1px); }
+    .crm-tag { display: inline-block; padding: 2px 7px; border-radius: 3px; font-size: 10px; font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
+    .crm-section-label { font-size: 10px; color: #7A6A50; font-family: 'IBM Plex Mono', monospace; letter-spacing: .15em; margin-bottom: 14px; display: block; }
+    .crm-row-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #CFC9B8; }
+    .crm-row-item:last-child { border-bottom: none; }
+    .crm-panel { background: #E8E2D4; border: 1px solid #C8C0AE; border-radius: 6px; padding: 24px; }
+    .crm-move-btn { font-size: 9px; padding: 2px 6px; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; transition: all .15s; cursor: pointer; border: none; }
+  `;
+
+  const LABEL_S = { fontSize: 10, color: "#7A6A50", fontFamily: "'IBM Plex Mono',monospace", letterSpacing: ".12em", display: "block", marginBottom: 5 };
+
+  function CRMField({ label, value, onChange, placeholder, type="text" }) {
+    return <div><label style={LABEL_S}>{label.toUpperCase()}</label><input className="crm-input" type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} /></div>;
+  }
+  function CRMSelect({ label, value, onChange, options, labels }) {
+    return <div><label style={LABEL_S}>{label.toUpperCase()}</label>
+      <select className="crm-input" value={value} onChange={e=>onChange(e.target.value)} style={{cursor:"pointer"}}>
+        {options.map((o,i)=><option key={o} value={o}>{labels?labels[i]:o}</option>)}
+      </select></div>;
+  }
+  function CRMTextarea({ label, value, onChange, placeholder }) {
+    return <div><label style={LABEL_S}>{label.toUpperCase()}</label>
+      <textarea className="crm-input" value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={3} style={{resize:"vertical"}} /></div>;
+  }
+  function CRMModalHeader({ title, onClose }) {
+    return <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
+      <h2 style={{fontSize:16,fontWeight:800,color:"#2C2010",fontFamily:"'Syne',sans-serif"}}>{title}</h2>
+      <button onClick={onClose} style={{color:"#7A6A50",fontSize:22,lineHeight:1,background:"none",border:"none",cursor:"pointer"}}>×</button>
+    </div>;
+  }
+
+  function AddLeadModal({ onClose, onSave }) {
+    const [f,setF] = useState({nombre:"",instagram:"",servicio:SERVICIOS[0],fuente:FUENTES[0],guion:"—",valor:"",etapa:"lead",notas:""});
+    const set=(k,v)=>setF(prev=>({...prev,[k]:v}));
+    return <div className="crm-modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="crm-modal-box">
+        <CRMModalHeader title="Nuevo Lead" onClose={onClose}/>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <CRMField label="Nombre" value={f.nombre} onChange={v=>set("nombre",v)} placeholder="Nombre del artista"/>
+          <CRMField label="Instagram" value={f.instagram} onChange={v=>set("instagram",v)} placeholder="@handle"/>
+          <CRMSelect label="Servicio" value={f.servicio} onChange={v=>set("servicio",v)} options={SERVICIOS}/>
+          <CRMSelect label="Fuente" value={f.fuente} onChange={v=>set("fuente",v)} options={FUENTES}/>
+          <CRMSelect label="Guión (Meta)" value={f.guion} onChange={v=>set("guion",v)} options={["—",...GUIONES]}/>
+          <CRMField label="Valor estimado (€)" value={f.valor} onChange={v=>set("valor",v)} placeholder="0" type="number"/>
+          <CRMSelect label="Etapa inicial" value={f.etapa} onChange={v=>set("etapa",v)} options={ETAPAS.map(e=>e.id)} labels={ETAPAS.map(e=>e.label)}/>
+          <CRMTextarea label="Notas" value={f.notas} onChange={v=>set("notas",v)} placeholder="Info relevante..."/>
+        </div>
+        <div style={{display:"flex",gap:10,marginTop:24}}>
+          <button className="crm-btn-ghost" onClick={onClose} style={{flex:1}}>Cancelar</button>
+          <button className="crm-btn-gold" onClick={()=>onSave({...f,valor:parseFloat(f.valor)||0})} style={{flex:2}}>Guardar Lead</button>
+        </div>
+      </div></div>;
+  }
+
+  function EditLeadModal({ lead, onClose, onSave, onDelete }) {
+    const [f,setF] = useState({...lead});
+    const set=(k,v)=>setF(prev=>({...prev,[k]:v}));
+    return <div className="crm-modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="crm-modal-box">
+        <CRMModalHeader title="Editar Lead" onClose={onClose}/>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <CRMField label="Nombre" value={f.nombre} onChange={v=>set("nombre",v)} placeholder="Nombre del artista"/>
+          <CRMField label="Instagram" value={f.instagram} onChange={v=>set("instagram",v)} placeholder="@handle"/>
+          <CRMSelect label="Servicio" value={f.servicio} onChange={v=>set("servicio",v)} options={SERVICIOS}/>
+          <CRMSelect label="Fuente" value={f.fuente} onChange={v=>set("fuente",v)} options={FUENTES}/>
+          <CRMSelect label="Guión" value={f.guion||"—"} onChange={v=>set("guion",v)} options={["—",...GUIONES]}/>
+          <CRMField label="Valor (€)" value={f.valor||""} onChange={v=>set("valor",v)} placeholder="0" type="number"/>
+          <CRMSelect label="Etapa" value={f.etapa} onChange={v=>set("etapa",v)} options={ETAPAS.map(e=>e.id)} labels={ETAPAS.map(e=>e.label)}/>
+          <CRMTextarea label="Notas" value={f.notas||""} onChange={v=>set("notas",v)} placeholder="Info relevante..."/>
+        </div>
+        <div style={{display:"flex",gap:10,marginTop:24,alignItems:"center"}}>
+          <button className="crm-btn-danger" onClick={()=>onDelete(lead.id)}>Eliminar</button>
+          <div style={{flex:1}}/>
+          <button className="crm-btn-ghost" onClick={onClose}>Cancelar</button>
+          <button className="crm-btn-gold" onClick={()=>onSave({...f,valor:parseFloat(f.valor)||0})}>Guardar</button>
+        </div>
+      </div></div>;
+  }
+
+  function AddMetaModal({ onClose, onSave }) {
+    const [f,setF] = useState({periodo:"",guion:GUIONES[0],gastado:"",conversaciones:"",alcance:"",impresiones:"",cpm:""});
+    const set=(k,v)=>setF(prev=>({...prev,[k]:v}));
+    return <div className="crm-modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="crm-modal-box">
+        <CRMModalHeader title="Registrar Datos Meta" onClose={onClose}/>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <CRMField label="Período" value={f.periodo} onChange={v=>set("periodo",v)} placeholder="Ej: Semana 14 Apr"/>
+          <CRMSelect label="Guión activo" value={f.guion} onChange={v=>set("guion",v)} options={GUIONES}/>
+          <CRMField label="Gasto (€)" value={f.gastado} onChange={v=>set("gastado",v)} placeholder="0.00" type="number"/>
+          <CRMField label="Conversaciones iniciadas" value={f.conversaciones} onChange={v=>set("conversaciones",v)} placeholder="0" type="number"/>
+          <CRMField label="Alcance" value={f.alcance} onChange={v=>set("alcance",v)} placeholder="0" type="number"/>
+          <CRMField label="Impresiones" value={f.impresiones} onChange={v=>set("impresiones",v)} placeholder="0" type="number"/>
+          <CRMField label="CPM (€)" value={f.cpm} onChange={v=>set("cpm",v)} placeholder="0.00" type="number"/>
+        </div>
+        <div style={{display:"flex",gap:10,marginTop:24}}>
+          <button className="crm-btn-ghost" onClick={onClose} style={{flex:1}}>Cancelar</button>
+          <button className="crm-btn-gold" onClick={()=>onSave(f)} style={{flex:2}}>Guardar</button>
+        </div>
+      </div></div>;
+  }
+
+  // CRM Tabs
+  function ResumenTab({ leads, cerrados, activos, tasaCierre, ingresosCerrados, pipelinePotencial, totalGasto, totalConvs, costoConv }) {
+    const recent = [...leads].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,6);
+    const kpis = [
+      { label:"Leads Totales", value:leads.length, sub:`${activos.length} activos`, color:"#C9A84C" },
+      { label:"Tasa de Cierre", value:tasaCierre+"%", sub:`${cerrados.length} cerrados`, color:"#3FB950" },
+      { label:"Ingresos Cerrados", value:fmtC(ingresosCerrados), sub:"confirmado", color:"#C9A84C" },
+      { label:"Pipeline Potencial", value:fmtC(pipelinePotencial), sub:`${activos.length} en curso`, color:"#58A6FF" },
+      { label:"Gasto Meta Total", value:"€"+totalGasto.toFixed(0), sub:"acumulado", color:"#F0B429" },
+      { label:"Costo por Conv.", value:costoConv?"€"+costoConv:"—", sub:`${totalConvs} conversaciones`, color:"#F0B429" },
+    ];
+    return <div style={{flex:1,overflow:"auto",padding:"28px 32px"}}>
+      <div style={{marginBottom:24}}><h1 style={{fontSize:22,fontWeight:800,color:"#2C2010",letterSpacing:".02em",fontFamily:"'Syne',sans-serif"}}>Resumen</h1><p style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:3}}>Vista global de tu negocio</p></div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:24}}>
+        {kpis.map((k,i)=><div key={i} className="crm-kpi">
+          <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:k.color,opacity:.6}}/>
+          <div className="crm-section-label" style={{marginBottom:6}}>{k.label.toUpperCase()}</div>
+          <div style={{fontSize:28,fontWeight:800,color:k.color,lineHeight:1,marginBottom:6,fontFamily:"'Syne',sans-serif"}}>{k.value}</div>
+          <div style={{fontSize:11,color:"#8A7A60",fontFamily:"'IBM Plex Mono',monospace"}}>{k.sub}</div>
+        </div>)}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:16}}>
+        <div className="crm-panel">
+          <span className="crm-section-label">FUNNEL DE VENTAS</span>
+          {ETAPAS.map(e=>{
+            const count=leads.filter(l=>l.etapa===e.id).length;
+            const pct=leads.length>0?(count/leads.length)*100:0;
+            return <div key={e.id} style={{marginBottom:12}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                <span style={{fontSize:11,color:e.color,fontFamily:"'IBM Plex Mono',monospace"}}>{e.label}</span>
+                <span style={{fontSize:11,color:e.color,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{count}</span>
+              </div>
+              <div style={{background:"#DDD7C8",borderRadius:2,height:4}}>
+                <div style={{width:pct+"%",height:"100%",background:e.color,borderRadius:2,transition:"width .5s"}}/>
+              </div>
+            </div>;
+          })}
+        </div>
+        <div className="crm-panel">
+          <span className="crm-section-label">ÚLTIMOS LEADS</span>
+          {recent.map(l=><div key={l.id} className="crm-row-item">
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:"#2C2010",fontFamily:"'Syne',sans-serif"}}>{l.instagram?`@${l.instagram}`:l.nombre}</div>
+              <div style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:2}}>{l.servicio} · {fmtDateC(l.fecha)}</div>
+            </div>
+            <div>
+              {(() => { const e=ETAPAS.find(x=>x.id===l.etapa)||ETAPAS[0]; return <span className="crm-tag" style={{background:e.bg,color:e.color}}>{e.label}</span>; })()}
+            </div>
+          </div>)}
+          {!recent.length&&<div style={{color:"#8A7A60",fontSize:12,fontFamily:"'IBM Plex Mono',monospace"}}>Sin leads todavía.</div>}
+        </div>
+      </div>
+    </div>;
+  }
+
+  function PipelineTab({ leads, saveLeads, onOpenLead, onAdd }) {
+    return <div style={{flex:1,overflow:"auto",padding:"28px 32px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
+        <div><h1 style={{fontSize:22,fontWeight:800,color:"#2C2010",fontFamily:"'Syne',sans-serif"}}>Pipeline</h1><p style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:3}}>Gestión de leads por etapa</p></div>
+        <button className="crm-btn-gold" onClick={onAdd}>+ Nuevo Lead</button>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12}}>
+        {ETAPAS.map(etapa=>{
+          const etapaLeads=leads.filter(l=>l.etapa===etapa.id);
+          const val=etapaLeads.reduce((s,l)=>s+(l.valor||0),0);
+          return <div key={etapa.id} style={{background:"#EDE8DB",border:"1px solid #1A1814",borderRadius:8,padding:14}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+              <span style={{fontSize:11,fontWeight:700,color:etapa.color,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:".05em"}}>{etapa.label.toUpperCase()}</span>
+              <span style={{fontSize:18,fontWeight:800,color:etapa.color,fontFamily:"'Syne',sans-serif"}}>{etapaLeads.length}</span>
+            </div>
+            {val>0&&<div style={{fontSize:10,color:"#8A7A60",fontFamily:"'IBM Plex Mono',monospace",marginBottom:10}}>{fmtC(val)}</div>}
+            <div style={{display:"flex",flexDirection:"column",gap:7}}>
+              {etapaLeads.map(l=><div key={l.id} className="crm-lead-card" onClick={()=>onOpenLead(l)}>
+                <div style={{fontSize:12,fontWeight:700,color:"#2C2010",marginBottom:4,fontFamily:"'Syne',sans-serif"}}>{l.instagram?`@${l.instagram}`:l.nombre}</div>
+                <div style={{fontSize:10,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginBottom:6}}>{l.servicio}</div>
+                {l.valor>0&&<div style={{fontSize:11,fontWeight:700,color:"#C9A84C",fontFamily:"'IBM Plex Mono',monospace"}}>{fmtC(l.valor)}</div>}
+                <div style={{display:"flex",gap:4,marginTop:7,flexWrap:"wrap"}}>
+                  {ETAPAS.filter(e=>e.id!==etapa.id).slice(0,2).map(e=><button key={e.id} className="crm-move-btn" style={{background:e.bg,color:e.color}}
+                    onClick={ev=>{ev.stopPropagation();saveLeads(leads.map(x=>x.id===l.id?{...x,etapa:e.id}:x));}}>→{e.label.slice(0,5)}</button>)}
+                </div>
+              </div>)}
+            </div>
+          </div>;
+        })}
+      </div>
+    </div>;
+  }
+
+  function MetaTab({ meta, saveMeta, onAdd }) {
+    const totalGasto=meta.reduce((s,w)=>s+(parseFloat(w.gastado)||0),0);
+    const totalConvs=meta.reduce((s,w)=>s+(parseInt(w.conversaciones)||0),0);
+    const costoConv=totalConvs>0?(totalGasto/totalConvs).toFixed(2):null;
+    return <div style={{flex:1,overflow:"auto",padding:"28px 32px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
+        <div><h1 style={{fontSize:22,fontWeight:800,color:"#2C2010",fontFamily:"'Syne',sans-serif"}}>Meta Ads</h1><p style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:3}}>Seguimiento de campañas</p></div>
+        <button className="crm-btn-gold" onClick={onAdd}>+ Registrar Datos</button>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:24}}>
+        {[{label:"Gasto Total",value:"€"+totalGasto.toFixed(2),color:"#F0B429"},{label:"Conversaciones",value:totalConvs,color:"#58A6FF"},{label:"Costo / Conv.",value:costoConv?"€"+costoConv:"—",color:"#3FB950"}].map((k,i)=>
+          <div key={i} className="crm-kpi"><div className="crm-section-label">{k.label.toUpperCase()}</div><div style={{fontSize:28,fontWeight:800,color:k.color,fontFamily:"'Syne',sans-serif"}}>{k.value}</div></div>
+        )}
+      </div>
+      <div className="crm-panel">
+        <span className="crm-section-label">HISTORIAL DE CAMPAÑAS</span>
+        {!meta.length&&<div style={{color:"#8A7A60",fontSize:12,fontFamily:"'IBM Plex Mono',monospace"}}>Sin datos registrados.</div>}
+        <table style={{width:"100%",borderCollapse:"collapse"}}>
+          {meta.length>0&&<thead><tr style={{borderBottom:"1px solid #1A1814"}}>
+            {["Período","Guión","Gastado","Convs","Alcance","C/Conv",""].map((h,i)=><th key={i} style={{textAlign:"left",padding:"0 10px 10px",fontSize:10,color:"#8A7A60",fontFamily:"'IBM Plex Mono',monospace",letterSpacing:".15em"}}>{h.toUpperCase()}</th>)}
+          </tr></thead>}
+          <tbody>
+            {[...meta].reverse().map(w=><tr key={w.id} style={{borderTop:"1px solid #1A1814"}}>
+              <td style={{padding:"9px 10px",fontSize:11,color:"#6A5A40",fontFamily:"'IBM Plex Mono',monospace"}}>{w.periodo||"—"}</td>
+              <td style={{padding:"9px 10px",fontSize:11,color:"#F0B429",fontFamily:"'IBM Plex Mono',monospace"}}>{w.guion}</td>
+              <td style={{padding:"9px 10px",fontSize:11,color:"#F0B429",fontFamily:"'IBM Plex Mono',monospace"}}>€{w.gastado}</td>
+              <td style={{padding:"9px 10px",fontSize:11,color:"#58A6FF",fontFamily:"'IBM Plex Mono',monospace"}}>{w.conversaciones}</td>
+              <td style={{padding:"9px 10px",fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace"}}>{w.alcance?parseInt(w.alcance).toLocaleString("es-ES"):"—"}</td>
+              <td style={{padding:"9px 10px",fontSize:11,color:"#3FB950",fontFamily:"'IBM Plex Mono',monospace"}}>{w.conversaciones>0?"€"+(parseFloat(w.gastado)/parseInt(w.conversaciones)).toFixed(2):"—"}</td>
+              <td style={{padding:"9px 10px",textAlign:"right"}}>
+                <button onClick={()=>saveMeta(meta.filter(m=>m.id!==w.id))} style={{fontSize:13,color:"#F85149",opacity:.4,transition:"opacity .15s",border:"none",background:"none",cursor:"pointer"}}
+                  onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=.4}>×</button>
+              </td>
+            </tr>)}
+          </tbody>
+        </table>
+      </div>
+    </div>;
+  }
+
+  function FinanzasCRMTab({ leads, cerrados, ingresosCerrados, pipelinePotencial, tasaCierre, totalGasto }) {
+    const roi=totalGasto>0?((ingresosCerrados/totalGasto)*100).toFixed(0):null;
+    const proyeccion=pipelinePotencial*(tasaCierre/100);
+    const total=ingresosCerrados+proyeccion;
+    const svcMap={};
+    cerrados.forEach(l=>{const s=l.servicio||"Sin categoría";svcMap[s]=(svcMap[s]||0)+(l.valor||0);});
+    const svcList=Object.entries(svcMap).sort((a,b)=>b[1]-a[1]);
+    return <div style={{flex:1,overflow:"auto",padding:"28px 32px"}}>
+      <div style={{marginBottom:24}}><h1 style={{fontSize:22,fontWeight:800,color:"#2C2010",fontFamily:"'Syne',sans-serif"}}>Finanzas CRM</h1><p style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:3}}>Balance de ingresos y proyección</p></div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}}>
+        <div className="crm-kpi" style={{borderTop:"2px solid #C9A84C88",padding:28}}><div className="crm-section-label">INGRESOS CONFIRMADOS</div><div style={{fontSize:36,fontWeight:800,color:"#C9A84C",lineHeight:1,marginBottom:6,fontFamily:"'Syne',sans-serif"}}>{fmtC(ingresosCerrados)}</div><div style={{fontSize:12,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace"}}>{cerrados.length} cliente{cerrados.length!==1?"s":""} cerrado{cerrados.length!==1?"s":""}</div></div>
+        <div className="crm-kpi" style={{borderTop:"2px solid #58A6FF66",padding:28}}><div className="crm-section-label">PROYECCIÓN TOTAL</div><div style={{fontSize:36,fontWeight:800,color:"#58A6FF",lineHeight:1,marginBottom:6,fontFamily:"'Syne',sans-serif"}}>{fmtC(total)}</div><div style={{fontSize:12,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace"}}>Cerrado + {fmtC(proyeccion)} proyectado ({tasaCierre}% cierre)</div></div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:20}}>
+        {[{label:"Gasto Meta",value:"€"+totalGasto.toFixed(0),color:"#F0B429"},{label:"ROI Meta",value:roi?roi+"%":"—",color:"#3FB950"},{label:"Tasa de Cierre",value:tasaCierre+"%",color:"#3FB950"}].map((k,i)=>
+          <div key={i} className="crm-kpi"><div className="crm-section-label">{k.label.toUpperCase()}</div><div style={{fontSize:26,fontWeight:800,color:k.color,fontFamily:"'Syne',sans-serif"}}>{k.value}</div></div>
+        )}
+      </div>
+      <div className="crm-panel">
+        <span className="crm-section-label">INGRESOS POR SERVICIO</span>
+        {!svcList.length&&<div style={{color:"#8A7A60",fontSize:12,fontFamily:"'IBM Plex Mono',monospace"}}>Sin datos.</div>}
+        {svcList.map(([s,v])=>{const pct=ingresosCerrados>0?(v/ingresosCerrados)*100:0; return <div key={s} style={{marginBottom:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}><span style={{fontSize:11,color:"#6A5A40",fontFamily:"'IBM Plex Mono',monospace"}}>{s}</span><span style={{fontSize:11,color:"#C9A84C",fontFamily:"'IBM Plex Mono',monospace"}}>{fmtC(v)}</span></div>
+          <div style={{background:"#DDD7C8",borderRadius:2,height:4}}><div style={{width:pct+"%",height:"100%",background:"#C9A84C",borderRadius:2,transition:"width .5s"}}/></div>
+        </div>;})}
+        {cerrados.length>0&&<><div style={{height:16}}/><span className="crm-section-label">CLIENTES CERRADOS</span>
+          {cerrados.map(l=><div key={l.id} className="crm-row-item">
+            <div><div style={{fontSize:13,fontWeight:700,color:"#2C2010",fontFamily:"'Syne',sans-serif"}}>{l.instagram?`@${l.instagram}`:l.nombre}</div>
+            <div style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:2}}>{l.servicio} · {fmtDateC(l.fecha)}</div></div>
+            <div style={{fontSize:18,fontWeight:800,color:"#C9A84C",fontFamily:"'IBM Plex Mono',monospace"}}>{fmtC(l.valor)}</div>
+          </div>)}
+        </>}
+      </div>
+    </div>;
+  }
+
+  function LarryOSCRM() {
+    const [tab,setTab]=useState("resumen");
+    const [leads,setLeads]=useState([]);
+    const [meta,setMeta]=useState([]);
+    const [ready,setReady]=useState(false);
+    const [modal,setModal]=useState(null);
+    const [editTarget,setEditTarget]=useState(null);
+
+    useEffect(()=>{
+      const l=sget("larry:leads"), m=sget("larry:meta");
+      if(l) setLeads(l); if(m) setMeta(m); setReady(true);
+    },[]);
+
+    const saveLeads=(v)=>{setLeads(v);sset("larry:leads",v);};
+    const saveMeta=(v)=>{setMeta(v);sset("larry:meta",v);};
+    const cerrados=leads.filter(l=>l.etapa==="cerrado");
+    const perdidos=leads.filter(l=>l.etapa==="perdido");
+    const activos=leads.filter(l=>!["cerrado","perdido"].includes(l.etapa));
+    const resueltos=cerrados.length+perdidos.length;
+    const tasaCierre=resueltos>0?Math.round((cerrados.length/resueltos)*100):0;
+    const ingresosCerrados=cerrados.reduce((s,l)=>s+(l.valor||0),0);
+    const pipelinePotencial=activos.reduce((s,l)=>s+(l.valor||0),0);
+    const totalGasto=meta.reduce((s,w)=>s+(parseFloat(w.gastado)||0),0);
+    const totalConvs=meta.reduce((s,w)=>s+(parseInt(w.conversaciones)||0),0);
+    const costoConv=totalConvs>0?(totalGasto/totalConvs).toFixed(2):null;
+    const openLead=(l)=>{setEditTarget(l);setModal("editLead");};
+
+    if(!ready) return <div style={{height:"100%",display:"flex",alignItems:"center",justifyContent:"center",color:"#C9A84C",fontFamily:"monospace",fontSize:13}}>Cargando CRM...</div>;
+
+    const tabs=[{id:"resumen",label:"Resumen",icon:"◈"},{id:"pipeline",label:"Pipeline",icon:"⬡"},{id:"meta",label:"Meta Ads",icon:"◉"},{id:"finanzas",label:"Finanzas",icon:"◎"}];
+
+    return <>
+      <style>{CRM_CSS}</style>
+      <div className="crm-wrap" style={{display:"flex",height:"100%",fontFamily:"'Syne',sans-serif",overflow:"hidden",background:"#F5F0E4"}}>
+        {/* CRM sub-nav */}
+        <div style={{width:160,background:"#EDE8DB",borderRight:"1px solid #1A1814",display:"flex",flexDirection:"column",flexShrink:0}}>
+          <div style={{padding:"18px 16px 14px",borderBottom:"1px solid #1A1814"}}>
+            <div style={{fontSize:10,color:"#9A8A6A",fontFamily:"'IBM Plex Mono',monospace",letterSpacing:".2em"}}>CRM · PIPELINE</div>
+          </div>
+          <nav style={{flex:1}}>
+            {tabs.map(item=><button key={item.id} onClick={()=>setTab(item.id)} className={`crm-nav-btn${tab===item.id?" active":""}`}>
+              <span style={{fontSize:14,opacity:tab===item.id?1:.4}}>{item.icon}</span>{item.label}
+            </button>)}
+          </nav>
+          <div style={{padding:"14px 16px",borderTop:"1px solid #1A1814"}}>
+            <div style={{fontSize:9,color:"#9A8A6A",fontFamily:"'IBM Plex Mono',monospace",letterSpacing:".15em",marginBottom:4}}>LEADS TOTALES</div>
+            <div style={{fontSize:28,fontWeight:800,color:"#C9A84C",lineHeight:1,fontFamily:"'Syne',sans-serif"}}>{leads.length}</div>
+            <div style={{fontSize:9,color:"#9A8A6A",fontFamily:"'IBM Plex Mono',monospace",marginTop:3}}>{cerrados.length} cerrados</div>
+          </div>
+        </div>
+        <main style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
+          {tab==="resumen"&&<ResumenTab leads={leads} cerrados={cerrados} activos={activos} tasaCierre={tasaCierre} ingresosCerrados={ingresosCerrados} pipelinePotencial={pipelinePotencial} totalGasto={totalGasto} totalConvs={totalConvs} costoConv={costoConv}/>}
+          {tab==="pipeline"&&<PipelineTab leads={leads} saveLeads={saveLeads} onOpenLead={openLead} onAdd={()=>setModal("addLead")}/>}
+          {tab==="meta"&&<MetaTab meta={meta} saveMeta={saveMeta} onAdd={()=>setModal("addMeta")}/>}
+          {tab==="finanzas"&&<FinanzasCRMTab leads={leads} cerrados={cerrados} ingresosCerrados={ingresosCerrados} pipelinePotencial={pipelinePotencial} tasaCierre={tasaCierre} totalGasto={totalGasto}/>}
+        </main>
+      </div>
+      {modal==="addLead"&&<AddLeadModal onClose={()=>setModal(null)} onSave={lead=>{saveLeads([...leads,{...lead,id:Date.now(),fecha:new Date().toISOString()}]);setModal(null);}}/>}
+      {modal==="editLead"&&<EditLeadModal lead={editTarget} onClose={()=>{setModal(null);setEditTarget(null);}} onSave={u=>{saveLeads(leads.map(l=>l.id===u.id?u:l));setModal(null);setEditTarget(null);}} onDelete={id=>{saveLeads(leads.filter(l=>l.id!==id));setModal(null);setEditTarget(null);}}/>}
+      {modal==="addMeta"&&<AddMetaModal onClose={()=>setModal(null)} onSave={w=>{saveMeta([...meta,{...w,id:Date.now()}]);setModal(null);}}/>}
+    </>;
+  }
+
+  const crmRoot = ReactDOM.createRoot(document.getElementById("crm-root"));
+  crmRoot.render(<LarryOSCRM/>);
+</script>
+
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// AGENDA DE CONTENIDO MODULE
+// ═══════════════════════════════════════════════════════════════════
+(function() {
+'use strict';
+
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const TYPES = [
+  { id:'reel',      label:'REEL',      color:'#D42B48', emoji:'🎬' },
+  { id:'historia',  label:'HISTORIA',  color:'#C87A00', emoji:'📸' },
+  { id:'secuencia', label:'SECUENCIA', color:'#8B3FD4', emoji:'🎞️' },
+  { id:'post',      label:'POST',      color:'#1A9438', emoji:'🖼️' },
+  { id:'carrusel',  label:'CARRUSEL',  color:'#0A6ED4', emoji:'📲' },
+  { id:'live',      label:'LIVE',      color:'#D43530', emoji:'🔴' },
+];
+const STATUSES = [
+  { id:'idea',       label:'Idea',          color:'#9A8870' },
+  { id:'produccion', label:'En producción', color:'#C87A00' },
+  { id:'listo',      label:'Listo',         color:'#1A9438' },
+  { id:'publicado',  label:'Publicado',     color:'#0A6ED4' },
+];
+const AGENDA_MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAYS_S = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+function getType(id)   { return TYPES.find(t=>t.id===id) || TYPES[0]; }
+function getStatus(id) { return STATUSES.find(s=>s.id===id) || STATUSES[0]; }
+function hex(color,a){ return color+Math.round(a*255).toString(16).padStart(2,'0').toLowerCase(); }
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let entries      = {};
+let currentDate  = new Date();
+let viewMode     = 'semana';
+let listMode     = false;
+let filterType   = 'all';
+let filterStatus = 'all';
+let editingId    = null;
+let editingKey   = null;
+let selectedType = 'reel';
+
+function toKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function todayKey(){ return toKey(new Date()); }
+
+// ── PERSISTENCE ───────────────────────────────────────────────────────────────
+function agendaSave(){ try{ localStorage.setItem('agenda_v1', JSON.stringify(entries)); }catch{} }
+function agendaLoad(){ try{ const d=localStorage.getItem('agenda_v1'); if(d) entries=JSON.parse(d); }catch{} }
+agendaLoad();
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function getWeekDates(date){
+  const d=new Date(date), day=d.getDay();
+  const diff=d.getDate()-day+(day===0?-6:1);
+  const mon=new Date(d.setDate(diff));
+  return Array.from({length:7},(_,i)=>{ const dd=new Date(mon); dd.setDate(mon.getDate()+i); return dd; });
+}
+function getMonthDates(date){
+  const y=date.getFullYear(), m=date.getMonth();
+  const first=new Date(y,m,1), last=new Date(y,m+1,0);
+  const startDay=first.getDay()===0?6:first.getDay()-1;
+  const days=[];
+  for(let i=0;i<startDay;i++){ const dd=new Date(first); dd.setDate(first.getDate()-(startDay-i)); days.push({date:dd,cur:false}); }
+  for(let i=1;i<=last.getDate();i++) days.push({date:new Date(y,m,i),cur:true});
+  let extra=0; while((days.length)%7!==0){ const dd=new Date(last); dd.setDate(last.getDate()+1+extra++); days.push({date:dd,cur:false}); }
+  return days;
+}
+function matchFilter(e){ return (filterType==='all'||e.type===filterType) && (filterStatus==='all'||e.status===filterStatus); }
+function allFlat(){ return Object.entries(entries).flatMap(([k,arr])=>arr.map(e=>({...e,dateKey:k}))); }
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render(){
+  renderStats();
+  renderPeriodLabel();
+  renderTypeFilters();
+  if(listMode){ renderList(); } else { renderCalendar(); }
+}
+
+function renderStats(){
+  const all=allFlat();
+  document.getElementById('agenda-total-label').textContent=`${all.length} piezas planificadas`;
+  const bar=document.getElementById('agenda-stats-bar');
+  bar.innerHTML='';
+  TYPES.forEach(t=>{
+    const cnt=all.filter(e=>e.type===t.id).length;
+    if(!cnt) return;
+    const chip=document.createElement('div');
+    chip.className='stat-chip';
+    chip.style.cssText=`color:${t.color};background:${hex(t.color,.07)};border-color:${hex(t.color,.25)}`;
+    chip.innerHTML=`${t.emoji} <b>${cnt}</b> ${t.label}`;
+    chip.title=`Filtrar por ${t.label}`;
+    chip.onclick=()=>{ filterType=filterType===t.id?'all':t.id; render(); };
+    bar.appendChild(chip);
+  });
+}
+
+function renderTypeFilters(){
+  const el=document.getElementById('agenda-type-filters');
+  el.innerHTML='';
+  const allBtn=document.createElement('button');
+  allBtn.className='filter-pill'+(filterType==='all'?' active':'');
+  allBtn.style.cssText=filterType==='all'?'background:#9A8870;color:#FAF8F2;border-color:#9A8870':'color:#7C6E58;border-color:#DDD3C0';
+  allBtn.textContent='Todo';
+  allBtn.onclick=()=>{ filterType='all'; render(); };
+  el.appendChild(allBtn);
+  TYPES.forEach(t=>{
+    const btn=document.createElement('button');
+    const active=filterType===t.id;
+    btn.className='filter-pill'+(active?' active':'');
+    btn.style.cssText=active?`background:${t.color};color:#fff;border-color:${t.color}`:`color:${t.color};border-color:${hex(t.color,.35)}`;
+    btn.innerHTML=`${t.emoji} ${t.label}`;
+    btn.onclick=()=>{ filterType=active?'all':t.id; render(); };
+    el.appendChild(btn);
+  });
+}
+
+function renderPeriodLabel(){
+  const el=document.getElementById('agenda-period-label');
+  if(viewMode==='semana'){
+    const w=getWeekDates(currentDate);
+    el.textContent=`${w[0].getDate()} – ${w[6].getDate()} ${AGENDA_MONTHS[w[6].getMonth()]} ${w[6].getFullYear()}`;
+  } else {
+    el.textContent=`${AGENDA_MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+  }
+}
+
+function renderCalendar(){
+  document.getElementById('agenda-calendar').style.display='';
+  document.getElementById('agenda-list-view').classList.remove('visible');
+  if(viewMode==='semana') renderWeek();
+  else renderMonth();
+}
+
+function renderWeek(){
+  const dates=getWeekDates(currentDate);
+  const today=todayKey();
+  const hdr=document.getElementById('agenda-day-headers');
+  hdr.innerHTML='';
+  dates.forEach((d,i)=>{
+    const key=toKey(d), isToday=key===today;
+    const h=document.createElement('div');
+    h.className='day-header';
+    const numHtml=isToday
+      ?`<div class="num today-circle">${d.getDate()}</div>`
+      :`<div class="num">${d.getDate()}</div>`;
+    h.innerHTML=`<div class="dow">${DAYS_S[i]}</div>${numHtml}`;
+    hdr.appendChild(h);
+  });
+  const grid=document.getElementById('agenda-grid-area');
+  grid.innerHTML='';
+  const wg=document.createElement('div');
+  wg.className='week-grid';
+  dates.forEach(d=>{
+    const key=toKey(d), isToday=key===today;
+    const col=document.createElement('div');
+    col.className='week-col'+(isToday?' is-today':'');
+    (entries[key]||[]).filter(matchFilter).forEach(e=>{ col.appendChild(makeEntryCard(e,key)); });
+    const addWrap=document.createElement('div');
+    addWrap.className='add-btn-day';
+    const dot=document.createElement('button');
+    dot.className='add-dot'; dot.textContent='+';
+    dot.onclick=()=>openNew(d);
+    addWrap.appendChild(dot);
+    col.appendChild(addWrap);
+    wg.appendChild(col);
+  });
+  grid.appendChild(wg);
+}
+
+function renderMonth(){
+  const dates=getMonthDates(currentDate);
+  const today=todayKey();
+  const hdr=document.getElementById('agenda-day-headers');
+  hdr.innerHTML='';
+  DAYS_S.forEach(d=>{
+    const h=document.createElement('div');
+    h.className='day-header';
+    h.innerHTML=`<div class="dow">${d}</div>`;
+    hdr.appendChild(h);
+  });
+  const grid=document.getElementById('agenda-grid-area');
+  grid.innerHTML='';
+  const mg=document.createElement('div');
+  mg.className='month-grid';
+  dates.forEach(({date,cur})=>{
+    const key=toKey(date), isToday=key===today;
+    const cell=document.createElement('div');
+    cell.className='month-cell'+(cur?'':' other-month')+(isToday?' is-today':'');
+    cell.onclick=()=>openNew(date);
+    const dayEntries=(entries[key]||[]).filter(matchFilter);
+    const mday=document.createElement('div');
+    mday.className='mday'; mday.textContent=date.getDate();
+    cell.appendChild(mday);
+    dayEntries.slice(0,3).forEach(e=>{
+      const t=getType(e.type);
+      const chip=document.createElement('div');
+      chip.className='month-entry';
+      chip.style.background=t.color;
+      chip.textContent=`${t.emoji} ${e.title}`;
+      chip.onclick=(ev)=>{ ev.stopPropagation(); openEdit(e,key); };
+      cell.appendChild(chip);
+    });
+    if(dayEntries.length>3){ const m=document.createElement('div'); m.className='month-more'; m.textContent=`+${dayEntries.length-3} más`; cell.appendChild(m); }
+    mg.appendChild(cell);
+  });
+  grid.appendChild(mg);
+}
+
+function renderList(){
+  document.getElementById('agenda-calendar').style.display='none';
+  const lv=document.getElementById('agenda-list-view');
+  lv.classList.add('visible');
+  const sf=document.getElementById('agenda-status-filters');
+  sf.innerHTML='';
+  const allBtn=document.createElement('button');
+  allBtn.className='filter-pill'+(filterStatus==='all'?' active':'');
+  allBtn.style.cssText=filterStatus==='all'?'background:#9A8870;color:#FAF8F2;border-color:#9A8870':'color:#7C6E58;border-color:#DDD3C0';
+  allBtn.textContent='Todos los estados';
+  allBtn.onclick=()=>{ filterStatus='all'; renderList(); };
+  sf.appendChild(allBtn);
+  STATUSES.forEach(s=>{
+    const btn=document.createElement('button');
+    const active=filterStatus===s.id;
+    btn.className='filter-pill'+(active?' active':'');
+    btn.style.cssText=active?`background:${s.color};color:#fff;border-color:${s.color}`:`color:${s.color};border-color:${hex(s.color,.35)}`;
+    btn.textContent=`● ${s.label}`;
+    btn.onclick=()=>{ filterStatus=active?'all':s.id; renderList(); };
+    sf.appendChild(btn);
+  });
+  const container=document.getElementById('agenda-list-items');
+  container.innerHTML='';
+  const sorted=allFlat().filter(matchFilter).sort((a,b)=>a.dateKey.localeCompare(b.dateKey));
+  if(!sorted.length){
+    const em=document.createElement('div'); em.className='empty-state';
+    em.innerHTML='No hay contenido planificado aún.<br><small>Hacé click en el calendario para agregar.</small>';
+    container.appendChild(em); return;
+  }
+  sorted.forEach(e=>{
+    const t=getType(e.type), s=getStatus(e.status);
+    const [y,m,d]=e.dateKey.split('-');
+    const item=document.createElement('div');
+    item.className='list-item';
+    item.style.borderLeftColor=t.color;
+    item.innerHTML=`
+      <div class="list-date">
+        <div class="ld" style="color:${t.color}">${d}</div>
+        <div class="lm">${AGENDA_MONTHS[parseInt(m)-1].slice(0,3).toUpperCase()}</div>
+      </div>
+      <div class="list-body">
+        <div class="list-meta">
+          <span class="filter-pill" style="background:${hex(t.color,.12)};color:${t.color};border-color:${hex(t.color,.25)};font-size:10px;padding:2px 8px">${t.emoji} ${t.label}</span>
+          <span style="font-size:11px;color:var(--muted2)">${e.platform||''}</span>
+          ${e.hora?`<span style="font-size:11px;color:var(--muted)">⏰ ${e.hora}</span>`:''}
+          <span style="font-size:10px;color:${s.color};font-weight:700;margin-left:auto">● ${s.label}</span>
+        </div>
+        <div class="list-title">${e.title}</div>
+        ${e.notes?`<div class="list-notes">${e.notes}</div>`:''}
+      </div>`;
+    item.onclick=()=>openEdit(e,e.dateKey);
+    container.appendChild(item);
+  });
+}
+
+function makeEntryCard(e, dateKey){
+  const t=getType(e.type), s=getStatus(e.status);
+  const card=document.createElement('div');
+  card.className='entry-card';
+  card.style.cssText=`background:${hex(t.color,.07)};border-left-color:${t.color}`;
+  card.innerHTML=`
+    <div class="entry-type-label" style="color:${t.color}">${t.emoji} ${t.label}</div>
+    <div class="entry-title">${e.title}</div>
+    ${e.hora?`<div class="entry-time">⏰ ${e.hora}</div>`:''}
+    <span class="entry-status" style="color:${s.color};background:${hex(s.color,.12)}">● ${s.label}</span>`;
+  card.onclick=()=>openEdit(e,dateKey);
+  return card;
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function buildTypeGrid(){
+  const grid=document.getElementById('agenda-type-grid');
+  grid.innerHTML='';
+  TYPES.forEach(t=>{
+    const pill=document.createElement('button');
+    pill.className='type-pill'; pill.dataset.type=t.id;
+    pill.innerHTML=`${t.emoji} ${t.label}`;
+    pill.onclick=()=>{ selectType(t.id); };
+    grid.appendChild(pill);
+  });
+}
+buildTypeGrid();
+
+function selectType(id){
+  selectedType=id;
+  const t=getType(id);
+  document.querySelectorAll('.type-pill').forEach(p=>{
+    const pt=getType(p.dataset.type);
+    if(p.dataset.type===id){
+      p.style.cssText=`background:${pt.color};color:#fff;border-color:${pt.color};box-shadow:0 2px 10px ${hex(pt.color,.35)}`;
+    } else {
+      p.style.cssText=`background:${hex(pt.color,.08)};color:${pt.color};border-color:${hex(pt.color,.25)};box-shadow:none`;
+    }
+  });
+  document.getElementById('agenda-btn-save').style.background=t.color;
+}
+
+function openNew(date){
+  editingId=null; editingKey=toKey(date);
+  document.getElementById('agenda-modal-title').textContent='✨ Nuevo Contenido';
+  document.getElementById('agenda-f-title').value='';
+  document.getElementById('agenda-f-date').value=editingKey;
+  document.getElementById('agenda-f-time').value='12:00';
+  document.getElementById('agenda-f-platform').value='Instagram';
+  document.getElementById('agenda-f-status').value='idea';
+  document.getElementById('agenda-f-notes').value='';
+  document.getElementById('agenda-btn-delete').style.display='none';
+  document.getElementById('agenda-btn-save').textContent='Agregar';
+  selectType('reel');
+  openOverlay();
+}
+
+function openEdit(e, dateKey){
+  editingId=e.id; editingKey=dateKey;
+  document.getElementById('agenda-modal-title').textContent='✏️ Editar Contenido';
+  document.getElementById('agenda-f-title').value=e.title||'';
+  document.getElementById('agenda-f-date').value=dateKey;
+  document.getElementById('agenda-f-time').value=e.hora||'12:00';
+  document.getElementById('agenda-f-platform').value=e.platform||'Instagram';
+  document.getElementById('agenda-f-status').value=e.status||'idea';
+  document.getElementById('agenda-f-notes').value=e.notes||'';
+  document.getElementById('agenda-btn-delete').style.display='';
+  document.getElementById('agenda-btn-save').textContent='Guardar';
+  selectType(e.type||'reel');
+  openOverlay();
+}
+
+function openOverlay(){ document.getElementById('agenda-overlay').classList.add('open'); }
+function closeOverlay(){ document.getElementById('agenda-overlay').classList.remove('open'); }
+
+function saveEntry(){
+  const title=document.getElementById('agenda-f-title').value.trim();
+  if(!title) { document.getElementById('agenda-f-title').focus(); return; }
+  const type=selectedType||'reel';
+  const dateKey=document.getElementById('agenda-f-date').value || editingKey;
+  const entry={
+    id: editingId || String(Date.now()),
+    title,
+    type,
+    hora:     document.getElementById('agenda-f-time').value,
+    platform: document.getElementById('agenda-f-platform').value,
+    status:   document.getElementById('agenda-f-status').value,
+    notes:    document.getElementById('agenda-f-notes').value.trim(),
+  };
+  if(editingId && editingKey && editingKey!==dateKey){
+    entries[editingKey]=(entries[editingKey]||[]).filter(e=>e.id!==editingId);
+    if(!entries[editingKey].length) delete entries[editingKey];
+  }
+  const arr=entries[dateKey]?[...entries[dateKey]]:[];
+  const idx=arr.findIndex(e=>e.id===entry.id);
+  if(idx>=0) arr[idx]=entry; else arr.push(entry);
+  entries[dateKey]=arr;
+  agendaSave(); closeOverlay(); render();
+}
+
+function deleteEntry(){
+  if(!editingId||!editingKey) return;
+  entries[editingKey]=(entries[editingKey]||[]).filter(e=>e.id!==editingId);
+  if(!entries[editingKey].length) delete entries[editingKey];
+  agendaSave(); closeOverlay(); render();
+}
+
+// ── EVENTS ────────────────────────────────────────────────────────────────────
+document.getElementById('agenda-overlay').onclick=(e)=>{ if(e.target===e.currentTarget) closeOverlay(); };
+document.getElementById('agenda-btn-cancel').onclick=closeOverlay;
+document.getElementById('agenda-btn-save').onclick=saveEntry;
+document.getElementById('agenda-btn-delete').onclick=deleteEntry;
+document.getElementById('agenda-fab').onclick=()=>openNew(new Date());
+
+document.querySelectorAll('#agenda-app .tab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('#agenda-app .tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    viewMode=t.dataset.view;
+    listMode=false;
+    document.getElementById('agenda-btn-list').textContent='📋';
+    render();
+  };
+});
+
+document.getElementById('agenda-btn-prev').onclick=()=>{
+  if(viewMode==='semana') currentDate=new Date(currentDate.getFullYear(),currentDate.getMonth(),currentDate.getDate()-7);
+  else currentDate=new Date(currentDate.getFullYear(),currentDate.getMonth()-1,1);
+  render();
+};
+document.getElementById('agenda-btn-next').onclick=()=>{
+  if(viewMode==='semana') currentDate=new Date(currentDate.getFullYear(),currentDate.getMonth(),currentDate.getDate()+7);
+  else currentDate=new Date(currentDate.getFullYear(),currentDate.getMonth()+1,1);
+  render();
+};
+document.getElementById('agenda-btn-today').onclick=()=>{ currentDate=new Date(); render(); };
+
+document.getElementById('agenda-btn-list').onclick=()=>{
+  listMode=!listMode;
+  document.getElementById('agenda-btn-list').textContent=listMode?'📅':'📋';
+  render();
+};
+
+// Export / Import
+document.getElementById('agenda-btn-export').onclick=()=>{
+  const blob=new Blob([JSON.stringify(entries,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='agenda-contenido.json'; a.click();
+};
+document.getElementById('agenda-btn-import-trigger').onclick=()=>document.getElementById('agenda-btn-import').click();
+document.getElementById('agenda-btn-import').onchange=(e)=>{
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=(ev)=>{ try{ entries=JSON.parse(ev.target.result); agendaSave(); render(); }catch{ alert('Archivo inválido'); } };
+  r.readAsText(file); e.target.value='';
+};
+
+// keyboard
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeOverlay(); });
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+render();
+
+})();
+</script>
+
+</body>
+</html>
