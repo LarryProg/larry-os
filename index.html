@@ -674,7 +674,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
               </div>
             </div>
             <div class="card"><div class="card-title">Clientes con cobro pendiente</div>
-              <table><thead><tr><th>Cliente</th><th>Servicio</th><th>Total</th><th>Cobrado</th><th>Pendiente</th><th>Estado</th></tr></thead><tbody id="dash-pendientes-body"></tbody></table>
+              <table><thead><tr><th>Cliente</th><th>Servicio</th><th>Total</th><th>Cobrado</th><th>Pendiente</th><th>Estado</th><th></th></tr></thead><tbody id="dash-pendientes-body"></tbody></table>
             </div>
           </div>
 
@@ -691,7 +691,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
             </div>
             <div class="chart-card">
               <div class="chart-card-title">Ingresos vs Gastos — mes a mes</div>
-              <div class="chart-card-sub">Comparativa mensual 2026</div>
+              <div class="chart-card-sub" id="chart-sub-barras">Comparativa mensual 2026</div>
               <div style="position:relative;height:240px"><canvas id="chart-barras"></canvas></div>
             </div>
             <div class="charts-grid-2">
@@ -702,11 +702,11 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
               </div>
               <div class="chart-card">
                 <div class="chart-card-title">Gastos por categoría</div>
-                <div class="chart-card-sub">Año completo 2026</div>
+                <div class="chart-card-sub" id="chart-sub-categorias">Año completo 2026</div>
                 <div style="position:relative;height:200px"><canvas id="chart-categorias"></canvas></div>
               </div>
             </div>
-            <div class="card"><div class="card-title">Resumen mes a mes 2026</div>
+            <div class="card"><div class="card-title" id="chart-sub-tabla">Resumen mes a mes 2026</div>
               <table><thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Resultado</th><th>Acumulado</th></tr></thead><tbody id="tabla-mensual"></tbody></table>
             </div>
           </div>
@@ -854,7 +854,8 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
 
       <div id="modal-gasto" class="modal-overlay">
         <div class="modal">
-          <div class="modal-title">Nuevo gasto</div>
+          <div class="modal-title" id="modal-gasto-title">Nuevo gasto</div>
+          <input type="hidden" id="g-id">
           <div class="form-group"><label class="form-label">Descripción</label><input class="form-input" id="g-desc" placeholder="¿En qué gastaste?"></div>
           <div class="form-row">
             <div class="form-group"><label class="form-label">Categoría</label>
@@ -868,7 +869,8 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
           <div class="form-group"><label class="form-label">Fecha</label><input class="form-input" type="date" id="g-fecha"></div>
           <div class="modal-actions">
             <button class="btn btn-ghost" onclick="closeModal('modal-gasto')">Cancelar</button>
-            <button class="btn btn-primary" onclick="saveGasto()">Guardar gasto</button>
+            <button class="btn btn-danger" id="g-btn-delete" style="display:none" onclick="deleteGastoFromModal()">✕ Eliminar</button>
+            <button class="btn btn-primary" id="g-btn-save" onclick="saveGasto()">Guardar gasto</button>
           </div>
         </div>
       </div>
@@ -2038,7 +2040,7 @@ function renderDashboard() {
 
   // Pendientes
   const conPend = appData.clientes.filter(c=>totalPendiente(c)>0);
-  document.getElementById('dash-pendientes-body').innerHTML = conPend.map(c=>`<tr><td><strong>${c.nombre}</strong></td><td style="color:#7A6A50">${c.servicio||'—'}</td><td>${fmt(c.precio)}</td><td class="amount-pos">${fmt(totalCobrado(c))}</td><td class="amount-neg">${fmt(totalPendiente(c))}</td><td>${estadoBadge(c.estado)}</td></tr>`).join('')||'<tr class="empty-row"><td colspan="6">Sin cobros pendientes 🎉</td></tr>';
+  document.getElementById('dash-pendientes-body').innerHTML = conPend.map(c=>`<tr><td><strong>${c.nombre}</strong></td><td style="color:#7A6A50">${c.servicio||'—'}</td><td>${fmt(c.precio)}</td><td class="amount-pos">${fmt(totalCobrado(c))}</td><td class="amount-neg">${fmt(totalPendiente(c))}</td><td>${estadoBadge(c.estado)}</td><td><button class="btn btn-green btn-sm" onclick="openModalPago('${c.id}')">💰 Cobrar</button></td></tr>`).join('')||'<tr class="empty-row"><td colspan="7">Sin cobros pendientes 🎉</td></tr>';
 }
 
 // ─── GRAFICAS ─────────────────────────────────────────────────
@@ -2062,6 +2064,11 @@ function renderGraficas() {
   document.getElementById('g-mejor-mes').textContent=MONTHS[mejorI].slice(0,3);
   document.getElementById('g-mejor-mes-val').textContent=fmt(allIng[mejorI]);
   document.getElementById('g-pendiente-total').textContent=fmt(appData.clientes.reduce((s,c)=>s+totalPendiente(c),0));
+
+  // Fix 1: actualizar subtítulos con el año seleccionado
+  document.getElementById('chart-sub-barras').textContent='Comparativa mensual '+YEAR;
+  document.getElementById('chart-sub-categorias').textContent='Año completo '+YEAR;
+  document.getElementById('chart-sub-tabla').textContent='Resumen mes a mes '+YEAR;
 
   const chartOpts = { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{color:CHART_DEFAULTS.grid},ticks:{color:CHART_DEFAULTS.tick,font:{size:10}}},y:{grid:{color:CHART_DEFAULTS.grid},ticks:{color:CHART_DEFAULTS.tick,font:{size:10},callback:v=>'€'+v.toLocaleString('es-ES')}}} };
 
@@ -2187,6 +2194,14 @@ function saveCliente() {
   }
   save();closeModal('modal-cliente');renderClientes();renderDashboard();
   const pendiente=Math.max(0,precio-cobroMonto);
+  // Fix 4: auto-completar si el cobro lleva a 100%
+  if(editingClienteId){
+    const c=appData.clientes.find(x=>x.id===editingClienteId);
+    if(c && c.precio>0 && totalCobrado(c)>=Number(c.precio) && c.estado!=='completado'){
+      c.estado='completado'; save();
+      showToast(`✅ ${c.nombre} — 100% cobrado. Estado → Completado`);
+    }
+  }
   if(cobroMonto>0&&pendiente>0) showToast(`✓ Cliente guardado · Cobrado ${fmt(cobroMonto)} · Pendiente ${fmt(pendiente)}`);
   else if(cobroMonto>0) showToast(`✓ Cliente guardado · Pago completo ${fmt(cobroMonto)}`);
   else showToast(editingClienteId?'Cliente actualizado':'Cliente creado ✓');
@@ -2215,6 +2230,12 @@ function savePago() {
   const c=appData.clientes.find(x=>x.id===editingPagoClienteId);
   if(!c.pagos)c.pagos=[];
   c.pagos.push({id:crypto.randomUUID(),monto,fecha,nota:document.getElementById('p-nota').value.trim()});
+  // Fix 4: auto-completar estado si llegó al 100%
+  const totalCobradoActual = c.pagos.reduce((s,p)=>s+Number(p.monto),0);
+  if(c.precio>0 && totalCobradoActual>=Number(c.precio) && c.estado!=='completado'){
+    c.estado='completado';
+    showToast(`✅ ${c.nombre} — pago completo. Estado → Completado`);
+  }
   save();
   // 🔗 BRIDGE: Actualizar pagado en Clientes si este cliente tiene clId
   if (c.clId) {
@@ -2245,12 +2266,50 @@ function renderGastos() {
   gm.sort((a,b)=>b.fecha.localeCompare(a.fecha));
   const allCats=[...new Set(gastosEnMes(mes).map(g=>g.cat))];
   document.getElementById('cat-filters').innerHTML=`<button class="cat-pill ${activeCat==='todas'?'active':''}" onclick="filterCat('todas')">Todas</button>`+allCats.map(c=>`<button class="cat-pill ${activeCat===c?'active':''}" onclick="filterCat('${c}')">${c}</button>`).join('');
-  document.getElementById('gastos-body').innerHTML=gm.map(g=>`<tr><td><strong>${g.desc}</strong></td><td><span class="badge badge-gray">${g.cat}</span></td><td style="color:#7A6A50">${fmtDate(g.fecha)}</td><td class="amount-neg">${fmt(g.monto)}</td><td><button class="btn btn-danger btn-sm" onclick="deleteGasto('${g.id}')">✕</button></td></tr>`).join('')||'<tr class="empty-row"><td colspan="5">Sin gastos en este mes</td></tr>';
+  document.getElementById('gastos-body').innerHTML=gm.map(g=>`<tr><td><strong>${g.desc}</strong></td><td><span class="badge badge-gray">${g.cat}</span></td><td style="color:#7A6A50">${fmtDate(g.fecha)}</td><td class="amount-neg">${fmt(g.monto)}</td><td style="display:flex;gap:5px;padding:8px"><button class="btn btn-ghost btn-sm" onclick="openModalGasto('${g.id}')">✎</button><button class="btn btn-danger btn-sm" onclick="deleteGasto('${g.id}')">✕</button></td></tr>`).join('')||'<tr class="empty-row"><td colspan="5">Sin gastos en este mes</td></tr>';
 }
 function filterCat(cat){activeCat=cat;renderGastos();}
-function openModalGasto(){['g-desc','g-monto'].forEach(i=>document.getElementById(i).value='');document.getElementById('g-fecha').value=new Date().toISOString().split('T')[0];document.getElementById('modal-gasto').classList.add('open');}
-function saveGasto(){const desc=document.getElementById('g-desc').value.trim(),monto=parseFloat(document.getElementById('g-monto').value)||0;if(!desc){showToast('⚠️ Descripción obligatoria');return;}if(!monto){showToast('⚠️ Ingresa un monto');return;}appData.gastos.push({id:crypto.randomUUID(),desc,cat:document.getElementById('g-cat').value,monto,fecha:document.getElementById('g-fecha').value});save();closeModal('modal-gasto');renderGastos();renderDashboard();if(document.getElementById('fin-page-balance').style.display!=='none')renderBalance();showToast('Gasto guardado ✓');}
-function deleteGasto(id){appData.gastos=appData.gastos.filter(g=>g.id!==id);save();renderGastos();renderDashboard();if(document.getElementById('fin-page-balance').style.display!=='none')renderBalance();showToast('Gasto eliminado');}
+function openModalGasto(id=null){
+  const g=id?appData.gastos.find(x=>x.id===id):null;
+  document.getElementById('g-id').value=id||'';
+  document.getElementById('modal-gasto-title').textContent=g?'Editar gasto':'Nuevo gasto';
+  document.getElementById('g-btn-save').textContent=g?'Guardar cambios':'Guardar gasto';
+  document.getElementById('g-btn-delete').style.display=g?'':'none';
+  document.getElementById('g-desc').value=g?g.desc:'';
+  document.getElementById('g-cat').value=g?g.cat:'Meta Ads';
+  document.getElementById('g-monto').value=g?g.monto:'';
+  document.getElementById('g-fecha').value=g?g.fecha:new Date().toISOString().split('T')[0];
+  document.getElementById('modal-gasto').classList.add('open');
+}
+function deleteGastoFromModal(){
+  const id=document.getElementById('g-id').value;
+  if(!id||!confirm('¿Eliminar este gasto?'))return;
+  appData.gastos=appData.gastos.filter(g=>g.id!==id);
+  save();closeModal('modal-gasto');renderGastos();renderDashboard();
+  if(document.getElementById('fin-page-balance').style.display!=='none')renderBalance();
+  showToast('Gasto eliminado');
+}
+function saveGasto(){
+  const desc=document.getElementById('g-desc').value.trim(),monto=parseFloat(document.getElementById('g-monto').value)||0;
+  if(!desc){showToast('⚠️ Descripción obligatoria');return;}
+  if(!monto){showToast('⚠️ Ingresa un monto');return;}
+  const id=document.getElementById('g-id').value;
+  const cat=document.getElementById('g-cat').value;
+  const fecha=document.getElementById('g-fecha').value;
+  if(id){
+    const i=appData.gastos.findIndex(g=>g.id===id);
+    if(i>=0)appData.gastos[i]={...appData.gastos[i],desc,cat,monto,fecha};
+    save();closeModal('modal-gasto');renderGastos();renderDashboard();
+    if(document.getElementById('fin-page-balance').style.display!=='none')renderBalance();
+    showToast('Gasto actualizado ✓');
+  } else {
+    appData.gastos.push({id:crypto.randomUUID(),desc,cat,monto,fecha});
+    save();closeModal('modal-gasto');renderGastos();renderDashboard();
+    if(document.getElementById('fin-page-balance').style.display!=='none')renderBalance();
+    showToast('Gasto guardado ✓');
+  }
+}
+function deleteGasto(id){if(!confirm('¿Eliminar este gasto?'))return;appData.gastos=appData.gastos.filter(g=>g.id!==id);save();renderGastos();renderDashboard();if(document.getElementById('fin-page-balance').style.display!=='none')renderBalance();showToast('Gasto eliminado');}
 
 // ─── BALANCE ──────────────────────────────────────────────────
 function renderBalance() {
@@ -2278,7 +2337,10 @@ function renderBalance() {
 }
 
 // ─── MODALS ───────────────────────────────────────────────────
-function closeModal(id){document.getElementById(id).classList.remove('open');}
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  if(id==='modal-gasto') document.getElementById('g-id').value='';
+}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 
 // ─── PDF ANUAL ────────────────────────────────────────────────
