@@ -2381,7 +2381,7 @@ renderTareas();
     .crm-input:focus { border-color: #C9A84C55; }
     .crm-input::placeholder { color: #8A7A60; }
     .crm-modal-overlay { position: fixed; inset: 0; background: #2C201088; z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .crm-modal-box { background: #EAE4D6; border: 1px solid #BDB5A5; border-radius: 8px; padding: 28px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; animation: crmFadeUp .2s ease; }
+    .crm-modal-box { background: #EAE4D6; border: 1px solid #BDB5A5; border-radius: 8px; padding: 28px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; animation: crmFadeUp .2s ease; }
     @keyframes crmFadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
     .crm-nav-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 20px; font-size: 13px; font-weight: 500; letter-spacing: .03em; transition: all .15s; text-align: left; background: transparent; border-left: 2px solid transparent; color: #7A6A50; font-family: 'Syne', sans-serif; border-top: none; border-right: none; border-bottom: none; cursor: pointer; }
     .crm-nav-btn:hover { color: #6A5A40; }
@@ -2421,19 +2421,33 @@ renderTareas();
   }
 
   function AddLeadModal({ onClose, onSave }) {
-    const [f,setF] = useState({nombre:"",instagram:"",servicio:SERVICIOS[0],fuente:FUENTES[0],guion:"—",valor:"",etapa:"lead",notas:""});
+    const [f,setF] = useState({nombre:"",instagram:"",whatsapp:"",nacionalidad:"",servicio:SERVICIOS[0],fuente:FUENTES[0],ads:"—",valor:"",etapa:"lead",fechaContacto:new Date().toISOString().split("T")[0],proximoContacto:"",notas:""});
     const set=(k,v)=>setF(prev=>({...prev,[k]:v}));
     return <div className="crm-modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="crm-modal-box">
         <CRMModalHeader title="Nuevo Lead" onClose={onClose}/>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
-          <CRMField label="Nombre" value={f.nombre} onChange={v=>set("nombre",v)} placeholder="Nombre del artista"/>
-          <CRMField label="Instagram" value={f.instagram} onChange={v=>set("instagram",v)} placeholder="@handle"/>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <CRMField label="Nombre" value={f.nombre} onChange={v=>set("nombre",v)} placeholder="Nombre del artista"/>
+            <CRMField label="Instagram" value={f.instagram} onChange={v=>set("instagram",v)} placeholder="@handle"/>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <CRMField label="WhatsApp" value={f.whatsapp} onChange={v=>set("whatsapp",v)} placeholder="+34 600 000 000"/>
+            <CRMField label="Nacionalidad" value={f.nacionalidad} onChange={v=>set("nacionalidad",v)} placeholder="España, México..."/>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <CRMField label="Fecha de contacto" value={f.fechaContacto} onChange={v=>set("fechaContacto",v)} type="date"/>
+            <CRMField label="Próximo contacto" value={f.proximoContacto} onChange={v=>set("proximoContacto",v)} type="date"/>
+          </div>
           <CRMSelect label="Servicio" value={f.servicio} onChange={v=>set("servicio",v)} options={SERVICIOS}/>
-          <CRMSelect label="Fuente" value={f.fuente} onChange={v=>set("fuente",v)} options={FUENTES}/>
-          <CRMSelect label="Guión (Meta)" value={f.guion} onChange={v=>set("guion",v)} options={["—",...GUIONES]}/>
-          <CRMField label="Valor estimado (€)" value={f.valor} onChange={v=>set("valor",v)} placeholder="0" type="number"/>
-          <CRMSelect label="Etapa inicial" value={f.etapa} onChange={v=>set("etapa",v)} options={ETAPAS.map(e=>e.id)} labels={ETAPAS.map(e=>e.label)}/>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <CRMSelect label="Fuente" value={f.fuente} onChange={v=>set("fuente",v)} options={FUENTES}/>
+            {f.fuente==="Meta Ads"&&<CRMField label="Ad (Meta)" value={f.ads==="—"?"":f.ads} onChange={v=>set("ads",v)} placeholder="Nombre del ad..."/>}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <CRMField label="Valor estimado (€)" value={f.valor} onChange={v=>set("valor",v)} placeholder="0" type="number"/>
+            <CRMSelect label="Etapa inicial" value={f.etapa} onChange={v=>set("etapa",v)} options={ETAPAS.map(e=>e.id)} labels={ETAPAS.map(e=>e.label)}/>
+          </div>
           <CRMTextarea label="Notas" value={f.notas} onChange={v=>set("notas",v)} placeholder="Info relevante..."/>
         </div>
         <div style={{display:"flex",gap:10,marginTop:24}}>
@@ -2450,13 +2464,27 @@ renderTareas();
       <div className="crm-modal-box">
         <CRMModalHeader title="Editar Lead" onClose={onClose}/>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
-          <CRMField label="Nombre" value={f.nombre} onChange={v=>set("nombre",v)} placeholder="Nombre del artista"/>
-          <CRMField label="Instagram" value={f.instagram} onChange={v=>set("instagram",v)} placeholder="@handle"/>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <CRMField label="Nombre" value={f.nombre} onChange={v=>set("nombre",v)} placeholder="Nombre del artista"/>
+            <CRMField label="Instagram" value={f.instagram} onChange={v=>set("instagram",v)} placeholder="@handle"/>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <CRMField label="WhatsApp" value={f.whatsapp||""} onChange={v=>set("whatsapp",v)} placeholder="+34 600 000 000"/>
+            <CRMField label="Nacionalidad" value={f.nacionalidad||""} onChange={v=>set("nacionalidad",v)} placeholder="España, México..."/>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <CRMField label="Fecha de contacto" value={f.fechaContacto||""} onChange={v=>set("fechaContacto",v)} type="date"/>
+            <CRMField label="Próximo contacto" value={f.proximoContacto||""} onChange={v=>set("proximoContacto",v)} type="date"/>
+          </div>
           <CRMSelect label="Servicio" value={f.servicio} onChange={v=>set("servicio",v)} options={SERVICIOS}/>
-          <CRMSelect label="Fuente" value={f.fuente} onChange={v=>set("fuente",v)} options={FUENTES}/>
-          <CRMSelect label="Guión" value={f.guion||"—"} onChange={v=>set("guion",v)} options={["—",...GUIONES]}/>
-          <CRMField label="Valor (€)" value={f.valor||""} onChange={v=>set("valor",v)} placeholder="0" type="number"/>
-          <CRMSelect label="Etapa" value={f.etapa} onChange={v=>set("etapa",v)} options={ETAPAS.map(e=>e.id)} labels={ETAPAS.map(e=>e.label)}/>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <CRMSelect label="Fuente" value={f.fuente} onChange={v=>set("fuente",v)} options={FUENTES}/>
+            {f.fuente==="Meta Ads"&&<CRMField label="Ad (Meta)" value={(f.ads||f.guion||"").replace("—","")} onChange={v=>set("ads",v)} placeholder="Nombre del ad..."/>}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <CRMField label="Valor (€)" value={f.valor||""} onChange={v=>set("valor",v)} placeholder="0" type="number"/>
+            <CRMSelect label="Etapa" value={f.etapa} onChange={v=>set("etapa",v)} options={ETAPAS.map(e=>e.id)} labels={ETAPAS.map(e=>e.label)}/>
+          </div>
           <CRMTextarea label="Notas" value={f.notas||""} onChange={v=>set("notas",v)} placeholder="Info relevante..."/>
         </div>
         <div style={{display:"flex",gap:10,marginTop:24,alignItems:"center"}}>
@@ -2546,14 +2574,59 @@ renderTareas();
   }
 
   function PipelineTab({ leads, saveLeads, onOpenLead, onAdd }) {
+    const [search, setSearch] = React.useState("");
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    function getDaysLabel(dateStr) {
+      if (!dateStr) return null;
+      const d = new Date(dateStr); d.setHours(0,0,0,0);
+      const diff = Math.round((d - today) / 86400000);
+      if (diff < 0) return { label: `${Math.abs(diff)}d vencido`, color: "#F85149", urgent: true };
+      if (diff === 0) return { label: "Hoy", color: "#F0B429", urgent: true };
+      if (diff <= 2) return { label: `En ${diff}d`, color: "#F0B429", urgent: false };
+      return { label: `En ${diff}d`, color: "#8A7A60", urgent: false };
+    }
+
+    function getNacFlag(nac) {
+      if (!nac) return "";
+      const n = nac.toLowerCase();
+      if (n.includes("españa") || n.includes("spain")) return "🇪🇸 ";
+      if (n.includes("mexico") || n.includes("méxico")) return "🇲🇽 ";
+      if (n.includes("argentin")) return "🇦🇷 ";
+      if (n.includes("colombia") || n.includes("colombia")) return "🇨🇴 ";
+      if (n.includes("chile")) return "🇨🇱 ";
+      if (n.includes("peru") || n.includes("perú")) return "🇵🇪 ";
+      if (n.includes("venezuel")) return "🇻🇪 ";
+      if (n.includes("eeuu") || n.includes("usa") || n.includes("estados unidos")) return "🇺🇸 ";
+      if (n.includes("brasil") || n.includes("brazil")) return "🇧🇷 ";
+      if (n.includes("puerto rico")) return "🇵🇷 ";
+      if (n.includes("república dominicana") || n.includes("dominicana")) return "🇩🇴 ";
+      if (n.includes("ecuador")) return "🇪🇨 ";
+      if (n.includes("uruguay")) return "🇺🇾 ";
+      return "🌍 ";
+    }
+
+    const filteredLeads = search.trim()
+      ? leads.filter(l => {
+          const q = search.toLowerCase();
+          return (l.nombre||"").toLowerCase().includes(q) ||
+                 (l.instagram||"").toLowerCase().includes(q) ||
+                 (l.servicio||"").toLowerCase().includes(q) ||
+                 (l.nacionalidad||"").toLowerCase().includes(q);
+        })
+      : leads;
+
     return <div style={{flex:1,overflow:"auto",padding:"28px 32px"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
         <div><h1 style={{fontSize:22,fontWeight:800,color:"#2C2010",fontFamily:"'Syne',sans-serif"}}>Pipeline</h1><p style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:3}}>Gestión de leads por etapa</p></div>
-        <button className="crm-btn-gold" onClick={onAdd}>+ Nuevo Lead</button>
+        <div style={{display:"flex",gap:10,alignItems:"center"}}>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Buscar lead..." style={{background:"#DDD7C8",border:"1px solid #BDB5A5",borderRadius:4,color:"#2C2010",padding:"8px 12px",fontSize:12,fontFamily:"'IBM Plex Mono',monospace",outline:"none",width:180}}/>
+          <button className="crm-btn-gold" onClick={onAdd}>+ Nuevo Lead</button>
+        </div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12}}>
         {ETAPAS.map(etapa=>{
-          const etapaLeads=leads.filter(l=>l.etapa===etapa.id);
+          const etapaLeads=filteredLeads.filter(l=>l.etapa===etapa.id);
           const val=etapaLeads.reduce((s,l)=>s+(l.valor||0),0);
           return <div key={etapa.id} style={{background:"#EDE8DB",border:"1px solid #1A1814",borderRadius:8,padding:14}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
@@ -2562,18 +2635,36 @@ renderTareas();
             </div>
             {val>0&&<div style={{fontSize:10,color:"#8A7A60",fontFamily:"'IBM Plex Mono',monospace",marginBottom:10}}>{fmtC(val)}</div>}
             <div style={{display:"flex",flexDirection:"column",gap:7}}>
-              {etapaLeads.map(l=><div key={l.id} className="crm-lead-card" onClick={()=>onOpenLead(l)}>
-                <div style={{fontSize:12,fontWeight:700,color:"#2C2010",marginBottom:4,fontFamily:"'Syne',sans-serif"}}>{l.instagram?`@${l.instagram}`:l.nombre}</div>
-                <div style={{fontSize:10,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginBottom:6}}>{l.servicio}</div>
-                {l.valor>0&&<div style={{fontSize:11,fontWeight:700,color:"#C9A84C",fontFamily:"'IBM Plex Mono',monospace"}}>{fmtC(l.valor)}</div>}
-                <div style={{display:"flex",gap:4,marginTop:7,flexWrap:"wrap"}}>
-                  {ETAPAS.filter(e=>e.id!==etapa.id).slice(0,2).map(e=><button key={e.id} className="crm-move-btn" style={{background:e.bg,color:e.color}}
-                    onClick={ev=>{ev.stopPropagation();saveLeads(leads.map(x=>x.id===l.id?{...x,etapa:e.id}:x));}}>→{e.label.slice(0,5)}</button>)}
-                  {etapa.id==="cerrado"&&<button className="crm-move-btn"
-                    style={{background:"rgba(74,140,98,0.2)",color:"#4a8c62",border:"none"}}
-                    onClick={ev=>{ev.stopPropagation();window.crmMakeClient&&window.crmMakeClient(l);}}>🎤 Cliente</button>}
-                </div>
-              </div>)}
+              {etapaLeads.map(l=>{
+                const daysInfo = getDaysLabel(l.proximoContacto);
+                const adInfo = (l.fuente==="Meta Ads") ? (l.ads||l.guion||null) : null;
+                return <div key={l.id} className="crm-lead-card" onClick={()=>onOpenLead(l)} style={{position:"relative"}}>
+                  {daysInfo&&daysInfo.urgent&&<div style={{position:"absolute",top:0,right:0,width:4,height:"100%",background:daysInfo.color,borderRadius:"0 6px 6px 0",opacity:.7}}/>}
+                  <div style={{fontSize:12,fontWeight:700,color:"#2C2010",marginBottom:2,fontFamily:"'Syne',sans-serif"}}>{l.instagram?`@${l.instagram}`:l.nombre}</div>
+                  {l.nombre&&l.instagram&&<div style={{fontSize:10,color:"#9A8A6A",fontFamily:"'IBM Plex Mono',monospace",marginBottom:2}}>{l.nombre}</div>}
+                  <div style={{fontSize:10,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>{l.servicio}</div>
+                  {l.nacionalidad&&<div style={{fontSize:10,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginBottom:3}}>{getNacFlag(l.nacionalidad)}{l.nacionalidad}</div>}
+                  {l.whatsapp&&<a href={`https://wa.me/${l.whatsapp.replace(/[^0-9]/g,"")}`} target="_blank" rel="noopener noreferrer"
+                    onClick={ev=>ev.stopPropagation()}
+                    style={{display:"inline-flex",alignItems:"center",gap:3,fontSize:10,color:"#3FB950",fontFamily:"'IBM Plex Mono',monospace",textDecoration:"none",marginBottom:4}}>
+                    <span>💬</span>{l.whatsapp}
+                  </a>}
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:4}}>
+                    {l.valor>0&&<span style={{fontSize:11,fontWeight:700,color:"#C9A84C",fontFamily:"'IBM Plex Mono',monospace"}}>{fmtC(l.valor)}</span>}
+                    {adInfo&&adInfo!=="—"&&<span style={{fontSize:9,background:"rgba(240,180,41,0.15)",color:"#F0B429",borderRadius:3,padding:"1px 5px",fontFamily:"'IBM Plex Mono',monospace"}}>📣 {adInfo}</span>}
+                  </div>
+                  {daysInfo&&<div style={{fontSize:9,color:daysInfo.color,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6,fontWeight:daysInfo.urgent?700:400}}>
+                    {daysInfo.urgent?"⚠️ ":"🗓 "}Próximo: {daysInfo.label}
+                  </div>}
+                  <div style={{display:"flex",gap:4,marginTop:4,flexWrap:"wrap"}}>
+                    {ETAPAS.filter(e=>e.id!==etapa.id).slice(0,2).map(e=><button key={e.id} className="crm-move-btn" style={{background:e.bg,color:e.color}}
+                      onClick={ev=>{ev.stopPropagation();saveLeads(leads.map(x=>x.id===l.id?{...x,etapa:e.id}:x));}}>→{e.label.slice(0,5)}</button>)}
+                    {etapa.id==="cerrado"&&<button className="crm-move-btn"
+                      style={{background:"rgba(74,140,98,0.2)",color:"#4a8c62",border:"none"}}
+                      onClick={ev=>{ev.stopPropagation();window.crmMakeClient&&window.crmMakeClient(l);}}>🎤 Cliente</button>}
+                  </div>
+                </div>;
+              })}
             </div>
           </div>;
         })}
