@@ -638,6 +638,11 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
       <select class="sb-month-select" id="globalYear" onchange="onYearChange()" style="margin-bottom:8px"></select>
       <div class="sb-month-label">MES ACTIVO</div>
       <select class="sb-month-select" id="globalMonth" onchange="onMonthChange()"></select>
+      <div style="margin-top:12px;display:flex;gap:6px">
+        <button onclick="backupData()" title="Descargar copia de seguridad de todos los datos" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);border-radius:6px;color:#C9A84C;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em;transition:all .15s" onmouseover="this.style.background='rgba(201,168,76,0.22)'" onmouseout="this.style.background='rgba(201,168,76,0.12)'">⬇ Backup</button>
+        <button onclick="document.getElementById('restore-input').click()" title="Cargar copia de seguridad" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;background:rgba(44,32,16,0.05);border:1px solid #BDB5A5;border-radius:6px;color:#7A6A50;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em;transition:all .15s" onmouseover="this.style.background='rgba(44,32,16,0.1)'" onmouseout="this.style.background='rgba(44,32,16,0.05)'">⬆ Restaurar</button>
+        <input type="file" id="restore-input" accept=".json" style="display:none" onchange="restoreData(event)">
+      </div>
     </div>
   </aside>
 
@@ -769,6 +774,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
         <button onclick="navigateFin('clientes',this)">◎ Clientes</button>
         <button onclick="navigateFin('gastos',this)">◐ Gastos</button>
         <button onclick="navigateFin('balance',this)">◑ Balance</button>
+        <button onclick="printAnualPDF()" style="margin-left:auto;color:#C9A84C;border-bottom-color:transparent" title="Imprimir / exportar PDF completo del año">⬇ PDF Anual</button>
       </div>
 
       <!-- Finanzas Modals -->
@@ -801,7 +807,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
           </div>
           <!-- PAGO AL REGISTRAR -->
           <div style="background:rgba(63,185,80,0.07);border:1.5px solid rgba(63,185,80,0.25);border-radius:9px;padding:14px 16px;margin-bottom:14px">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#3FB950;margin-bottom:10px;font-family:'IBM Plex Mono',monospace">💰 Cobro al registrar</div>
+            <div id="c-cobro-section-label" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#3FB950;margin-bottom:10px;font-family:'IBM Plex Mono',monospace">💰 Cobro al registrar</div>
             <div class="form-row">
               <div class="form-group" style="margin-bottom:0">
                 <label class="form-label">Monto cobrado ahora (€)</label>
@@ -1732,6 +1738,49 @@ function showToast(msg) {
   }, 2500);
 }
 
+// ─── BACKUP / RESTORE ────────────────────────────────────────
+const BACKUP_KEYS = ['larryOS_finanzas','larryCRM_v2','larry_os_tasks','agenda_v1','larry:leads','larry:meta'];
+
+function backupData() {
+  const backup = { _version: 1, _date: new Date().toISOString(), _app: 'LarryOS' };
+  BACKUP_KEYS.forEach(k => {
+    try { backup[k] = JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { backup[k] = null; }
+  });
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const date = new Date().toISOString().slice(0,10);
+  a.download = 'LarryOS_backup_' + date + '.json';
+  a.click();
+  showToast('\u2713 Backup descargado \u00b7 ' + date);
+}
+
+function restoreData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data._app || data._app !== 'LarryOS') {
+        showToast('\u26a0\ufe0f Archivo no v\u00e1lido \u2014 us\u00e1 un backup de Larry OS');
+        return;
+      }
+      const dateStr = data._date ? new Date(data._date).toLocaleDateString('es-ES') : 'archivo';
+      if (!confirm('\u00bfRestaurar datos del backup del ' + dateStr + '?\n\nEsto reemplazar\u00e1 todos los datos actuales.')) return;
+      BACKUP_KEYS.forEach(k => {
+        if (data[k] !== undefined && data[k] !== null) localStorage.setItem(k, JSON.stringify(data[k]));
+      });
+      showToast('\u2713 Datos restaurados \u00b7 Recargando...');
+      setTimeout(() => location.reload(), 1200);
+    } catch(err) {
+      showToast('\u26a0\ufe0f Error al leer el archivo');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
 // ─── MONTH / YEAR SELECTOR (shared) ──────────────────────────
 let YEAR = new Date().getFullYear(); // Bug 3: dinámico en lugar de hardcodeado 2026
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -2099,6 +2148,8 @@ function openModalCliente(id=null) {
     document.getElementById('c-cobro-nota').value='';
   }
   cModalCalc();
+  const cobroLabel = document.getElementById('c-cobro-section-label');
+  if(cobroLabel) cobroLabel.textContent = id ? '➕ Agregar cobro' : '💰 Cobro al registrar';
   document.getElementById('modal-cliente').classList.add('open');
 }
 function cModalCalc() {
@@ -2140,12 +2191,13 @@ function saveCliente() {
   else if(cobroMonto>0) showToast(`✓ Cliente guardado · Pago completo ${fmt(cobroMonto)}`);
   else showToast(editingClienteId?'Cliente actualizado':'Cliente creado ✓');
 }
-function deleteCliente(id){if(!confirm('¿Eliminar este cliente?'))return;appData.clientes=appData.clientes.filter(c=>c.id!==id);save();renderClientes();renderDashboard();showToast('Cliente eliminado');}
+function deleteCliente(id){if(!confirm('¿Eliminar este cliente?'))return;appData.clientes=appData.clientes.filter(c=>c.id!==id);save();renderClientes();renderDashboard();renderBalance();showToast('Cliente eliminado');}
 
 // ─── PAGOS ────────────────────────────────────────────────────
 function openModalPago(clienteId) {
   editingPagoClienteId=clienteId;
   const c=appData.clientes.find(x=>x.id===clienteId);
+  if(!c){showToast('⚠️ Cliente no encontrado');return;}
   document.getElementById('pago-cliente-nombre').textContent=c.nombre;
   document.getElementById('pago-pendiente-display').textContent=fmt(totalPendiente(c));
   document.getElementById('p-monto').value='';
@@ -2180,7 +2232,7 @@ function savePago() {
       }
     } catch(e) {}
   }
-  openModalPago(editingPagoClienteId);renderClientes();renderDashboard();showToast(`Cobro de ${fmt(monto)} registrado ✓`);
+  openModalPago(editingPagoClienteId);renderClientes();renderDashboard();if(document.getElementById('fin-page-balance').style.display!=='none')renderBalance();showToast(`Cobro de ${fmt(monto)} registrado ✓`);
 }
 function deletePago(clienteId,pagoId){const c=appData.clientes.find(x=>x.id===clienteId);c.pagos=c.pagos.filter(p=>p.id!==pagoId);save();openModalPago(clienteId);renderClientes();renderDashboard();showToast('Pago eliminado');}
 
@@ -2197,8 +2249,8 @@ function renderGastos() {
 }
 function filterCat(cat){activeCat=cat;renderGastos();}
 function openModalGasto(){['g-desc','g-monto'].forEach(i=>document.getElementById(i).value='');document.getElementById('g-fecha').value=new Date().toISOString().split('T')[0];document.getElementById('modal-gasto').classList.add('open');}
-function saveGasto(){const desc=document.getElementById('g-desc').value.trim(),monto=parseFloat(document.getElementById('g-monto').value)||0;if(!desc){showToast('⚠️ Descripción obligatoria');return;}if(!monto){showToast('⚠️ Ingresa un monto');return;}appData.gastos.push({id:crypto.randomUUID(),desc,cat:document.getElementById('g-cat').value,monto,fecha:document.getElementById('g-fecha').value});save();closeModal('modal-gasto');renderGastos();renderDashboard();showToast('Gasto guardado ✓');}
-function deleteGasto(id){appData.gastos=appData.gastos.filter(g=>g.id!==id);save();renderGastos();renderDashboard();showToast('Gasto eliminado');}
+function saveGasto(){const desc=document.getElementById('g-desc').value.trim(),monto=parseFloat(document.getElementById('g-monto').value)||0;if(!desc){showToast('⚠️ Descripción obligatoria');return;}if(!monto){showToast('⚠️ Ingresa un monto');return;}appData.gastos.push({id:crypto.randomUUID(),desc,cat:document.getElementById('g-cat').value,monto,fecha:document.getElementById('g-fecha').value});save();closeModal('modal-gasto');renderGastos();renderDashboard();if(document.getElementById('fin-page-balance').style.display!=='none')renderBalance();showToast('Gasto guardado ✓');}
+function deleteGasto(id){appData.gastos=appData.gastos.filter(g=>g.id!==id);save();renderGastos();renderDashboard();if(document.getElementById('fin-page-balance').style.display!=='none')renderBalance();showToast('Gasto eliminado');}
 
 // ─── BALANCE ──────────────────────────────────────────────────
 function renderBalance() {
@@ -2228,6 +2280,221 @@ function renderBalance() {
 // ─── MODALS ───────────────────────────────────────────────────
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+// ─── PDF ANUAL ────────────────────────────────────────────────
+function printAnualPDF() {
+  const year = YEAR;
+  const fmtP = n => '€' + (n||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  // ── Calcular datos anuales ──
+  const allIng  = MONTHS.map((_,i) => appData.clientes.reduce((s,c) => s + cobradoEnMes(c,i+1), 0));
+  const allGas  = MONTHS.map((_,i) => gastosEnMes(i+1).reduce((s,g) => s+Number(g.monto),0));
+  const allNet  = allIng.map((v,i) => v - allGas[i]);
+  const totIng  = allIng.reduce((s,v)=>s+v,0);
+  const totGas  = allGas.reduce((s,v)=>s+v,0);
+  const totNet  = totIng - totGas;
+  const totPend = appData.clientes.reduce((s,c)=>s+totalPendiente(c),0);
+
+  // ── Tabla mensual ──
+  let acum = 0;
+  const filasMeses = MONTHS.map((m,i) => {
+    const ing = allIng[i], gas = allGas[i], net = allNet[i];
+    acum += net;
+    const netColor = net >= 0 ? '#2e7d32' : '#c62828';
+    const acumColor = acum >= 0 ? '#2e7d32' : '#c62828';
+    return `<tr>
+      <td>${m}</td>
+      <td class="num green">${fmtP(ing)}</td>
+      <td class="num red">${fmtP(gas)}</td>
+      <td class="num" style="color:${netColor};font-weight:600">${fmtP(net)}</td>
+      <td class="num" style="color:${acumColor};font-weight:600">${fmtP(acum)}</td>
+    </tr>`;
+  }).join('');
+
+  // ── Tabla clientes ──
+  const filasClientes = appData.clientes.length
+    ? appData.clientes.map(c => {
+        const ct = totalCobrado(c), pend = totalPendiente(c);
+        const pct = c.precio > 0 ? Math.min(100,(ct/c.precio)*100) : 0;
+        const estadoColor = {activo:'#1b5e20',completado:'#e65100',pausado:'#555',cancelado:'#b71c1c'}[c.estado]||'#555';
+        // Historial de pagos de este cliente
+        const pagosHtml = (c.pagos||[]).length
+          ? (c.pagos||[]).sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(p =>
+              `<div style="font-size:10px;color:#555;margin-top:2px">↳ ${fmtP(Number(p.monto))} · ${p.fecha} ${p.nota?'· '+p.nota:''}</div>`
+            ).join('')
+          : '';
+        return `<tr>
+          <td><strong>${c.nombre}</strong>${pagosHtml}</td>
+          <td>${c.servicio||'—'}</td>
+          <td class="num">${fmtP(c.precio)}</td>
+          <td class="num green">${fmtP(ct)}</td>
+          <td class="num ${pend>0?'red':''}">${pend>0?fmtP(pend):'—'}</td>
+          <td class="num">${Math.round(pct)}%</td>
+          <td><span style="color:${estadoColor};font-weight:600;font-size:11px;text-transform:uppercase">${c.estado||'—'}</span></td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:#999;font-style:italic">Sin clientes registrados</td></tr>';
+
+  // ── Gastos por categoría ──
+  const gastosDelAno = appData.gastos.filter(g=>{const d=new Date(g.fecha+'T12:00:00');return d.getFullYear()===year;});
+  const porCat = {};
+  gastosDelAno.forEach(g => {
+    if (!porCat[g.cat]) porCat[g.cat] = { count:0, total:0, items:[] };
+    porCat[g.cat].count++;
+    porCat[g.cat].total += Number(g.monto);
+    porCat[g.cat].items.push(g);
+  });
+  const filasGasCat = Object.entries(porCat).sort((a,b)=>b[1].total-a[1].total).map(([cat,v])=>
+    `<tr><td>${cat}</td><td class="num">${v.count}</td><td class="num red">${fmtP(v.total)}</td></tr>`
+  ).join('') || '<tr><td colspan="3" style="text-align:center;color:#999;font-style:italic">Sin gastos</td></tr>';
+
+  // ── Detalle de todos los gastos ordenados por fecha ──
+  const gastosOrdenados = appData.gastos.filter(g=>{const d=new Date(g.fecha+'T12:00:00');return d.getFullYear()===year;}).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const filasGastos = gastosOrdenados.length
+    ? gastosOrdenados.map(g => `<tr>
+        <td>${g.fecha}</td>
+        <td>${g.desc}</td>
+        <td><span style="background:#f0f0f0;padding:2px 7px;border-radius:10px;font-size:10px">${g.cat}</span></td>
+        <td class="num red">${fmtP(Number(g.monto))}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" style="text-align:center;color:#999;font-style:italic">Sin gastos registrados</td></tr>';
+
+  // ── HTML del PDF ──
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Larry OS — Informe Anual ${year}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;font-size:12px;color:#1a1208;background:#fff;padding:0}
+  @page{size:A4;margin:18mm 16mm}
+  
+  /* ── PORTADA ── */
+  .cover{text-align:center;padding:60px 0 50px;border-bottom:3px solid #b8882a;margin-bottom:36px}
+  .cover-brand{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.4em;color:#9a8a6a;text-transform:uppercase;margin-bottom:14px}
+  .cover-title{font-family:'Playfair Display',serif;font-size:42px;font-weight:700;color:#2c2010;line-height:1.1;margin-bottom:8px}
+  .cover-year{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:#b8882a;letter-spacing:.15em}
+  .cover-date{font-size:11px;color:#9a8a6a;margin-top:16px}
+
+  /* ── KPIs ── */
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+  .kpi{background:#faf7f0;border:1px solid #ddd7c8;border-radius:10px;padding:16px 18px;border-top:3px solid #b8882a}
+  .kpi.green{border-top-color:#2e7d32}
+  .kpi.red{border-top-color:#c62828}
+  .kpi.amber{border-top-color:#e65100}
+  .kpi-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#9a8a6a;margin-bottom:8px}
+  .kpi-val{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;line-height:1;color:#1a1208}
+  .kpi-val.green{color:#2e7d32}
+  .kpi-val.red{color:#c62828}
+  .kpi-val.amber{color:#e65100}
+
+  /* ── SECCIONES ── */
+  .section{margin-bottom:32px;page-break-inside:avoid}
+  .section-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#2c2010;padding-bottom:8px;border-bottom:2px solid #b8882a;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .section-title span{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9a8a6a;font-weight:400;letter-spacing:.1em}
+
+  /* ── TABLAS ── */
+  table{width:100%;border-collapse:collapse;margin-bottom:4px}
+  th{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:#9a8a6a;padding:6px 10px;border-bottom:1.5px solid #ddd7c8;text-align:left;background:#faf7f0}
+  td{padding:8px 10px;border-bottom:1px solid #ede8db;vertical-align:top;font-size:11.5px}
+  tr:last-child td{border-bottom:none}
+  tr:nth-child(even) td{background:#fdfbf7}
+  .num{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px}
+  .green{color:#2e7d32;font-weight:600}
+  .red{color:#c62828;font-weight:600}
+  tfoot td{font-weight:700;background:#f5f0e4;font-family:'IBM Plex Mono',monospace;font-size:11px;border-top:2px solid #c9a84c}
+
+  /* ── FOOTER ── */
+  .footer{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#bbb;letter-spacing:.2em;padding-top:20px;border-top:1px solid #ede8db;margin-top:32px}
+  .page-break{page-break-before:always}
+</style>
+</head>
+<body>
+
+<!-- PORTADA -->
+<div class="cover">
+  <div class="cover-brand">Larry OS · Finanzas</div>
+  <div class="cover-title">Informe Anual</div>
+  <div class="cover-year">${year}</div>
+  <div class="cover-date">Generado el ${new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'})}</div>
+</div>
+
+<!-- KPIs ANUALES -->
+<div class="kpi-row">
+  <div class="kpi green"><div class="kpi-label">Ingresos totales</div><div class="kpi-val green">${fmtP(totIng)}</div></div>
+  <div class="kpi red"><div class="kpi-label">Gastos totales</div><div class="kpi-val red">${fmtP(totGas)}</div></div>
+  <div class="kpi ${totNet>=0?'green':'red'}"><div class="kpi-label">Resultado neto</div><div class="kpi-val ${totNet>=0?'green':'red'}">${fmtP(totNet)}</div></div>
+  <div class="kpi amber"><div class="kpi-label">Pendiente de cobro</div><div class="kpi-val amber">${fmtP(totPend)}</div></div>
+</div>
+
+<!-- RESUMEN MENSUAL -->
+<div class="section">
+  <div class="section-title">Resumen Mensual <span>· ${year}</span></div>
+  <table>
+    <thead><tr><th>Mes</th><th style="text-align:right">Ingresos</th><th style="text-align:right">Gastos</th><th style="text-align:right">Neto</th><th style="text-align:right">Acumulado</th></tr></thead>
+    <tbody>${filasMeses}</tbody>
+    <tfoot><tr>
+      <td>TOTAL ${year}</td>
+      <td class="num green">${fmtP(totIng)}</td>
+      <td class="num red">${fmtP(totGas)}</td>
+      <td class="num" style="color:${totNet>=0?'#2e7d32':'#c62828'}">${fmtP(totNet)}</td>
+      <td></td>
+    </tr></tfoot>
+  </table>
+</div>
+
+<!-- CLIENTES -->
+<div class="section page-break">
+  <div class="section-title">Clientes <span>· ${appData.clientes.length} registrados</span></div>
+  <table>
+    <thead><tr><th>Nombre / Cobros</th><th>Servicio</th><th style="text-align:right">Precio</th><th style="text-align:right">Cobrado</th><th style="text-align:right">Pendiente</th><th style="text-align:right">%</th><th>Estado</th></tr></thead>
+    <tbody>${filasClientes}</tbody>
+    <tfoot><tr>
+      <td colspan="2">TOTALES</td>
+      <td class="num">${fmtP(appData.clientes.reduce((s,c)=>s+Number(c.precio||0),0))}</td>
+      <td class="num green">${fmtP(appData.clientes.reduce((s,c)=>s+totalCobrado(c),0))}</td>
+      <td class="num red">${fmtP(totPend)}</td>
+      <td></td><td></td>
+    </tr></tfoot>
+  </table>
+</div>
+
+<!-- GASTOS POR CATEGORÍA -->
+<div class="section">
+  <div class="section-title">Gastos por Categoría <span>· ${year}</span></div>
+  <table>
+    <thead><tr><th>Categoría</th><th style="text-align:right">Nº</th><th style="text-align:right">Total</th></tr></thead>
+    <tbody>${filasGasCat}</tbody>
+    <tfoot><tr>
+      <td>TOTAL GASTOS</td>
+      <td class="num">${gastosDelAno.length}</td>
+      <td class="num red">${fmtP(totGas)}</td>
+    </tr></tfoot>
+  </table>
+</div>
+
+<!-- DETALLE GASTOS -->
+<div class="section page-break">
+  <div class="section-title">Detalle de Gastos <span>· todos los registros</span></div>
+  <table>
+    <thead><tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th style="text-align:right">Monto</th></tr></thead>
+    <tbody>${filasGastos}</tbody>
+  </table>
+</div>
+
+<div class="footer">LARRY OS · INFORME ANUAL ${year} · DOCUMENTO CONFIDENCIAL</div>
+
+<script>window.onload=function(){window.print();}<\/script>
+</body>
+</html>`;
+
+  const w = window.open('', '_blank');
+  if (!w) { showToast('⚠️ Permite popups para generar el PDF'); return; }
+  w.document.write(html);
+  w.document.close();
+}
 
 // ─── INIT FINANZAS ────────────────────────────────────────────
 load();
