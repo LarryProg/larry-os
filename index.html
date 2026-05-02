@@ -181,7 +181,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
 #module-finanzas .bal-cliente { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; margin-bottom:10px; }
 #module-finanzas .bal-cliente-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
 @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-#module-finanzas .form-select option { background: #161410; }
+#module-finanzas .form-select option { background: #EAE4D6; color: #2C2010; }
 #module-finanzas .form-input::placeholder { color: var(--muted); }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -777,10 +777,19 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
           <div class="modal-title" id="modal-cliente-title">Nuevo cliente</div>
           <div class="form-row">
             <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="c-nombre" placeholder="Nombre del cliente"></div>
-            <div class="form-group"><label class="form-label">Servicio</label><input class="form-input" id="c-servicio" placeholder="Tipo de servicio"></div>
+            <div class="form-group"><label class="form-label">Servicio</label>
+              <select class="form-select" id="c-servicio">
+                <option value="Beatmaking">Beatmaking</option>
+                <option value="Mix">Mix</option>
+                <option value="Master">Master</option>
+                <option value="Mix&Master">Mix&amp;Master</option>
+                <option value="Prod Completa">Prod Completa</option>
+                <option value="Ep/Lanzamiento">Ep/Lanzamiento</option>
+              </select>
+            </div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label class="form-label">Precio total (€)</label><input class="form-input" type="number" id="c-precio" placeholder="0"></div>
+            <div class="form-group"><label class="form-label">Precio total (€)</label><input class="form-input" type="number" id="c-precio" placeholder="0" oninput="cModalCalc()"></div>
             <div class="form-group"><label class="form-label">Estado</label>
               <select class="form-select" id="c-estado">
                 <option value="activo">Activo</option>
@@ -790,7 +799,29 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
               </select>
             </div>
           </div>
-          <div class="form-group"><label class="form-label">Notas</label><textarea class="form-textarea" id="c-notas" rows="2" placeholder="Notas opcionales"></textarea></div>
+          <!-- PAGO AL REGISTRAR -->
+          <div style="background:rgba(63,185,80,0.07);border:1.5px solid rgba(63,185,80,0.25);border-radius:9px;padding:14px 16px;margin-bottom:14px">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#3FB950;margin-bottom:10px;font-family:'IBM Plex Mono',monospace">💰 Cobro al registrar</div>
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">Monto cobrado ahora (€)</label>
+                <input class="form-input" type="number" id="c-cobro-inicial" placeholder="0 = sin cobro aún" oninput="cModalCalc()">
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">Fecha del cobro</label>
+                <input class="form-input" type="date" id="c-cobro-fecha">
+              </div>
+            </div>
+            <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+              <div style="font-size:11px;color:#7A6A50;font-family:'IBM Plex Mono',monospace">Pendiente tras este cobro:</div>
+              <div id="c-pendiente-calc" style="font-size:14px;font-weight:700;color:#F85149;font-family:'IBM Plex Mono',monospace">€0</div>
+            </div>
+            <div id="c-cobro-nota-wrap" style="margin-top:8px">
+              <label class="form-label">Nota del cobro (opcional)</label>
+              <input class="form-input" id="c-cobro-nota" placeholder="Ej: Seña, pago completo, primera cuota…">
+            </div>
+          </div>
+          <div class="form-group"><label class="form-label">Notas del cliente</label><textarea class="form-textarea" id="c-notas" rows="2" placeholder="Notas opcionales"></textarea></div>
           <div class="modal-actions">
             <button class="btn btn-ghost" onclick="closeModal('modal-cliente')">Cancelar</button>
             <button class="btn btn-primary" onclick="saveCliente()">Guardar</button>
@@ -1288,10 +1319,11 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
               <div class="cl-f-group">
                 <label>Proceso</label>
                 <select id="cl-fProceso" onchange="clToggleEP()">
-                  <option value="EP">EP</option>
+                  <option value="EP">Ep/Lanzamiento</option>
                   <option value="PROD">Prod Completa</option>
                   <option value="BEAT">Beatmaking</option>
-                  <option value="MIX">Mix & Master</option>
+                  <option value="MIX_SOLO">Mix</option>
+                  <option value="MIX">Mix &amp; Master</option>
                   <option value="MASTER">Master</option>
                 </select>
               </div>
@@ -1352,7 +1384,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
 (function(){
   const CL_BONUS_LIST   = ['Manual de Marca','Arsenal Creativo','Contrato Beat','Vocals Top','Escucha Top','Guía Lanzamiento Exitoso','Regalo Agenda'];
   const CL_STAGE_LABELS = ['Sin Empezar','En Producción','En Revisión','Terminado'];
-  const CL_PROC_LABELS  = { EP:'EP', PROD:'Prod Completa', BEAT:'Beatmaking', MIX:'Mix & Master', MASTER:'Master' };
+  const CL_PROC_LABELS  = { EP:'Ep/Lanzamiento', PROD:'Prod Completa', BEAT:'Beatmaking', MIX_SOLO:'Mix', MIX:'Mix & Master', MASTER:'Master' };
   const CL_STORAGE_KEY  = 'larryCRM_v2';
   const CL_MONTHS_ES    = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
@@ -1768,7 +1800,7 @@ initYearSelect();
 // Bug 1: eliminado window.addEventListener('load', renderDashboard) — Finanzas JS lo llama directamente
 
 // ─── BRIDGE: CONEXIÓN CLIENTES ↔ FINANZAS ↔ CRM ─────────────
-const CL_PROC_LABELS_BRIDGE = { EP:'EP', PROD:'Producción Completa', BEAT:'Beatmaking', MIX:'Mix & Master', MASTER:'Master' };
+const CL_PROC_LABELS_BRIDGE = { EP:'Ep/Lanzamiento', PROD:'Producción Completa', BEAT:'Beatmaking', MIX_SOLO:'Mix', MIX:'Mix & Master', MASTER:'Master' };
 
 // Sincroniza un cliente de larryCRM_v2 → larryOS_finanzas
 function syncClToFin(clClient) {
@@ -1841,8 +1873,11 @@ function crmMakeClient(lead) {
   setTimeout(() => {
     const procMap = {
       'Beatmaking': 'BEAT', 'Producción Completa': 'PROD',
-      'EP/Lanzamiento': 'EP', 'Master por Stems': 'MASTER',
-      'Edición + Mezcla': 'MIX', 'Edición + Mezcla + Master': 'MIX',
+      'EP/Lanzamiento': 'EP', 'Ep/Lanzamiento': 'EP',
+      'Master': 'MASTER', 'Mix': 'MIX_SOLO',
+      'Master por Stems': 'MASTER',
+      'Edición + Mezcla': 'MIX_SOLO', 'Edición + Mezcla + Master': 'MIX',
+      'Mix & Master': 'MIX', 'Mix&Master': 'MIX',
       'Análisis de Marca Artística': 'PROD'
     };
     const mockData = {
@@ -2013,12 +2048,19 @@ function renderClientes() {
     const ct=totalCobrado(c),pend=totalPendiente(c),pct=c.precio>0?Math.min(100,(ct/c.precio)*100):0;
     const barClass=pct>=100?'progress-bar':pct>=50?'progress-bar amber':'progress-bar red';
     const crmBadge = c.clId ? `<span title="Sincronizado desde Clientes" style="font-size:9px;background:rgba(74,140,98,0.15);color:#4a8c62;border-radius:3px;padding:1px 5px;margin-left:6px;font-family:'IBM Plex Mono',monospace">🎤</span>` : '';
+    // Payment status icon
+    let pagoIcon='';
+    if(c.precio>0){
+      if(pct>=100) pagoIcon=`<span title="Pago completo" style="font-size:11px;margin-left:5px">✅</span>`;
+      else if(ct>0) pagoIcon=`<span title="Pago parcial — falta ${fmt(pend)}" style="font-size:11px;margin-left:5px">⚠️</span>`;
+      else pagoIcon=`<span title="Sin cobrar" style="font-size:11px;margin-left:5px">🔴</span>`;
+    }
     return `<tr>
-      <td><strong>${c.nombre}</strong>${crmBadge}</td>
+      <td><strong>${c.nombre}</strong>${crmBadge}${pagoIcon}</td>
       <td style="color:#7A6A50">${c.servicio||'—'}</td>
       <td>${fmt(c.precio)}</td>
       <td class="amount-pos">${fmt(ct)}</td>
-      <td class="${pend>0?'amount-neg':''}">${fmt(pend)}</td>
+      <td class="${pend>0?'amount-neg':''}">${pend>0?fmt(pend):'<span style="color:#3FB950;font-weight:600">—</span>'}</td>
       <td style="width:100px"><div class="progress-wrap"><div class="${barClass}" style="width:${pct}%"></div></div><span style="font-size:10px;color:#7A6A50">${Math.round(pct)}%</span></td>
       <td>${estadoBadge(c.estado)}</td>
       <td style="display:flex;gap:5px;padding:8px">
@@ -2033,17 +2075,70 @@ function renderClientes() {
 function openModalCliente(id=null) {
   editingClienteId=id;
   document.getElementById('modal-cliente-title').textContent=id?'Editar cliente':'Nuevo cliente';
-  if(id){const c=appData.clientes.find(x=>x.id===id);document.getElementById('c-nombre').value=c.nombre;document.getElementById('c-servicio').value=c.servicio||'';document.getElementById('c-precio').value=c.precio||'';document.getElementById('c-estado').value=c.estado||'activo';document.getElementById('c-notas').value=c.notas||'';}
-  else{['c-nombre','c-servicio','c-precio','c-notas'].forEach(i=>document.getElementById(i).value='');document.getElementById('c-estado').value='activo';}
+  // Set default cobro date to today
+  document.getElementById('c-cobro-fecha').value=new Date().toISOString().split('T')[0];
+  if(id){
+    const c=appData.clientes.find(x=>x.id===id);
+    document.getElementById('c-nombre').value=c.nombre;
+    // Handle servicio select
+    const servSel=document.getElementById('c-servicio');
+    const validOpts=['Beatmaking','Mix','Master','Mix&Master','Prod Completa','Ep/Lanzamiento'];
+    servSel.value=validOpts.includes(c.servicio)?c.servicio:'Beatmaking';
+    document.getElementById('c-precio').value=c.precio||'';
+    document.getElementById('c-estado').value=c.estado||'activo';
+    document.getElementById('c-notas').value=c.notas||'';
+    document.getElementById('c-cobro-inicial').value='';
+    document.getElementById('c-cobro-nota').value='';
+  } else {
+    document.getElementById('c-nombre').value='';
+    document.getElementById('c-servicio').value='Beatmaking';
+    document.getElementById('c-precio').value='';
+    document.getElementById('c-estado').value='activo';
+    document.getElementById('c-notas').value='';
+    document.getElementById('c-cobro-inicial').value='';
+    document.getElementById('c-cobro-nota').value='';
+  }
+  cModalCalc();
   document.getElementById('modal-cliente').classList.add('open');
+}
+function cModalCalc() {
+  const precio=parseFloat(document.getElementById('c-precio').value)||0;
+  const cobro=parseFloat(document.getElementById('c-cobro-inicial').value)||0;
+  const pend=Math.max(0,precio-cobro);
+  const el=document.getElementById('c-pendiente-calc');
+  el.textContent=fmt(pend);
+  el.style.color=pend<=0?'#3FB950':'#F85149';
 }
 function saveCliente() {
   const nombre=document.getElementById('c-nombre').value.trim();
   if(!nombre){showToast('⚠️ Nombre obligatorio');return;}
-  const obj={nombre,servicio:document.getElementById('c-servicio').value.trim(),precio:parseFloat(document.getElementById('c-precio').value)||0,estado:document.getElementById('c-estado').value,notas:document.getElementById('c-notas').value.trim()};
-  if(editingClienteId){const i=appData.clientes.findIndex(x=>x.id===editingClienteId);appData.clientes[i]={...appData.clientes[i],...obj};}
-  else{appData.clientes.push({id:crypto.randomUUID(),...obj,pagos:[]});}
-  save();closeModal('modal-cliente');renderClientes();renderDashboard();showToast(editingClienteId?'Cliente actualizado':'Cliente creado ✓');
+  const servicio=document.getElementById('c-servicio').value;
+  const precio=parseFloat(document.getElementById('c-precio').value)||0;
+  const estado=document.getElementById('c-estado').value;
+  const notas=document.getElementById('c-notas').value.trim();
+  const cobroMonto=parseFloat(document.getElementById('c-cobro-inicial').value)||0;
+  const cobroFecha=document.getElementById('c-cobro-fecha').value||new Date().toISOString().split('T')[0];
+  const cobroNota=document.getElementById('c-cobro-nota').value.trim();
+  const obj={nombre,servicio,precio,estado,notas};
+  if(editingClienteId){
+    const i=appData.clientes.findIndex(x=>x.id===editingClienteId);
+    appData.clientes[i]={...appData.clientes[i],...obj};
+    if(cobroMonto>0){
+      if(!appData.clientes[i].pagos)appData.clientes[i].pagos=[];
+      appData.clientes[i].pagos.push({id:crypto.randomUUID(),monto:cobroMonto,fecha:cobroFecha,nota:cobroNota||'Cobro adicional'});
+    }
+  } else {
+    const newCl={id:crypto.randomUUID(),...obj,pagos:[]};
+    if(cobroMonto>0){
+      newCl.pagos.push({id:crypto.randomUUID(),monto:cobroMonto,fecha:cobroFecha,nota:cobroNota||'Cobro inicial'});
+    }
+    appData.clientes.push(newCl);
+  }
+  save();closeModal('modal-cliente');renderClientes();renderDashboard();
+  const pendiente=Math.max(0,precio-cobroMonto);
+  if(cobroMonto>0&&pendiente>0) showToast(`✓ Cliente guardado · Cobrado ${fmt(cobroMonto)} · Pendiente ${fmt(pendiente)}`);
+  else if(cobroMonto>0) showToast(`✓ Cliente guardado · Pago completo ${fmt(cobroMonto)}`);
+  else showToast(editingClienteId?'Cliente actualizado':'Cliente creado ✓');
 }
 function deleteCliente(id){if(!confirm('¿Eliminar este cliente?'))return;appData.clientes=appData.clientes.filter(c=>c.id!==id);save();renderClientes();renderDashboard();showToast('Cliente eliminado');}
 
