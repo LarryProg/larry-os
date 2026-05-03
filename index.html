@@ -826,6 +826,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
               <div><div class="page-title">Clientes</div><div class="page-subtitle">Proyectos y cobros · <span style="color:#4a8c62;font-size:11px">🎤 = sincronizado desde Clientes</span></div></div>
               <div style="display:flex;gap:10px;align-items:center">
                 <input type="text" class="search-input" placeholder="Buscar cliente..." id="search-clientes" oninput="renderClientes()">
+                <button class="btn btn-ghost btn-sm" onclick="renderClientes();renderDashboard();showToast('✓ Clientes actualizados')" title="Actualizar tabla de clientes">↻ Actualizar</button>
                 <button class="btn btn-ghost btn-sm" onclick="syncAllClToFin()" title="Sincronizar todos los clientes desde el módulo Clientes">🔄 Sync</button>
                 <button class="btn btn-primary" onclick="openModalCliente()">+ Nuevo cliente</button>
               </div>
@@ -2623,7 +2624,12 @@ function openModalCliente(id=null) {
 }
 function cModalCalc() {
   const precioRaw=parseFloat(document.getElementById('c-precio').value);
-  if(isNaN(precioRaw)||precioRaw<0){document.getElementById('c-precio').style.borderColor='#F85149';showToast('⚠️ El precio no puede ser negativo');return;}
+  if(isNaN(precioRaw)||precioRaw<0){
+    document.getElementById('c-precio').style.borderColor='#F85149';
+    const proxWrapErr=document.getElementById('c-prox-cobro-wrap');
+    if(proxWrapErr) proxWrapErr.style.display='none';
+    return;
+  }
   document.getElementById('c-precio').style.borderColor='';
   const precio=precioRaw||0;
   const cobro=parseFloat(document.getElementById('c-cobro-inicial').value)||0;
@@ -2678,7 +2684,7 @@ function saveCliente() {
     appData.clientes.push(newCl);
   }
   // Sync proximoCobro to larryCRM_v2 fechas so the card in Clientes also lo muestra
-  if(proxFecha&&pendiente>0){
+  if(proxFecha&&pendienteReal>0){
     try{
       const finC=appData.clientes.find(x=>x.id===(editingClienteId||appData.clientes[appData.clientes.length-1].id));
       if(finC&&finC.clId){
