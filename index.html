@@ -65,6 +65,42 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
 .module { display: none; flex: 1; overflow: hidden; height: 100%; }
 .module.active { display: flex; flex-direction: column; }
 
+
+/* ─── RESPONSIVE / MÓVIL ───────────────────────────────────── */
+#sb-hamburger {
+  display: none;
+  position: fixed; top: 12px; left: 12px; z-index: 200;
+  background: #EDE8DB; border: 1px solid #CFC9B8;
+  border-radius: 8px; padding: 8px 10px;
+  font-size: 18px; cursor: pointer; line-height: 1;
+  box-shadow: 0 2px 8px rgba(44,32,16,0.12);
+}
+#sb-overlay-mobile {
+  display: none; position: fixed; inset: 0;
+  background: rgba(44,32,16,0.4); z-index: 99;
+}
+@media (max-width: 768px) {
+  body, html { overflow: auto; }
+  #sb-hamburger { display: block; }
+  #larry-shell { overflow-x: hidden; }
+  #sidebar {
+    position: fixed; left: -220px; top: 0; height: 100vh;
+    z-index: 100; transition: left .25s cubic-bezier(.4,0,.2,1);
+    box-shadow: 4px 0 24px rgba(44,32,16,0.18);
+  }
+  #sidebar.sb-open { left: 0; }
+  #sb-overlay-mobile.sb-open { display: block; }
+  #main-content { margin-left: 0 !important; width: 100%; }
+  #module-finanzas .kpi-grid { grid-template-columns: repeat(2,1fr) !important; }
+  #fin-subnav { left: 0 !important; flex-wrap: wrap; }
+  #fin-subnav button { font-size: 9px !important; padding: 9px 10px !important; }
+}
+@media (max-width: 480px) {
+  #module-finanzas .kpi-grid { grid-template-columns: 1fr !important; }
+  #module-finanzas .dash-grid { grid-template-columns: 1fr !important; }
+  #module-home > div > div[style*="grid-template-columns:1fr 1fr"] { display:block !important; }
+}
+
 /* ─── TOAST ────────────────────────────────────────────────────── */
 #toast {
   position: fixed; bottom: 24px; right: 24px;
@@ -126,7 +162,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
 
 #module-finanzas table { width:100%; border-collapse:collapse; }
 #module-finanzas th { text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); font-weight:600; padding:0 10px 10px; border-bottom:1px solid var(--border); font-family:'IBM Plex Mono',monospace; }
-#module-finanzas td { padding:11px 10px; border-bottom:1px solid rgba(37,32,24,0.7); font-size:13px; vertical-align:middle; color:var(--dark); }
+#module-finanzas td { padding:11px 10px; border-bottom:1px solid rgba(37,32,24,0.07); font-size:13px; vertical-align:middle; color:var(--dark); }
 #module-finanzas tr:last-child td { border-bottom:none; }
 #module-finanzas tr:hover td { background:rgba(201,168,76,0.03); }
 #module-finanzas .empty-row td { text-align:center; color:var(--muted); padding:28px; font-style:italic; font-size:12px; }
@@ -604,6 +640,8 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
 </head>
 <body>
 
+<button id="sb-hamburger" onclick="toggleSidebar()" aria-label="Menú">☰</button>
+<div id="sb-overlay-mobile" onclick="closeSidebar()"></div>
 <div id="larry-shell">
 
   <!-- ═══ SIDEBAR ═══ -->
@@ -615,6 +653,9 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
 
     <div class="sb-section">
       <div class="sb-section-label">MÓDULOS</div>
+      <button class="sb-btn" onclick="switchModule('home')" id="sb-home">
+        <span class="sb-icon">🏠</span> Home
+      </button>
       <button class="sb-btn active" onclick="switchModule('finanzas')" id="sb-finanzas">
         <span class="sb-icon">💰</span> Finanzas
       </button>
@@ -639,15 +680,76 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
       <div class="sb-month-label">MES ACTIVO</div>
       <select class="sb-month-select" id="globalMonth" onchange="onMonthChange()"></select>
       <div style="margin-top:12px;display:flex;gap:6px">
+        <button onclick="openGlobalSearch&&openGlobalSearch()" title="Búsqueda global (Cmd+K)" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;background:rgba(44,32,16,0.05);border:1px solid #BDB5A5;border-radius:6px;color:#7A6A50;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em;transition:all .15s;margin-bottom:6px" onmouseover="this.style.background='rgba(201,168,76,0.12)'" onmouseout="this.style.background='rgba(44,32,16,0.05)'">Buscar</button>
+        <div style="display:flex;gap:6px">
         <button onclick="backupData()" title="Descargar copia de seguridad de todos los datos" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);border-radius:6px;color:#C9A84C;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em;transition:all .15s" onmouseover="this.style.background='rgba(201,168,76,0.22)'" onmouseout="this.style.background='rgba(201,168,76,0.12)'">⬇ Backup</button>
         <button onclick="document.getElementById('restore-input').click()" title="Cargar copia de seguridad" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;background:rgba(44,32,16,0.05);border:1px solid #BDB5A5;border-radius:6px;color:#7A6A50;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em;transition:all .15s" onmouseover="this.style.background='rgba(44,32,16,0.1)'" onmouseout="this.style.background='rgba(44,32,16,0.05)'">⬆ Restaurar</button>
         <input type="file" id="restore-input" accept=".json" style="display:none" onchange="restoreData(event)">
-      </div>
+      </div></div>
     </div>
   </aside>
 
   <!-- ═══ MAIN ═══ -->
   <div id="main-content">
+
+
+    <!-- ── HOME MODULE ── -->
+    <div id="module-home" class="module" style="background:#F0EBE0;overflow-y:auto">
+      <div style="padding:28px 32px 48px;max-width:900px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid #CFC9B8">
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#2C2010" id="home-greeting">Buenos días ⚡</div>
+            <div style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace;letter-spacing:.12em;margin-top:2px" id="home-date-label">—</div>
+          </div>
+          <button onclick="renderHome()" style="padding:7px 14px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);border-radius:6px;color:#C9A84C;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em">↻ Actualizar</button>
+        </div>
+
+        <!-- KPI row -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px" id="home-kpis"></div>
+
+        <!-- 2 column layout -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <!-- Cobros urgentes -->
+          <div style="background:#EAE4D6;border:1px solid #CFC9B8;border-radius:10px;padding:18px">
+            <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#2C2010;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+              ⚡ Cobros esta semana
+              <button onclick="switchModule('finanzas')" style="font-size:10px;color:#C9A84C;background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace">Ver todo →</button>
+            </div>
+            <div id="home-cobros" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+
+          <!-- Tareas urgentes -->
+          <div style="background:#EAE4D6;border:1px solid #CFC9B8;border-radius:10px;padding:18px">
+            <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#2C2010;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+              🎛️ Tareas urgentes
+              <button onclick="switchModule('tareas')" style="font-size:10px;color:#C9A84C;background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace">Ver todo →</button>
+            </div>
+            <div id="home-tareas" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+        </div>
+
+        <!-- 2 column layout -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <!-- Próximas publicaciones -->
+          <div style="background:#EAE4D6;border:1px solid #CFC9B8;border-radius:10px;padding:18px">
+            <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#2C2010;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+              📅 Próximas publicaciones
+              <button onclick="switchModule('agenda')" style="font-size:10px;color:#C9A84C;background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace">Agenda →</button>
+            </div>
+            <div id="home-agenda" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+
+          <!-- CRM activos -->
+          <div style="background:#EAE4D6;border:1px solid #CFC9B8;border-radius:10px;padding:18px">
+            <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#2C2010;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+              ⬡ Leads en seguimiento
+              <button onclick="switchModule('crm')" style="font-size:10px;color:#C9A84C;background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace">CRM →</button>
+            </div>
+            <div id="home-leads" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- ── FINANZAS MODULE ── -->
     <div id="module-finanzas" class="module active">
@@ -665,6 +767,14 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
               <div class="kpi-card"><div class="kpi-label">Balance neto</div><div class="kpi-value" id="kpi-balance">€0</div><div class="kpi-sub">ingresos − gastos</div></div>
               <div class="kpi-card amber"><div class="kpi-label">Pendiente cobro</div><div class="kpi-value amber" id="kpi-pendiente">€0</div><div class="kpi-sub" id="kpi-pendiente-sub">en todos los clientes</div></div>
             </div>
+            <!-- Bloque cobros esta semana -->
+            <div id="dash-alert-cobros" class="card" style="display:none;margin-bottom:16px;border-color:rgba(248,81,73,0.35);background:rgba(248,81,73,0.03)">
+              <div class="card-title" style="margin-bottom:12px">
+                <span>⚠️ Cobros urgentes</span>
+                <span class="dash-alert-count badge badge-red" style="font-size:11px">0</span>
+              </div>
+              <div class="dash-alert-inner" style="display:flex;flex-direction:column;gap:6px"></div>
+            </div>
             <div class="dash-grid">
               <div class="card"><div class="card-title">Últimos cobros</div>
                 <table><thead><tr><th>Cliente</th><th>Fecha</th><th>Monto</th></tr></thead><tbody id="dash-cobros-body"></tbody></table>
@@ -674,7 +784,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
               </div>
             </div>
             <div class="card"><div class="card-title">Clientes con cobro pendiente</div>
-              <table><thead><tr><th>Cliente</th><th>Servicio</th><th>Total</th><th>Cobrado</th><th>Pendiente</th><th>Estado</th><th></th></tr></thead><tbody id="dash-pendientes-body"></tbody></table>
+              <table><thead><tr><th>Cliente</th><th>Servicio</th><th>Total</th><th>Cobrado</th><th>Pendiente</th><th>Próximo cobro</th><th>Estado</th><th></th></tr></thead><tbody id="dash-pendientes-body"></tbody></table>
             </div>
           </div>
 
@@ -721,37 +831,34 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
               </div>
             </div>
             <div class="card">
-              <table><thead><tr><th>Nombre</th><th>Servicio</th><th>Precio total</th><th>Cobrado</th><th>Pendiente</th><th>Progreso</th><th>Estado</th><th></th></tr></thead>
+              <table><thead><tr><th>Nombre</th><th>Servicio</th><th>Mes</th><th>Precio total</th><th>Cobrado</th><th>Pendiente</th><th>Próximo cobro</th><th>Progreso</th><th>Estado</th><th></th></tr></thead>
               <tbody id="clientes-body"></tbody></table>
             </div>
           </div>
 
           <div id="fin-page-gastos" class="fin-page" style="display:none">
             <div class="page-header">
-              <div><div class="page-title">Gastos</div><div class="page-subtitle" id="gastos-period">—</div></div>
+              <div><div class="page-title">Gastos &amp; Balance</div><div class="page-subtitle" id="gastos-period">—</div></div>
               <button class="btn btn-primary" onclick="openModalGasto()">+ Nuevo gasto</button>
             </div>
-            <div class="cat-grid" id="cat-filters"></div>
-            <div class="card">
-              <table><thead><tr><th>Descripción</th><th>Categoría</th><th>Fecha</th><th>Monto</th><th></th></tr></thead>
-              <tbody id="gastos-body"></tbody></table>
-            </div>
-          </div>
-
-          <div id="fin-page-balance" class="fin-page" style="display:none">
-            <div class="page-header">
-              <div><div class="page-title">Balance</div><div class="page-subtitle" id="balance-period">—</div></div>
-            </div>
-            <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+            <!-- Balance rápido del mes -->
+            <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
               <div class="kpi-card green"><div class="kpi-label">Ingresos del mes</div><div class="kpi-value green" id="bal-ingresos">€0</div></div>
               <div class="kpi-card red"><div class="kpi-label">Gastos del mes</div><div class="kpi-value red" id="bal-gastos">€0</div></div>
               <div class="kpi-card"><div class="kpi-label">Resultado neto</div><div class="kpi-value" id="bal-neto">€0</div></div>
             </div>
-            <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;margin-bottom:14px;color:#2C2010">Balance por cliente</div>
-            <div id="balance-clientes-list" style="margin-bottom:16px"></div>
+            <!-- Balance por cliente -->
+            <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;margin-bottom:12px;color:#2C2010">Balance por cliente <span id="balance-month-label" style="font-size:12px;font-weight:400;color:#7A6A50"></span></div>
+            <div id="balance-clientes-list" style="margin-bottom:20px"></div>
+            <div class="cat-grid" id="cat-filters"></div>
             <div class="card">
-              <div class="card-title">Gastos por categoría <span id="balance-month-label" style="font-size:12px;font-weight:400;color:#7A6A50"></span></div>
+              <div class="card-title">Gastos por categoría</div>
               <table><thead><tr><th>Categoría</th><th>N°</th><th>Total</th></tr></thead><tbody id="balance-cat-body"></tbody></table>
+            </div>
+            <div class="card">
+              <div class="card-title">Detalle de gastos</div>
+              <table><thead><tr><th>Descripción</th><th>Categoría</th><th>Fecha</th><th>Monto</th><th></th></tr></thead>
+              <tbody id="gastos-body"></tbody></table>
             </div>
           </div>
 
@@ -769,11 +876,10 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
         #module-finanzas .fin-main { padding-top: 56px; }
       </style>
       <div id="fin-subnav" style="display:none">
-        <button class="active" onclick="navigateFin('dashboard',this)">◈ Dashboard</button>
-        <button onclick="navigateFin('graficas',this)">◉ Gráficas</button>
-        <button onclick="navigateFin('clientes',this)">◎ Clientes</button>
-        <button onclick="navigateFin('gastos',this)">◐ Gastos</button>
-        <button onclick="navigateFin('balance',this)">◑ Balance</button>
+        <button class="active" data-fin-page="dashboard" onclick="navigateFin('dashboard',this)">◈ Dashboard</button>
+        <button data-fin-page="graficas" onclick="navigateFin('graficas',this)">◉ Gráficas</button>
+        <button data-fin-page="clientes" onclick="navigateFin('clientes',this)">◎ Clientes</button>
+        <button data-fin-page="gastos" onclick="navigateFin('gastos',this)">◐ Gastos &amp; Balance</button>
         <button onclick="printAnualPDF()" style="margin-left:auto;color:#C9A84C;border-bottom-color:transparent" title="Imprimir / exportar PDF completo del año">⬇ PDF Anual</button>
       </div>
 
@@ -825,6 +931,20 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
             <div id="c-cobro-nota-wrap" style="margin-top:8px">
               <label class="form-label">Nota del cobro (opcional)</label>
               <input class="form-input" id="c-cobro-nota" placeholder="Ej: Seña, pago completo, primera cuota…">
+            </div>
+            <!-- Próximo cobro — aparece cuando hay pendiente -->
+            <div id="c-prox-cobro-wrap" style="display:none;margin-top:12px;padding-top:12px;border-top:1px dashed rgba(248,81,73,0.25)">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#F85149;margin-bottom:8px;font-family:'IBM Plex Mono',monospace">📅 Próximo cobro programado</div>
+              <div class="form-row">
+                <div class="form-group" style="margin-bottom:0">
+                  <label class="form-label">Fecha del próximo cobro</label>
+                  <input class="form-input" type="date" id="c-prox-fecha">
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                  <label class="form-label">Etiqueta (opcional)</label>
+                  <input class="form-input" id="c-prox-label" placeholder="Ej: 2da cuota, saldo final…">
+                </div>
+              </div>
             </div>
           </div>
           <div class="form-group"><label class="form-label">Notas del cliente</label><textarea class="form-textarea" id="c-notas" rows="2" placeholder="Notas opcionales"></textarea></div>
@@ -920,6 +1040,25 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
                   <option>Ads</option><option>ManyChat</option><option>Landing</option>
                   <option>Ventas</option><option>Música</option><option>Admin</option><option>Otro</option>
                 </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div>
+                <div class="field-label">📅 Día recurrente</div>
+                <select id="f-dia" style="background:#EDE8DB;border:1px solid #CFC9B8;color:#2C2010;border-radius:7px;padding:9px 11px;width:100%;font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
+                  <option value="">— Ninguno —</option>
+                  <option value="1">Lunes</option>
+                  <option value="2">Martes</option>
+                  <option value="3">Miércoles</option>
+                  <option value="4">Jueves</option>
+                  <option value="5">Viernes</option>
+                  <option value="6">Sábado</option>
+                  <option value="0">Domingo</option>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;justify-content:flex-end">
+                <div class="field-label">Próximo día</div>
+                <div id="f-dia-preview" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9A8A6A;padding:9px 0">—</div>
               </div>
             </div>
             <div class="form-actions">
@@ -1449,12 +1588,23 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
     const list = clClients.filter(c => {
       const ms  = c.nombre.toLowerCase().includes(search);
       const mf  = clFilter === 'all' || String(c.etapa) === clFilter;
-      // Clients without mesKey are treated as legacy — show them always (backward compat)
-      const mes = !c.mesKey || c.mesKey === mesKey;
+      // Clientes activos (etapa < 3 = Terminado) aparecen en todos los meses
+      // desde su mes de alta hasta que se completen.
+      // Clientes terminados solo aparecen en su mes de alta.
+      const isTerminado = parseInt(c.etapa) >= 3;
+      const mes = !c.mesKey
+        ? true // legacy sin mesKey: mostrar siempre
+        : isTerminado
+          ? c.mesKey === mesKey // completados: solo en su mes
+          : c.mesKey <= mesKey; // activos: desde su mes de inicio hasta el mes actual
       return ms && mf && mes;
     });
     if (!list.length) {
-      const total = clClients.filter(c => !c.mesKey || c.mesKey === mesKey).length;
+      const total = clClients.filter(c => {
+        if (!c.mesKey) return true;
+        const isTerminado = parseInt(c.etapa) >= 3;
+        return isTerminado ? c.mesKey === mesKey : c.mesKey <= mesKey;
+      }).length;
       grid.innerHTML = `<div class="cl-empty">
         <div class="cl-empty-icon">🎛</div>
         <p>${total ? 'Sin resultados para ese filtro.' : `Sin clientes en ${clMesLabel(mesKey)}.`}</p>
@@ -1496,6 +1646,41 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
     }).join('');
     const epLabel = c.proceso==='EP' && c.canciones ? ` · ${c.canciones} temas` : '';
     const finBadge = hasFin ? `<span style="font-size:9px;background:rgba(74,140,98,0.15);color:#4a8c62;border-radius:4px;padding:1px 6px;font-family:'IBM Plex Mono',monospace;letter-spacing:.05em">🔗 FIN</span>` : '';
+
+    // Próximo cobro banner
+    let proxCobroHTML = '';
+    if (debe > 0 && (c.fechas||[]).length) {
+      const today = new Date().toISOString().split('T')[0];
+      const sorted = [...c.fechas].filter(f=>f.date).sort((a,b)=>a.date.localeCompare(b.date));
+      const next = sorted.find(f => f.date >= today) || null;
+      const overdue = sorted.filter(f => f.date < today);
+      if (next) {
+        const dObj = new Date(next.date + 'T00:00:00');
+        const diffDays = Math.ceil((dObj - new Date().setHours(0,0,0,0)) / 86400000);
+        const urgColor = diffDays <= 3 ? '#c0503a' : diffDays <= 7 ? '#b8883a' : '#4a8c62';
+        const urgBg   = diffDays <= 3 ? 'rgba(192,80,58,0.1)' : diffDays <= 7 ? 'rgba(184,136,58,0.1)' : 'rgba(74,140,98,0.1)';
+        const urgBorder = diffDays <= 3 ? 'rgba(192,80,58,0.3)' : diffDays <= 7 ? 'rgba(184,136,58,0.3)' : 'rgba(74,140,98,0.3)';
+        const icon = diffDays <= 3 ? '🔴' : diffDays <= 7 ? '🟡' : '🟢';
+        const when = diffDays === 0 ? 'Hoy' : diffDays === 1 ? 'Mañana' : `en ${diffDays}d`;
+        proxCobroHTML = `<div style="margin:0 14px 10px;padding:8px 12px;background:${urgBg};border:1px solid ${urgBorder};border-radius:7px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.2px;color:${urgColor};font-weight:700;text-transform:uppercase;margin-bottom:2px">${icon} Próximo cobro · ${when}</div>
+            <div style="font-size:13px;font-weight:700;color:var(--cl-ink)">${clFmtDate(next.date)}${next.label ? ` <span style="font-size:11px;color:var(--cl-ink-soft);font-weight:400">· ${next.label}</span>` : ''}</div>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:${urgColor}">€${Math.max(0,debe).toFixed(0)}</div>
+        </div>`;
+      } else if (overdue.length) {
+        // All dates passed and still pending
+        const last = overdue[overdue.length - 1];
+        proxCobroHTML = `<div style="margin:0 14px 10px;padding:8px 12px;background:rgba(192,80,58,0.1);border:1px solid rgba(192,80,58,0.35);border-radius:7px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.2px;color:#c0503a;font-weight:700;text-transform:uppercase;margin-bottom:2px">🔴 Cobro vencido</div>
+            <div style="font-size:13px;font-weight:700;color:var(--cl-ink)">${clFmtDate(last.date)}${last.label ? ` <span style="font-size:11px;color:var(--cl-ink-soft);font-weight:400">· ${last.label}</span>` : ''}</div>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:#c0503a">€${Math.max(0,debe).toFixed(0)}</div>
+        </div>`;
+      }
+    }
     div.innerHTML = `
       <div class="cl-card-head">
         <div style="display:flex;gap:11px;align-items:flex-start;flex:1;min-width:0">
@@ -1518,6 +1703,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
         <div class="cl-fin-cell"><div class="cl-fin-lbl">Pendiente</div><div class="cl-fin-val ${debe>0?'fv-due':'fv-zero'}">€${Math.max(0,debe).toFixed(0)}</div></div>
       </div>
       <div style="padding:0 14px 10px;"><div style="background:#d8cdb8;border-radius:4px;height:4px;overflow:hidden;"><div style="width:${pct}%;height:100%;border-radius:4px;background:${pct>=100?'#4a8c62':pct>=50?'#b8883a':'#c0503a'};transition:width .4s"></div></div></div>
+      ${proxCobroHTML}
       ${datesHTML}
       <div class="cl-card-bonus">${bonusHTML}</div>
       <div class="cl-card-actions">
@@ -1666,7 +1852,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
   window.clEditClient = function(id) { const c = clClients.find(x=>x.id===id); if(c) clOpenModal(c); };
 
   window.clDelClient = function(id) {
-    if (!confirm('¿Eliminar este cliente?')) return;
+    customConfirm('¿Eliminar este cliente del módulo Clientes?', function(){
     clClients = clClients.filter(x=>x.id!==id);
     clSave(); clRender();
     // 🔗 BRIDGE: Marcar como cancelado en Finanzas (preservar historial de cobros)
@@ -1678,6 +1864,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
         if (idx >= 0) { finData.clientes[idx].estado = 'cancelado'; localStorage.setItem('larryOS_finanzas', JSON.stringify(finData)); }
       }
     } catch(e) {}
+    }, 'Eliminar');
   };
 
   clToggleEP();
@@ -1769,12 +1956,13 @@ function restoreData(e) {
         return;
       }
       const dateStr = data._date ? new Date(data._date).toLocaleDateString('es-ES') : 'archivo';
-      if (!confirm('\u00bfRestaurar datos del backup del ' + dateStr + '?\n\nEsto reemplazar\u00e1 todos los datos actuales.')) return;
-      BACKUP_KEYS.forEach(k => {
-        if (data[k] !== undefined && data[k] !== null) localStorage.setItem(k, JSON.stringify(data[k]));
-      });
-      showToast('\u2713 Datos restaurados \u00b7 Recargando...');
-      setTimeout(() => location.reload(), 1200);
+      customConfirm('¿Restaurar backup del ' + dateStr + '? Se reemplazarán todos los datos actuales.', function(){
+        BACKUP_KEYS.forEach(k => {
+          if (data[k] !== undefined && data[k] !== null) localStorage.setItem(k, JSON.stringify(data[k]));
+        });
+        showToast('\u2713 Datos restaurados \u00b7 Recargando...');
+        setTimeout(() => location.reload(), 1200);
+      }, 'Restaurar');
     } catch(err) {
       showToast('\u26a0\ufe0f Error al leer el archivo');
     }
@@ -1784,7 +1972,7 @@ function restoreData(e) {
 }
 
 // ─── MONTH / YEAR SELECTOR (shared) ──────────────────────────
-let YEAR = new Date().getFullYear(); // Bug 3: dinámico en lugar de hardcodeado 2026
+let YEAR = new Date().getFullYear();
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
 function initMonthSelect() {
@@ -1800,7 +1988,7 @@ function initMonthSelect() {
 function initYearSelect() {
   const sel = document.getElementById('globalYear');
   const currentYear = new Date().getFullYear();
-  for (let y = currentYear - 3; y <= currentYear + 1; y++) {
+  for (let y = 2026; y <= 2030; y++) {
     const o = document.createElement('option');
     o.value = y; o.textContent = y;
     if (y === currentYear) o.selected = true;
@@ -1847,8 +2035,6 @@ function safeSave(key, data) {
 
 initMonthSelect();
 initYearSelect();
-// Bug 7: eliminado setDisplay redundante de fin-subnav (lo hace Finanzas JS en su init)
-// Bug 1: eliminado window.addEventListener('load', renderDashboard) — Finanzas JS lo llama directamente
 
 // ─── BRIDGE: CONEXIÓN CLIENTES ↔ FINANZAS ↔ CRM ─────────────
 const CL_PROC_LABELS_BRIDGE = { EP:'Ep/Lanzamiento', PROD:'Producción Completa', BEAT:'Beatmaking', MIX_SOLO:'Mix', MIX:'Mix & Master', MASTER:'Master' };
@@ -1913,7 +2099,7 @@ function openFinCobrosForCl(clId) {
   const finId = getFinClientId(clId);
   if (!finId) { showToast('⚠️ Primero guarda el cliente para sincronizar con Finanzas.'); return; }
   switchModule('finanzas');
-  const btn = document.querySelector('#fin-subnav button:nth-child(3)');
+  const btn = document.querySelector('#fin-subnav [data-fin-page="clientes"]');
   if (btn) navigateFin('clientes', btn);
   setTimeout(() => { if (typeof openModalPago === 'function') openModalPago(finId); }, 250);
 }
@@ -1942,6 +2128,54 @@ function crmMakeClient(lead) {
   }, 150);
 }
 window.crmMakeClient = crmMakeClient;
+
+// Auto-crea silenciosamente un cliente en larryCRM_v2 y lo sincroniza
+// con larryOS_finanzas cuando un lead CRM pasa a "cerrado"
+function crmAutoCreateClient(lead) {
+  try {
+    const procMap = {
+      'Beatmaking':'BEAT','Producción Completa':'PROD','EP/Lanzamiento':'EP',
+      'Ep/Lanzamiento':'EP','Master':'MASTER','Mix':'MIX_SOLO',
+      'Master por Stems':'MASTER','Edición + Mezcla':'MIX_SOLO',
+      'Edición + Mezcla + Master':'MIX','Mix & Master':'MIX',
+      'Mix&Master':'MIX','Análisis de Marca Artística':'PROD'
+    };
+    const clRaw = localStorage.getItem('larryCRM_v2');
+    const clClients = clRaw ? JSON.parse(clRaw) : [];
+    // Check if already exists (by nombre match)
+    const exists = clClients.find(c => c.nombre === lead.nombre);
+    if (exists) {
+      // Just sync to finanzas if not already synced
+      syncClToFin(exists);
+      showToast('🔗 ' + lead.nombre + ' ya existe en Clientes — sincronizado con Finanzas');
+      return;
+    }
+    const now = new Date();
+    const mesKey = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+    const newClient = {
+      id: 'crm_' + Date.now(),
+      nombre: lead.nombre || lead.instagram || 'Lead sin nombre',
+      proceso: procMap[lead.servicio] || 'PROD',
+      canciones: '',
+      etapa: 1, // En Producción
+      total: String(lead.valor || ''),
+      pagado: '0',
+      mesKey: mesKey,
+      bonus: [],
+      fechas: [],
+      _fromCRM: true
+    };
+    clClients.push(newClient);
+    localStorage.setItem('larryCRM_v2', JSON.stringify(clClients));
+    // Now sync to finanzas
+    syncClToFin(newClient);
+    showToast('✅ ' + newClient.nombre + ' → auto-creado en Clientes y Finanzas');
+    // Refresh clientes module if active
+    if (activeModule === 'clientes' && typeof clRender === 'function') clRender();
+  } catch(e) { console.warn('crmAutoCreateClient error', e); }
+}
+window.crmAutoCreateClient = crmAutoCreateClient;
+
 
 // Permite al CRM actualizar su año de filtro
 window.crmYearFilter = YEAR;
@@ -2012,8 +2246,7 @@ function navigateFin(page, btn) {
   if(page==='dashboard') renderDashboard();
   else if(page==='graficas') renderGraficas();
   else if(page==='clientes') renderClientes();
-  else if(page==='gastos') renderGastos();
-  else if(page==='balance') renderBalance();
+  else if(page==='gastos') { renderGastos(); renderBalance(); }
 }
 
 // ─── DASHBOARD ───────────────────────────────────────────────
@@ -2038,9 +2271,132 @@ function renderDashboard() {
   const gastosM = [...appData.gastos].sort((a,b)=>b.fecha.localeCompare(a.fecha));
   document.getElementById('dash-gastos-body').innerHTML = gastosM.slice(0,6).map(g=>`<tr><td><strong>${g.desc}</strong></td><td><span class="badge badge-gray">${g.cat}</span></td><td class="amount-neg">${fmt(g.monto)}</td></tr>`).join('')||'<tr class="empty-row"><td colspan="3">Sin gastos</td></tr>';
 
-  // Pendientes
+  // ── COBROS ESTA SEMANA ──────────────────────────────────────
+  (function(){
+    const today = new Date(); today.setHours(0,0,0,0);
+    const in7 = new Date(today); in7.setDate(in7.getDate()+7);
+    let alertItems = [];
+    // From larryCRM_v2 client dates
+    try {
+      const clRaw = localStorage.getItem('larryCRM_v2');
+      const clClients = clRaw ? JSON.parse(clRaw) : [];
+      clClients.forEach(c => {
+        const debe = parseFloat(c.total||0) - parseFloat(c.pagado||0);
+        if (debe <= 0) return;
+        (c.fechas||[]).forEach(f => {
+          if (!f.date) return;
+          const d = new Date(f.date + 'T00:00:00');
+          if (d <= in7) {
+            const diff = Math.ceil((d - today) / 86400000);
+            alertItems.push({ nombre:c.nombre, date:f.date, diff, label:f.label, overdue: diff < 0 });
+          }
+        });
+      });
+    } catch(e){}
+    // From finanzas proximoCobro
+    appData.clientes.forEach(c => {
+      if (c.proximoCobro && c.proximoCobro.fecha) {
+        const d = new Date(c.proximoCobro.fecha + 'T00:00:00');
+        const diff = Math.ceil((d - today) / 86400000);
+        if (diff <= 7) {
+          const alreadyThere = alertItems.find(a=>a.nombre===c.nombre&&a.date===c.proximoCobro.fecha);
+          if (!alreadyThere) alertItems.push({ nombre:c.nombre, date:c.proximoCobro.fecha, diff, label:c.proximoCobro.label, overdue: diff<0 });
+        }
+      }
+    });
+    alertItems.sort((a,b)=>a.diff-b.diff);
+
+    let alertHtml = '';
+    if (alertItems.length) {
+      const overdueItems = alertItems.filter(a=>a.overdue);
+      const upcomingItems = alertItems.filter(a=>!a.overdue);
+      const hasBoth = overdueItems.length && upcomingItems.length;
+      alertHtml = alertItems.map(a=>{
+        const color = a.overdue ? '#F85149' : a.diff<=3 ? '#C9A84C' : '#3FB950';
+        const bg    = a.overdue ? 'rgba(248,81,73,0.08)' : a.diff<=3 ? 'rgba(201,168,76,0.08)' : 'rgba(63,185,80,0.08)';
+        const icon  = a.overdue ? '🔴' : a.diff<=3 ? '🟡' : '🟢';
+        const when  = a.overdue ? Math.abs(a.diff)+'d vencido' : a.diff===0?'Hoy':a.diff===1?'Mañana':'en '+a.diff+'d';
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:${bg};border-radius:7px;border:1px solid ${color}22;font-size:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span>${icon}</span>
+            <strong style="color:#2C2010">${a.nombre}</strong>
+            ${a.label?`<span style="color:#9A8A6A;font-size:11px">· ${a.label}</span>`:''}
+          </div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:${color}">${when}</span>
+        </div>`;
+      }).join('');
+    }
+
+    const alertBlock = document.getElementById('dash-alert-cobros');
+    if (alertBlock) {
+      if (alertItems.length) {
+        alertBlock.style.display = 'block';
+        alertBlock.querySelector('.dash-alert-inner').innerHTML = alertHtml;
+        alertBlock.querySelector('.dash-alert-count').textContent = alertItems.length;
+      } else {
+        alertBlock.style.display = 'none';
+      }
+    }
+  })();
+
+  // Pendientes — agrupados por mes del último cobro
   const conPend = appData.clientes.filter(c=>totalPendiente(c)>0);
-  document.getElementById('dash-pendientes-body').innerHTML = conPend.map(c=>`<tr><td><strong>${c.nombre}</strong></td><td style="color:#7A6A50">${c.servicio||'—'}</td><td>${fmt(c.precio)}</td><td class="amount-pos">${fmt(totalCobrado(c))}</td><td class="amount-neg">${fmt(totalPendiente(c))}</td><td>${estadoBadge(c.estado)}</td><td><button class="btn btn-green btn-sm" onclick="openModalPago('${c.id}')">💰 Cobrar</button></td></tr>`).join('')||'<tr class="empty-row"><td colspan="7">Sin cobros pendientes 🎉</td></tr>';
+
+  // Group by month of last payment (same logic as renderClientes)
+  const getPendMesKey = (c) => {
+    if (c.pagos && c.pagos.length > 0) {
+      const last = [...c.pagos].sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
+      return last.fecha.substring(0, 7);
+    }
+    return '__nokey';
+  };
+
+  const pendSorted = [...conPend].sort((a,b) => {
+    const ka = getPendMesKey(a), kb = getPendMesKey(b);
+    if (ka === '__nokey' && kb === '__nokey') return a.nombre.localeCompare(b.nombre);
+    if (ka === '__nokey') return 1;
+    if (kb === '__nokey') return -1;
+    if (ka !== kb) return kb.localeCompare(ka);
+    return a.nombre.localeCompare(b.nombre);
+  });
+
+  const pendGroups = {}, pendOrder = [];
+  pendSorted.forEach(c => {
+    const mk = getPendMesKey(c);
+    if (!pendGroups[mk]) { pendGroups[mk] = []; pendOrder.push(mk); }
+    pendGroups[mk].push(c);
+  });
+
+  let pendHtml = '';
+  pendOrder.forEach(mk => {
+    if (mk !== '__nokey') {
+      const [y, m] = mk.split('-');
+      const mesTitle = MONTHS[parseInt(m)-1] + ' ' + y;
+      pendHtml += `<tr style="background:rgba(201,168,76,0.08)"><td colspan="8" style="padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.8px;color:#9A8A6A;text-transform:uppercase;border-bottom:1px solid #C8C0AE">◈ ${mesTitle}</td></tr>`;
+    }
+    pendGroups[mk].forEach(c => {
+      const proxCobro = getProximoCobro(c);
+      let proxPendHtml = '<span style="color:#9A8A6A;font-size:11px">—</span>';
+      if (proxCobro) {
+        const today = new Date().toISOString().split('T')[0];
+        const isVencido = proxCobro.date < today;
+        const color = isVencido ? '#F85149' : '#C9A84C';
+        proxPendHtml = `<div style="font-size:12px;font-weight:700;color:${color}">${isVencido?'⚠️ ':'📅 '}${fmtDate(proxCobro.date)}</div>${proxCobro.label?`<div style="font-size:10px;color:#9A8A6A">${proxCobro.label}</div>`:''}`;
+      }
+      pendHtml += `<tr>
+        <td><strong>${c.nombre}</strong></td>
+        <td style="color:#7A6A50">${c.servicio||'—'}</td>
+        <td>${fmt(c.precio)}</td>
+        <td class="amount-pos">${fmt(totalCobrado(c))}</td>
+        <td class="amount-neg">${fmt(totalPendiente(c))}</td>
+        <td>${proxPendHtml}</td>
+        <td>${estadoBadge(c.estado)}</td>
+        <td><button class="btn btn-green btn-sm" onclick="openModalCliente('${c.id}')">📅 Fecha</button> <button class="btn btn-green btn-sm" onclick="openModalPago('${c.id}')">💰 Cobrar</button></td>
+      </tr>`;
+    });
+  });
+
+  document.getElementById('dash-pendientes-body').innerHTML = pendHtml || '<tr class="empty-row"><td colspan="8">Sin cobros pendientes 🎉</td></tr>';
 }
 
 // ─── GRAFICAS ─────────────────────────────────────────────────
@@ -2097,35 +2453,132 @@ function renderGraficas() {
 }
 
 // ─── CLIENTES ─────────────────────────────────────────────────
+function getProximoCobro(finCliente) {
+  const ct = totalCobrado(finCliente);
+  const precio = Number(finCliente.precio || 0);
+  if (ct >= precio && precio > 0) return null; // ya pagado
+  // 1. Read from larryCRM_v2 fechas
+  try {
+    const clRaw = localStorage.getItem('larryCRM_v2');
+    if (clRaw && finCliente.clId) {
+      const clClients = JSON.parse(clRaw);
+      const cl = clClients.find(x => x.id === finCliente.clId);
+      if (cl && cl.fechas && cl.fechas.length) {
+        const today = new Date().toISOString().split('T')[0];
+        const sorted = [...cl.fechas].filter(f => f.date).sort((a,b)=>a.date.localeCompare(b.date));
+        const next = sorted.find(f => f.date >= today) || sorted[sorted.length - 1];
+        if (next) return { date: next.date, label: next.label };
+      }
+    }
+  } catch(e) {}
+  // 2. Fallback: proximoCobro stored directly on finanzas client
+  if (finCliente.proximoCobro && finCliente.proximoCobro.fecha) {
+    return { date: finCliente.proximoCobro.fecha, label: finCliente.proximoCobro.label };
+  }
+  return null;
+}
+
+function getMesLabel(client) {
+  // Try to get mesKey from clientes module
+  try {
+    const clRaw = localStorage.getItem('larryCRM_v2');
+    if (clRaw && client.clId) {
+      const clClients = JSON.parse(clRaw);
+      const cl = clClients.find(x => x.id === client.clId);
+      if (cl && cl.mesKey) {
+        const [y, m] = cl.mesKey.split('-');
+        return MONTHS[parseInt(m)-1] + ' ' + y;
+      }
+    }
+  } catch(e) {}
+  return '—';
+}
+
 function renderClientes() {
   const q = (document.getElementById('search-clientes').value||'').toLowerCase();
   let list = appData.clientes.filter(c=>!q||c.nombre.toLowerCase().includes(q)||(c.servicio||'').toLowerCase().includes(q));
-  document.getElementById('clientes-body').innerHTML = list.map(c=>{
-    const ct=totalCobrado(c),pend=totalPendiente(c),pct=c.precio>0?Math.min(100,(ct/c.precio)*100):0;
-    const barClass=pct>=100?'progress-bar':pct>=50?'progress-bar amber':'progress-bar red';
-    const crmBadge = c.clId ? `<span title="Sincronizado desde Clientes" style="font-size:9px;background:rgba(74,140,98,0.15);color:#4a8c62;border-radius:3px;padding:1px 5px;margin-left:6px;font-family:'IBM Plex Mono',monospace">🎤</span>` : '';
-    // Payment status icon
-    let pagoIcon='';
-    if(c.precio>0){
-      if(pct>=100) pagoIcon=`<span title="Pago completo" style="font-size:11px;margin-left:5px">✅</span>`;
-      else if(ct>0) pagoIcon=`<span title="Pago parcial — falta ${fmt(pend)}" style="font-size:11px;margin-left:5px">⚠️</span>`;
-      else pagoIcon=`<span title="Sin cobrar" style="font-size:11px;margin-left:5px">🔴</span>`;
+
+  // Group by month of last cobro
+  const getCMesKey = (c) => {
+    if (c.pagos && c.pagos.length > 0) {
+      const last = [...c.pagos].sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
+      return last.fecha.substring(0, 7); // YYYY-MM
     }
-    return `<tr>
-      <td><strong>${c.nombre}</strong>${crmBadge}${pagoIcon}</td>
-      <td style="color:#7A6A50">${c.servicio||'—'}</td>
-      <td>${fmt(c.precio)}</td>
-      <td class="amount-pos">${fmt(ct)}</td>
-      <td class="${pend>0?'amount-neg':''}">${pend>0?fmt(pend):'<span style="color:#3FB950;font-weight:600">—</span>'}</td>
-      <td style="width:100px"><div class="progress-wrap"><div class="${barClass}" style="width:${pct}%"></div></div><span style="font-size:10px;color:#7A6A50">${Math.round(pct)}%</span></td>
-      <td>${estadoBadge(c.estado)}</td>
-      <td style="display:flex;gap:5px;padding:8px">
-        <button class="btn btn-green btn-sm" onclick="openModalPago('${c.id}')">💰 Cobrar</button>
-        <button class="btn btn-ghost btn-sm" onclick="openModalCliente('${c.id}')">✎</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteCliente('${c.id}')">✕</button>
-      </td>
-    </tr>`;
-  }).join('')||'<tr class="empty-row"><td colspan="8">Sin clientes. Añade el primero o guarda uno desde el módulo Clientes.</td></tr>';
+    return '__nokey';
+  };
+
+  // Sort: most recent month first, __nokey at end, then by name
+  list = [...list].sort((a,b) => {
+    const ka = getCMesKey(a), kb = getCMesKey(b);
+    if (ka === '__nokey' && kb === '__nokey') return a.nombre.localeCompare(b.nombre);
+    if (ka === '__nokey') return 1;
+    if (kb === '__nokey') return -1;
+    if (ka !== kb) return kb.localeCompare(ka);
+    return a.nombre.localeCompare(b.nombre);
+  });
+
+  // Group
+  const groups = {}, groupOrder = [];
+  list.forEach(c => {
+    const mk = getCMesKey(c);
+    if (!groups[mk]) { groups[mk] = []; groupOrder.push(mk); }
+    groups[mk].push(c);
+  });
+
+  let html = '';
+  groupOrder.forEach(mk => {
+    // Only show separator for months with a real date
+    if (mk !== '__nokey') {
+      const [y, m] = mk.split('-');
+      const mesTitle = MONTHS[parseInt(m)-1] + ' ' + y;
+      html += `<tr style="background:rgba(201,168,76,0.08)"><td colspan="10" style="padding:7px 10px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.8px;color:#9A8A6A;text-transform:uppercase;border-bottom:1px solid #C8C0AE">◈ ${mesTitle}</td></tr>`;
+    }
+
+    groups[mk].forEach(c => {
+      const ct=totalCobrado(c),pend=totalPendiente(c),pct=c.precio>0?Math.min(100,(ct/c.precio)*100):0;
+      const barClass=pct>=100?'progress-bar':pct>=50?'progress-bar amber':'progress-bar red';
+      const crmBadge = c.clId ? `<span title="Sincronizado desde Clientes" style="font-size:9px;background:rgba(74,140,98,0.15);color:#4a8c62;border-radius:3px;padding:1px 5px;margin-left:6px;font-family:'IBM Plex Mono',monospace">🎤</span>` : '';
+      // Payment status icon
+      let pagoIcon='';
+      if(c.precio>0){
+        if(pct>=100) pagoIcon=`<span title="Pago completo" style="font-size:11px;margin-left:5px">✅</span>`;
+        else if(ct>0) pagoIcon=`<span title="Pago parcial — falta ${fmt(pend)}" style="font-size:11px;margin-left:5px">⚠️</span>`;
+        else pagoIcon=`<span title="Sin cobrar" style="font-size:11px;margin-left:5px">🔴</span>`;
+      }
+      // Próximo cobro
+      const proxCobro = getProximoCobro(c);
+      let proxHtml = '<span style="color:#9A8A6A;font-size:11px">—</span>';
+      if (pct >= 100) {
+        proxHtml = '<span style="color:#3FB950;font-size:11px;font-weight:600">✓ Saldado</span>';
+      } else if (proxCobro) {
+        const today = new Date().toISOString().split('T')[0];
+        const isVencido = proxCobro.date < today;
+        const color = isVencido ? '#F85149' : '#C9A84C';
+        proxHtml = `<div style="font-size:11px;font-weight:600;color:${color}">${fmtDate(proxCobro.date)}</div>${proxCobro.label?`<div style="font-size:10px;color:#9A8A6A">${proxCobro.label}</div>`:''}`;
+      }
+      // Mes label
+      const mesLabel = getMesLabel(c);
+
+      html += `<tr>
+        <td><strong>${c.nombre}</strong>${crmBadge}${pagoIcon}</td>
+        <td style="color:#7A6A50">${c.servicio||'—'}</td>
+        <td style="font-size:11px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">${mesLabel}</td>
+        <td>${fmt(c.precio)}</td>
+        <td class="amount-pos">${fmt(ct)}</td>
+        <td class="${pend>0?'amount-neg':''}">${pend>0?fmt(pend):'<span style="color:#3FB950;font-weight:600">—</span>'}</td>
+        <td>${proxHtml}</td>
+        <td style="width:100px"><div class="progress-wrap"><div class="${barClass}" style="width:${pct}%"></div></div><span style="font-size:10px;color:#7A6A50">${Math.round(pct)}%</span></td>
+        <td>${estadoBadge(c.estado)}</td>
+        <td style="display:flex;gap:5px;padding:8px">
+          <button class="btn btn-green btn-sm" onclick="openModalPago('${c.id}')">💰 Cobrar</button>
+          <button class="btn btn-ghost btn-sm" onclick="openModalCliente('${c.id}')">✎</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCliente('${c.id}')">✕</button>
+        </td>
+      </tr>`;
+    });
+  });
+
+  document.getElementById('clientes-body').innerHTML = html || '<tr class="empty-row"><td colspan="10">Sin clientes. Añade el primero o guarda uno desde el módulo Clientes.</td></tr>';
 }
 
 function openModalCliente(id=null) {
@@ -2145,6 +2598,12 @@ function openModalCliente(id=null) {
     document.getElementById('c-notas').value=c.notas||'';
     document.getElementById('c-cobro-inicial').value='';
     document.getElementById('c-cobro-nota').value='';
+    // Show próximo cobro whenever there's a pending amount; pre-fill stored date
+    const pc = c.proximoCobro;
+    document.getElementById('c-prox-fecha').value = pc&&pc.fecha ? pc.fecha : '';
+    document.getElementById('c-prox-label').value = pc&&pc.label ? pc.label : '';
+    const pw=document.getElementById('c-prox-cobro-wrap');
+    if(pw) pw.style.display = totalPendiente(c)>0 ? 'block' : 'none';
   } else {
     document.getElementById('c-nombre').value='';
     document.getElementById('c-servicio').value='Beatmaking';
@@ -2153,6 +2612,9 @@ function openModalCliente(id=null) {
     document.getElementById('c-notas').value='';
     document.getElementById('c-cobro-inicial').value='';
     document.getElementById('c-cobro-nota').value='';
+    document.getElementById('c-prox-fecha').value='';
+    document.getElementById('c-prox-label').value='';
+    const pw=document.getElementById('c-prox-cobro-wrap');if(pw)pw.style.display='none';
   }
   cModalCalc();
   const cobroLabel = document.getElementById('c-cobro-section-label');
@@ -2160,24 +2622,47 @@ function openModalCliente(id=null) {
   document.getElementById('modal-cliente').classList.add('open');
 }
 function cModalCalc() {
-  const precio=parseFloat(document.getElementById('c-precio').value)||0;
+  const precioRaw=parseFloat(document.getElementById('c-precio').value);
+  if(isNaN(precioRaw)||precioRaw<0){document.getElementById('c-precio').style.borderColor='#F85149';showToast('⚠️ El precio no puede ser negativo');return;}
+  document.getElementById('c-precio').style.borderColor='';
+  const precio=precioRaw||0;
   const cobro=parseFloat(document.getElementById('c-cobro-inicial').value)||0;
   const pend=Math.max(0,precio-cobro);
   const el=document.getElementById('c-pendiente-calc');
   el.textContent=fmt(pend);
   el.style.color=pend<=0?'#3FB950':'#F85149';
+  // Mostrar campo de próximo cobro solo si hay pendiente
+  const proxWrap=document.getElementById('c-prox-cobro-wrap');
+  if(proxWrap) proxWrap.style.display=pend>0?'block':'none';
 }
 function saveCliente() {
   const nombre=document.getElementById('c-nombre').value.trim();
   if(!nombre){showToast('⚠️ Nombre obligatorio');return;}
   const servicio=document.getElementById('c-servicio').value;
-  const precio=parseFloat(document.getElementById('c-precio').value)||0;
+  const precioRaw=parseFloat(document.getElementById('c-precio').value);
+  if(isNaN(precioRaw)||precioRaw<0){document.getElementById('c-precio').style.borderColor='#F85149';showToast('⚠️ El precio no puede ser negativo');return;}
+  document.getElementById('c-precio').style.borderColor='';
+  const precio=precioRaw||0;
   const estado=document.getElementById('c-estado').value;
   const notas=document.getElementById('c-notas').value.trim();
-  const cobroMonto=parseFloat(document.getElementById('c-cobro-inicial').value)||0;
+  const cobroMontoRaw=parseFloat(document.getElementById('c-cobro-inicial').value)||0;
+  if(cobroMontoRaw<0){document.getElementById('c-cobro-inicial').style.borderColor='#F85149';showToast('⚠️ El cobro no puede ser negativo');return;}
+  if(precio>0&&cobroMontoRaw>precio){document.getElementById('c-cobro-inicial').style.borderColor='#F85149';showToast('⚠️ El cobro supera el precio total');return;}
+  document.getElementById('c-cobro-inicial').style.borderColor='';
+  const cobroMonto=cobroMontoRaw;
   const cobroFecha=document.getElementById('c-cobro-fecha').value||new Date().toISOString().split('T')[0];
   const cobroNota=document.getElementById('c-cobro-nota').value.trim();
+  const proxFecha=document.getElementById('c-prox-fecha').value||'';
+  const proxLabel=document.getElementById('c-prox-label').value.trim()||'Próximo cobro';
+  const pendienteNuevo=Math.max(0,precio-cobroMonto);
+  // For edits, real pending = existing pending - new cobro
+  const pendienteReal = editingClienteId
+    ? Math.max(0, totalPendiente(appData.clientes.find(x=>x.id===editingClienteId)||{precio:precio,pagos:[]}) - cobroMonto)
+    : pendienteNuevo;
   const obj={nombre,servicio,precio,estado,notas};
+  if(proxFecha && pendienteReal>0) obj.proximoCobro={fecha:proxFecha,label:proxLabel};
+  else obj.proximoCobro=null;
+
   if(editingClienteId){
     const i=appData.clientes.findIndex(x=>x.id===editingClienteId);
     appData.clientes[i]={...appData.clientes[i],...obj};
@@ -2192,8 +2677,27 @@ function saveCliente() {
     }
     appData.clientes.push(newCl);
   }
+  // Sync proximoCobro to larryCRM_v2 fechas so the card in Clientes also lo muestra
+  if(proxFecha&&pendiente>0){
+    try{
+      const finC=appData.clientes.find(x=>x.id===(editingClienteId||appData.clientes[appData.clientes.length-1].id));
+      if(finC&&finC.clId){
+        const clRaw=localStorage.getItem('larryCRM_v2');
+        if(clRaw){
+          const clClients=JSON.parse(clRaw);
+          const ci=clClients.findIndex(x=>x.id===finC.clId);
+          if(ci>=0){
+            const fechas=clClients[ci].fechas||[];
+            // Remove old proxCobro entry and add new one
+            clClients[ci].fechas=fechas.filter(f=>f._finProx!==true);
+            clClients[ci].fechas.push({label:proxLabel,date:proxFecha,_finProx:true});
+            localStorage.setItem('larryCRM_v2',JSON.stringify(clClients));
+          }
+        }
+      }
+    }catch(e){}
+  }
   save();closeModal('modal-cliente');renderClientes();renderDashboard();
-  const pendiente=Math.max(0,precio-cobroMonto);
   // Fix 4: auto-completar si el cobro lleva a 100%
   if(editingClienteId){
     const c=appData.clientes.find(x=>x.id===editingClienteId);
@@ -2202,11 +2706,11 @@ function saveCliente() {
       showToast(`✅ ${c.nombre} — 100% cobrado. Estado → Completado`);
     }
   }
-  if(cobroMonto>0&&pendiente>0) showToast(`✓ Cliente guardado · Cobrado ${fmt(cobroMonto)} · Pendiente ${fmt(pendiente)}`);
+  if(cobroMonto>0&&pendienteReal>0) showToast(`✓ Cliente guardado · Cobrado ${fmt(cobroMonto)} · Próx. cobro ${proxFecha?fmtDate(proxFecha):'sin fecha'}`);
   else if(cobroMonto>0) showToast(`✓ Cliente guardado · Pago completo ${fmt(cobroMonto)}`);
   else showToast(editingClienteId?'Cliente actualizado':'Cliente creado ✓');
 }
-function deleteCliente(id){if(!confirm('¿Eliminar este cliente?'))return;appData.clientes=appData.clientes.filter(c=>c.id!==id);save();renderClientes();renderDashboard();renderBalance();showToast('Cliente eliminado');}
+function deleteCliente(id){customConfirm('¿Eliminar este cliente? Esta acción no se puede deshacer.',function(){appData.clientes=appData.clientes.filter(c=>c.id!==id);save();renderClientes();renderDashboard();renderBalance();showToast('Cliente eliminado');},'Eliminar');}
 
 // ─── PAGOS ────────────────────────────────────────────────────
 function openModalPago(clienteId) {
@@ -2253,7 +2757,7 @@ function savePago() {
       }
     } catch(e) {}
   }
-  openModalPago(editingPagoClienteId);renderClientes();renderDashboard();if(document.getElementById('fin-page-balance').style.display!=='none')renderBalance();showToast(`Cobro de ${fmt(monto)} registrado ✓`);
+  openModalPago(editingPagoClienteId);renderClientes();renderDashboard();showToast(`Cobro de ${fmt(monto)} registrado ✓`);
 }
 function deletePago(clienteId,pagoId){const c=appData.clientes.find(x=>x.id===clienteId);c.pagos=c.pagos.filter(p=>p.id!==pagoId);save();openModalPago(clienteId);renderClientes();renderDashboard();showToast('Pago eliminado');}
 
@@ -2267,6 +2771,8 @@ function renderGastos() {
   const allCats=[...new Set(gastosEnMes(mes).map(g=>g.cat))];
   document.getElementById('cat-filters').innerHTML=`<button class="cat-pill ${activeCat==='todas'?'active':''}" onclick="filterCat('todas')">Todas</button>`+allCats.map(c=>`<button class="cat-pill ${activeCat===c?'active':''}" onclick="filterCat('${c}')">${c}</button>`).join('');
   document.getElementById('gastos-body').innerHTML=gm.map(g=>`<tr><td><strong>${g.desc}</strong></td><td><span class="badge badge-gray">${g.cat}</span></td><td style="color:#7A6A50">${fmtDate(g.fecha)}</td><td class="amount-neg">${fmt(g.monto)}</td><td style="display:flex;gap:5px;padding:8px"><button class="btn btn-ghost btn-sm" onclick="openModalGasto('${g.id}')">✎</button><button class="btn btn-danger btn-sm" onclick="deleteGasto('${g.id}')">✕</button></td></tr>`).join('')||'<tr class="empty-row"><td colspan="5">Sin gastos en este mes</td></tr>';
+  // Render balance inline
+  renderBalance();
 }
 function filterCat(cat){activeCat=cat;renderGastos();}
 function openModalGasto(id=null){
@@ -2283,39 +2789,41 @@ function openModalGasto(id=null){
 }
 function deleteGastoFromModal(){
   const id=document.getElementById('g-id').value;
-  if(!id||!confirm('¿Eliminar este gasto?'))return;
-  appData.gastos=appData.gastos.filter(g=>g.id!==id);
-  save();closeModal('modal-gasto');renderGastos();renderDashboard();
-  if(document.getElementById('fin-page-balance').style.display!=='none')renderBalance();
-  showToast('Gasto eliminado');
+  if(!id)return;
+  customConfirm('¿Eliminar este gasto?',function(){const g2=document.getElementById('g-id').value;if(!g2)return;appData.gastos=appData.gastos.filter(g=>g.id!==g2);save();closeModal('modal-gasto');renderGastos();renderDashboard();showToast('Gasto eliminado');},'Eliminar');
 }
 function saveGasto(){
-  const desc=document.getElementById('g-desc').value.trim(),monto=parseFloat(document.getElementById('g-monto').value)||0;
-  if(!desc){showToast('⚠️ Descripción obligatoria');return;}
-  if(!monto){showToast('⚠️ Ingresa un monto');return;}
+  const desc=document.getElementById('g-desc').value.trim();
+  if(!desc){document.getElementById('g-desc').style.borderColor='#F85149';showToast('⚠️ Descripción obligatoria');return;}
+  document.getElementById('g-desc').style.borderColor='';
+  const montoRaw=parseFloat(document.getElementById('g-monto').value)||0;
+  if(montoRaw<=0){document.getElementById('g-monto').style.borderColor='#F85149';showToast('⚠️ Ingresa un monto válido (> 0)');return;}
+  document.getElementById('g-monto').style.borderColor='';
+  const monto=montoRaw;
   const id=document.getElementById('g-id').value;
   const cat=document.getElementById('g-cat').value;
   const fecha=document.getElementById('g-fecha').value;
+  if(!fecha){document.getElementById('g-fecha').style.borderColor='#F85149';showToast('⚠️ Selecciona una fecha');return;}
+  document.getElementById('g-fecha').style.borderColor='';
   if(id){
     const i=appData.gastos.findIndex(g=>g.id===id);
     if(i>=0)appData.gastos[i]={...appData.gastos[i],desc,cat,monto,fecha};
     save();closeModal('modal-gasto');renderGastos();renderDashboard();
-    if(document.getElementById('fin-page-balance').style.display!=='none')renderBalance();
+    
     showToast('Gasto actualizado ✓');
   } else {
     appData.gastos.push({id:crypto.randomUUID(),desc,cat,monto,fecha});
     save();closeModal('modal-gasto');renderGastos();renderDashboard();
-    if(document.getElementById('fin-page-balance').style.display!=='none')renderBalance();
+    
     showToast('Gasto guardado ✓');
   }
 }
-function deleteGasto(id){if(!confirm('¿Eliminar este gasto?'))return;appData.gastos=appData.gastos.filter(g=>g.id!==id);save();renderGastos();renderDashboard();if(document.getElementById('fin-page-balance').style.display!=='none')renderBalance();showToast('Gasto eliminado');}
+function deleteGasto(id){customConfirm('¿Eliminar este gasto?',function(){appData.gastos=appData.gastos.filter(g=>g.id!==id);save();renderGastos();renderDashboard();showToast('Gasto eliminado');},'Eliminar');}
 
 // ─── BALANCE ──────────────────────────────────────────────────
 function renderBalance() {
   const mes=getSelectedMonth(),label=getMonthLabel();
-  document.getElementById('balance-period').textContent=label+' '+YEAR;
-  document.getElementById('balance-month-label').textContent=label;
+  document.getElementById('balance-month-label').textContent=label+' '+YEAR;
   const ing=ingresosEnMes(mes),gas=totalGastosEnMes(mes),neto=ing-gas;
   document.getElementById('bal-ingresos').textContent=fmt(ing);
   document.getElementById('bal-gastos').textContent=fmt(gas);
@@ -2563,6 +3071,354 @@ load();
 renderDashboard();
 </script>
 
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL DE CONFIRMACIÓN PROPIO (sustituye confirm() del browser)
+═══════════════════════════════════════════════════════════════════ -->
+<div id="custom-confirm-overlay" style="display:none;position:fixed;inset:0;background:rgba(44,32,16,0.55);z-index:99999;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div id="custom-confirm-box" style="background:#EAE4D6;border:1px solid #BDB5A5;border-radius:14px;padding:28px 28px 22px;width:360px;max-width:92vw;box-shadow:0 16px 48px rgba(44,32,16,0.28);font-family:'DM Sans',sans-serif">
+    <div id="custom-confirm-msg" style="font-size:14px;color:#2C2010;line-height:1.55;margin-bottom:22px;font-weight:500"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button id="custom-confirm-no"  style="padding:8px 18px;border-radius:8px;border:1.5px solid #BDB5A5;background:transparent;color:#7A6A50;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s">Cancelar</button>
+      <button id="custom-confirm-yes" style="padding:8px 18px;border-radius:8px;border:none;background:#F85149;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     GLOBAL SEARCH Cmd+K
+═══════════════════════════════════════════════════════════════════ -->
+<div id="global-search-overlay" style="display:none;position:fixed;inset:0;background:rgba(44,32,16,0.60);z-index:99998;align-items:flex-start;justify-content:center;backdrop-filter:blur(6px);padding-top:80px">
+  <div style="background:#EAE4D6;border:1px solid #BDB5A5;border-radius:14px;width:560px;max-width:94vw;box-shadow:0 20px 60px rgba(44,32,16,0.32);overflow:hidden;font-family:'DM Sans',sans-serif">
+    <div style="display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid #CFC9B8;gap:10px">
+      <span style="font-size:16px;color:#9A8A6A">🔍</span>
+      <input id="global-search-input" type="text" placeholder="Buscar en todos los módulos..." autocomplete="off"
+        style="flex:1;background:transparent;border:none;outline:none;font-size:15px;color:#2C2010;font-family:'DM Sans',sans-serif">
+      <span style="font-size:10px;color:#9A8A6A;background:#DDD7C8;padding:3px 7px;border-radius:4px;font-family:'IBM Plex Mono',monospace">ESC</span>
+    </div>
+    <div id="global-search-results" style="max-height:380px;overflow-y:auto;padding:8px 0"></div>
+    <div style="padding:10px 18px;border-top:1px solid #CFC9B8;display:flex;gap:16px">
+      <span style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">💰 Finanzas</span>
+      <span style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">🎤 Clientes</span>
+      <span style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">⬡ CRM</span>
+      <span style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">🎛️ Tareas</span>
+      <span style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">📅 Agenda</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CUSTOM CONFIRM ──────────────────────────────────────────
+(function(){
+  let _cb = null;
+  const overlay = document.getElementById('custom-confirm-overlay');
+  const msg     = document.getElementById('custom-confirm-msg');
+  const yesBtn  = document.getElementById('custom-confirm-yes');
+  const noBtn   = document.getElementById('custom-confirm-no');
+
+  window.customConfirm = function(text, onYes, dangerLabel) {
+    msg.textContent = text;
+    if (dangerLabel) yesBtn.textContent = dangerLabel;
+    else yesBtn.textContent = 'Confirmar';
+    _cb = onYes;
+    overlay.style.display = 'flex';
+    setTimeout(()=>noBtn.focus(), 50);
+  };
+
+  yesBtn.onclick = () => { overlay.style.display = 'none'; if (_cb) _cb(); _cb = null; };
+  noBtn.onclick  = () => { overlay.style.display = 'none'; _cb = null; };
+  overlay.onclick = (e) => { if (e.target === overlay) { overlay.style.display = 'none'; _cb = null; } };
+  document.addEventListener('keydown', (e) => {
+    if (overlay.style.display === 'flex' && e.key === 'Escape') {
+      overlay.style.display = 'none'; _cb = null;
+    }
+  });
+})();
+
+// ─── GLOBAL SEARCH Cmd+K ─────────────────────────────────────
+(function(){
+  const overlay = document.getElementById('global-search-overlay');
+  const input   = document.getElementById('global-search-input');
+  const results = document.getElementById('global-search-results');
+
+  function openSearch() {
+    overlay.style.display = 'flex';
+    input.value = '';
+    results.innerHTML = `<div style="padding:20px;text-align:center;color:#9A8A6A;font-size:12px;font-family:'IBM Plex Mono',monospace">Escribe para buscar…</div>`;
+    setTimeout(()=>input.focus(), 50);
+  }
+  function closeSearch() {
+    overlay.style.display = 'none';
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
+    if (e.key === 'Escape' && overlay.style.display === 'flex') closeSearch();
+  });
+  overlay.onclick = (e) => { if (e.target === overlay) closeSearch(); };
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    if (!q) { results.innerHTML = `<div style="padding:20px;text-align:center;color:#9A8A6A;font-size:12px;font-family:'IBM Plex Mono',monospace">Escribe para buscar…</div>`; return; }
+    let hits = [];
+
+    // Search Finanzas clientes
+    try {
+      const fd = JSON.parse(localStorage.getItem('larryOS_finanzas') || '{}');
+      (fd.clientes||[]).filter(c=>(c.nombre||'').toLowerCase().includes(q)||(c.servicio||'').toLowerCase().includes(q))
+        .slice(0,4).forEach(c=>hits.push({ icon:'💰', module:'finanzas', label: c.nombre, sub: c.servicio||'', action: ()=>{ closeSearch(); switchModule('finanzas'); setTimeout(()=>{ const btn=document.querySelector('#fin-subnav [data-fin-page="clientes"]'); if(btn)navigateFin('clientes',btn); },200); } }));
+    } catch(e){}
+
+    // Search CRM leads
+    try {
+      const leads = JSON.parse(localStorage.getItem('larry:leads') || '[]');
+      leads.filter(l=>(l.nombre||'').toLowerCase().includes(q)||(l.instagram||'').toLowerCase().includes(q)||(l.servicio||'').toLowerCase().includes(q))
+        .slice(0,4).forEach(l=>hits.push({ icon:'⬡', module:'crm', label: l.instagram?`@${l.instagram}`:l.nombre, sub: l.servicio||'', action: ()=>{ closeSearch(); switchModule('crm'); } }));
+    } catch(e){}
+
+    // Search Clientes module
+    try {
+      const cls = JSON.parse(localStorage.getItem('larryCRM_v2') || '[]');
+      cls.filter(c=>(c.nombre||'').toLowerCase().includes(q))
+        .slice(0,4).forEach(c=>hits.push({ icon:'🎤', module:'clientes', label: c.nombre, sub: ['Sin Empezar','En Producción','En Revisión','Terminado'][parseInt(c.etapa,10)]||'', action: ()=>{ closeSearch(); switchModule('clientes'); } }));
+    } catch(e){}
+
+    // Search Tareas
+    try {
+      const tasks = JSON.parse(localStorage.getItem('larry_os_tasks') || '[]');
+      tasks.filter(t=>(t.titulo||'').toLowerCase().includes(q)||(t.descripcion||'').toLowerCase().includes(q))
+        .slice(0,4).forEach(t=>hits.push({ icon:'🎛️', module:'tareas', label: t.titulo, sub: t.categoria||'', action: ()=>{ closeSearch(); switchModule('tareas'); } }));
+    } catch(e){}
+
+    // Search Agenda
+    try {
+      const agData = JSON.parse(localStorage.getItem('agenda_v1') || '{}');
+      Object.values(agData).flat().filter(e=>e&&(e.title||'').toLowerCase().includes(q))
+        .slice(0,4).forEach(e=>hits.push({ icon:'📅', module:'agenda', label: e.title, sub: e.platform||'', action: ()=>{ closeSearch(); switchModule('agenda'); } }));
+    } catch(e){}
+
+    if (!hits.length) {
+      results.innerHTML = `<div style="padding:20px;text-align:center;color:#9A8A6A;font-size:12px;font-family:'IBM Plex Mono',monospace">Sin resultados para "${escT(q)}"</div>`;
+      return;
+    }
+    results.innerHTML = hits.map((h,i)=>`
+      <div class="gs-result" data-idx="${i}" style="display:flex;align-items:center;gap:12px;padding:11px 18px;cursor:pointer;transition:background .1s;border-bottom:1px solid #DDD7C8">
+        <span style="font-size:16px">${h.icon}</span>
+        <div style="min-width:0">
+          <div style="font-size:13px;font-weight:600;color:#2C2010;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escT(h.label)}</div>
+          ${h.sub?`<div style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">${escT(h.sub)}</div>`:''}
+        </div>
+        <div style="margin-left:auto;font-size:10px;color:#BDB5A5;font-family:'IBM Plex Mono',monospace">${h.module.toUpperCase()}</div>
+      </div>`).join('');
+    results.querySelectorAll('.gs-result').forEach((el,i)=>{
+      el.onmouseenter = ()=>el.style.background='rgba(201,168,76,0.08)';
+      el.onmouseleave = ()=>el.style.background='';
+      el.onclick = ()=>hits[i].action();
+    });
+  });
+
+  // Expose opener for sidebar button
+  window.openGlobalSearch = openSearch;
+})();
+</script>
+
+
+<script>
+// ─── MOBILE SIDEBAR ───────────────────────────────────────────
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('sb-open');
+  document.getElementById('sb-overlay-mobile').classList.toggle('sb-open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('sb-open');
+  document.getElementById('sb-overlay-mobile').classList.remove('sb-open');
+}
+
+// Patch switchModule to close sidebar on mobile and support 'home'
+const _switchModuleBase = window.switchModule || function(){};
+window.switchModule = function(mod) {
+  _switchModuleBase(mod);
+  closeSidebar();
+  if (mod === 'home') setTimeout(renderHome, 50);
+};
+
+// ─── HOME MODULE RENDER ──────────────────────────────────────
+function renderHome() {
+  // Greeting
+  const hr = new Date().getHours();
+  const greet = hr < 12 ? 'Buenos días ⚡' : hr < 20 ? 'Buenas tardes ⚡' : 'Buenas noches ⚡';
+  const el = document.getElementById('home-greeting');
+  if (el) el.textContent = greet;
+  const dl = document.getElementById('home-date-label');
+  if (dl) dl.textContent = new Date().toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).toUpperCase();
+
+  // KPIs
+  const kpisEl = document.getElementById('home-kpis');
+  if (kpisEl) {
+    try {
+      const fd = JSON.parse(localStorage.getItem('larryOS_finanzas')||'{}');
+      const clientes = fd.clientes||[];
+      const gastos   = fd.gastos||[];
+      const mes = new Date().getMonth()+1, yr = new Date().getFullYear();
+      const ingMes = clientes.reduce((s,c)=>{
+        return s + (c.pagos||[]).filter(p=>{const d=new Date(p.fecha+'T12:00:00');return d.getFullYear()===yr&&d.getMonth()+1===mes;}).reduce((x,p)=>x+Number(p.monto),0);
+      },0);
+      const gasMes = gastos.filter(g=>{const d=new Date(g.fecha+'T12:00:00');return d.getFullYear()===yr&&d.getMonth()+1===mes;}).reduce((s,g)=>s+Number(g.monto),0);
+      const pendTotal = clientes.reduce((s,c)=>s+Math.max(0,Number(c.precio||0)-(c.pagos||[]).reduce((x,p)=>x+Number(p.monto),0)),0);
+      const tasks = JSON.parse(localStorage.getItem('larry_os_tasks')||'[]');
+      const tasksPend = tasks.filter(t=>t.estado!=='hecho').length;
+      const fmt2 = n => '€'+(n||0).toLocaleString('es-ES',{minimumFractionDigits:0,maximumFractionDigits:0});
+      kpisEl.innerHTML = [
+        {label:'Ingresos del mes',val:fmt2(ingMes),color:'#3FB950',bg:'rgba(63,185,80,0.08)'},
+        {label:'Gastos del mes',val:fmt2(gasMes),color:'#F85149',bg:'rgba(248,81,73,0.08)'},
+        {label:'Pendiente cobro',val:fmt2(pendTotal),color:'#C9A84C',bg:'rgba(201,168,76,0.08)'},
+        {label:'Tareas activas',val:tasksPend,color:'#58A6FF',bg:'rgba(88,166,255,0.08)'},
+      ].map(k=>`<div style="background:${k.bg};border:1px solid ${k.color}33;border-radius:10px;padding:16px;text-align:center">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#9A8A6A;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">${k.label}</div>
+        <div style="font-size:24px;font-weight:700;color:${k.color};font-family:'Playfair Display',serif">${k.val}</div>
+      </div>`).join('');
+    } catch(e){}
+  }
+
+  // Cobros esta semana
+  const cobrosEl = document.getElementById('home-cobros');
+  if (cobrosEl) {
+    try {
+      const today2 = new Date(); today2.setHours(0,0,0,0);
+      const in7 = new Date(today2); in7.setDate(in7.getDate()+7);
+      let cobros = [];
+      const clRaw2 = JSON.parse(localStorage.getItem('larryCRM_v2')||'[]');
+      clRaw2.forEach(c=>{
+        const debe = parseFloat(c.total||0)-parseFloat(c.pagado||0);
+        if(debe<=0)return;
+        (c.fechas||[]).forEach(f=>{
+          if(!f.date)return;
+          const d=new Date(f.date+'T00:00:00');
+          if(d<=in7){const diff=Math.ceil((d-today2)/86400000);cobros.push({nombre:c.nombre,diff,date:f.date,label:f.label,overdue:diff<0});}
+        });
+      });
+      cobros.sort((a,b)=>a.diff-b.diff);
+      if(!cobros.length){cobrosEl.innerHTML='<div style="color:#9A8A6A;font-size:12px;font-style:italic">Sin cobros urgentes esta semana 🎉</div>';}
+      cobrosEl.innerHTML=cobros.slice(0,5).map(a=>{
+        const col=a.overdue?'#F85149':a.diff<=3?'#C9A84C':'#3FB950';
+        const when=a.overdue?Math.abs(a.diff)+'d vencido':a.diff===0?'Hoy':a.diff===1?'Mañana':'en '+a.diff+'d';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:5px 0;border-bottom:1px solid #CFC9B8">
+          <span style="font-weight:600;color:#2C2010">${a.nombre}${a.label?` <span style="font-weight:400;color:#9A8A6A">· ${a.label}</span>`:''}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:${col}">${when}</span>
+        </div>`;
+      }).join('');
+    } catch(e){cobrosEl.innerHTML='<div style="color:#9A8A6A;font-size:12px">—</div>';}
+  }
+
+  // Tareas urgentes
+  const tareasEl = document.getElementById('home-tareas');
+  if (tareasEl) {
+    try {
+      const tasks2 = JSON.parse(localStorage.getItem('larry_os_tasks')||'[]');
+      const urgent = tasks2.filter(t=>t.estado!=='hecho'&&t.prioridad>=4).sort((a,b)=>b.prioridad-a.prioridad).slice(0,5);
+      const PRIOS_C=['#7F77DD','#378ADD','#1D9E75','#EF9F27','#E24B4A'];
+      if(!urgent.length){tareasEl.innerHTML='<div style="color:#9A8A6A;font-size:12px;font-style:italic">Sin tareas urgentes 🎉</div>';return;}
+      tareasEl.innerHTML=urgent.map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #CFC9B8;font-size:12px">
+        <div style="width:3px;height:18px;border-radius:2px;background:${PRIOS_C[t.prioridad-1]||'#9A8A6A'};flex-shrink:0"></div>
+        <span style="font-weight:600;color:#2C2010;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.titulo}</span>
+        <span style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">${t.categoria||''}</span>
+      </div>`).join('');
+    } catch(e){}
+  }
+
+  // Próximas publicaciones
+  const agendaEl = document.getElementById('home-agenda');
+  if (agendaEl) {
+    try {
+      const agData2 = JSON.parse(localStorage.getItem('agenda_v1')||'{}');
+      const today3 = new Date().toISOString().split('T')[0];
+      let items3 = [];
+      Object.entries(agData2).forEach(([date,entries])=>{
+        if(date>=today3)(entries||[]).forEach(e=>{items3.push({...e,date});});
+      });
+      items3.sort((a,b)=>a.date.localeCompare(b.date));
+      if(!items3.length){agendaEl.innerHTML='<div style="color:#9A8A6A;font-size:12px;font-style:italic">Sin contenido programado próximamente</div>';return;}
+      agendaEl.innerHTML=items3.slice(0,5).map(e=>{
+        const d=new Date(e.date+'T00:00:00');
+        const diff2=Math.ceil((d-new Date().setHours(0,0,0,0))/86400000);
+        const when2=diff2===0?'Hoy':diff2===1?'Mañana':'en '+diff2+'d';
+        return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #CFC9B8;font-size:12px">
+          <span style="font-size:14px">${e.type==='reel'?'🎬':e.type==='foto'?'📸':e.type==='carrusel'?'🖼️':e.type==='story'?'⭕':'📝'}</span>
+          <span style="font-weight:600;color:#2C2010;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.title}</span>
+          <span style="font-size:10px;color:#C9A84C;font-family:'IBM Plex Mono',monospace;font-weight:700">${when2}</span>
+        </div>`;
+      }).join('');
+    } catch(e){}
+  }
+
+  // Leads en seguimiento CRM
+  const leadsEl = document.getElementById('home-leads');
+  if (leadsEl) {
+    try {
+      const leads3 = JSON.parse(localStorage.getItem('larry:leads')||'[]');
+      const active3 = leads3.filter(l=>!['cerrado','perdido'].includes(l.etapa)).slice(0,5);
+      const ETAPA_COL={'lead':'#58A6FF','interesado':'#C9A84C','propuesta':'#F0B429','negociando':'#F85149'};
+      if(!active3.length){leadsEl.innerHTML='<div style="color:#9A8A6A;font-size:12px;font-style:italic">Sin leads activos en el pipeline</div>';return;}
+      leadsEl.innerHTML=active3.map(l=>{
+        const col3=ETAPA_COL[l.etapa]||'#9A8A6A';
+        return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #CFC9B8;font-size:12px">
+          <div style="width:7px;height:7px;border-radius:50%;background:${col3};flex-shrink:0"></div>
+          <span style="font-weight:600;color:#2C2010;flex:1">${l.instagram?'@'+l.instagram:l.nombre}</span>
+          <span style="font-size:10px;color:${col3};font-family:'IBM Plex Mono',monospace">${l.etapa.toUpperCase()}</span>
+        </div>`;
+      }).join('');
+    } catch(e){}
+  }
+}
+
+// ─── AGENDA → TAREAS ─────────────────────────────────────────
+function createTaskFromAgenda() {
+  // Read current agenda form values
+  const title  = document.getElementById('agenda-f-title').value.trim();
+  const date   = document.getElementById('agenda-f-date').value;
+  const plat   = document.getElementById('agenda-f-platform').value;
+  if (!title) { showToast('⚠️ Añade un título al contenido primero'); return; }
+
+  // Create task in larry_os_tasks
+  try {
+    const tasks4 = JSON.parse(localStorage.getItem('larry_os_tasks')||'[]');
+    const getId4 = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
+    tasks4.push({
+      id: getId4(),
+      titulo: '📅 ' + title + (plat ? ' [' + plat + ']' : ''),
+      descripcion: 'Contenido programado: ' + (date||'sin fecha'),
+      prioridad: 2,
+      categoria: 'Contenido',
+      diaSemana: null,
+      proximoDia: date||null,
+      estado: 'pendiente',
+      creadoEn: Date.now()
+    });
+    localStorage.setItem('larry_os_tasks', JSON.stringify(tasks4));
+    showToast('🎛️ Tarea creada: ' + title);
+  } catch(e) { showToast('⚠️ Error al crear la tarea'); }
+}
+
+// Show create-task button when overlay opens
+function _patchAgendaBtns(show) {
+  const btn = document.getElementById('agenda-btn-create-task');
+  if (btn) btn.style.display = show ? '' : 'none';
+}
+// We wrap after page load
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Already loaded since we're at bottom — patch directly
+});
+// agenda-btn-create-task is shown when the overlay opens (handled inside the Agenda IIFE)
+
+// ─── RENDER HOME ON INIT / SIDEBAR HOME BUTTON ──────────────
+// Add 'home' support to the sidebar button map
+(function addHomeToSidebar(){
+  const sbHome = document.getElementById('sb-home');
+  if (sbHome) {
+    sbHome.onclick = function(){ switchModule('home'); };
+  }
+})();
+</script>
+
 <!-- ═══════════════════════════════════════════════════════════════
      TAREAS JS
 ═══════════════════════════════════════════════════════════════════ -->
@@ -2575,10 +3431,45 @@ const PRIORIDADES = [
   { id: 1, label: "IDEA",    color: "#7F77DD", bg: "rgba(127,119,221,0.10)", border: "rgba(127,119,221,0.30)" },
 ];
 
+const DIAS_ES = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+
+// Compute next occurrence of a weekday (0=Sun,...,6=Sat) from today or a given date
+function nextWeekdayDate(dayNum, fromDate) {
+  const d = fromDate ? new Date(fromDate) : new Date();
+  d.setHours(0,0,0,0);
+  const diff = (dayNum - d.getDay() + 7) % 7;
+  d.setDate(d.getDate() + (diff === 0 ? 7 : diff));
+  return d.toISOString().split('T')[0];
+}
+
+// Escalate priority of tasks that missed their day
+function checkEscaladoPrioridad() {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  let changed = false;
+  tareas = tareas.map(t => {
+    if (t.estado === 'hecho' || !t.diaSemana && t.diaSemana !== 0) return t;
+    if (!t.proximoDia) return t;
+    const due = new Date(t.proximoDia + 'T00:00:00');
+    if (due <= today) {
+      // Missed — escalate priority and advance to next week
+      const newPr = Math.min(5, (t.prioridad || 1) + 1);
+      const newDia = nextWeekdayDate(parseInt(t.diaSemana), t.proximoDia);
+      changed = true;
+      return { ...t, prioridad: newPr, proximoDia: newDia };
+    }
+    return t;
+  });
+  if (changed) { saveT(); }
+}
+
 let tareas = (() => { try { return JSON.parse(localStorage.getItem("larry_os_tasks") || "[]"); } catch(e) { console.warn('Larry OS: datos de tareas corruptos, reiniciando.', e); return []; } })();
 let filtro = "pendientes";
 let editandoId = null;
 let formPrioridad = 3;
+
+// Run escalation check on load
+checkEscaladoPrioridad();
 
 function saveT() { safeSave("larry_os_tasks", tareas); }
 function getId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
@@ -2603,6 +3494,8 @@ function toggleForm() {
     document.getElementById("f-titulo").value = "";
     document.getElementById("f-desc").value = "";
     document.getElementById("f-cat").value = "Otro";
+    document.getElementById("f-dia").value = "";
+    document.getElementById("f-dia-preview").textContent = "—";
     setFormPrioridad(3);
     document.getElementById("form-title").textContent = "Nueva tarea";
     document.getElementById("submit-btn").textContent = "Agregar tarea";
@@ -2628,7 +3521,14 @@ function setFormPrioridad(id) {
 function submitForm() {
   const titulo = document.getElementById("f-titulo").value.trim();
   if (!titulo) { document.getElementById("f-titulo").focus(); return; }
-  const t = { titulo, descripcion: document.getElementById("f-desc").value.trim(), prioridad: formPrioridad, categoria: document.getElementById("f-cat").value };
+  const diaVal = document.getElementById("f-dia").value;
+  const diaSemana = diaVal !== "" ? parseInt(diaVal) : null;
+  // Compute next occurrence of that weekday
+  let proximoDia = null;
+  if (diaSemana !== null) {
+    proximoDia = nextWeekdayDate(diaSemana);
+  }
+  const t = { titulo, descripcion: document.getElementById("f-desc").value.trim(), prioridad: formPrioridad, categoria: document.getElementById("f-cat").value, diaSemana, proximoDia };
   if (editandoId) {
     tareas = tareas.map(x => x.id === editandoId ? { ...x, ...t } : x);
     editandoId = null;
@@ -2648,9 +3548,10 @@ function cambiarEstado(id) {
 }
 
 function borrarTarea(id) {
-  if (!confirm("¿Borrar esta tarea?")) return;
-  tareas = tareas.filter(t => t.id !== id);
-  saveT(); renderTareas();
+  customConfirm("¿Borrar esta tarea?", function(){
+    tareas = tareas.filter(t => t.id !== id);
+    saveT(); renderTareas();
+  }, "Borrar");
 }
 
 function editarTarea(id) {
@@ -2664,6 +3565,9 @@ function editarTarea(id) {
   document.getElementById("f-titulo").value = t.titulo;
   document.getElementById("f-desc").value = t.descripcion || "";
   document.getElementById("f-cat").value = t.categoria;
+  const diaEl = document.getElementById("f-dia");
+  diaEl.value = (t.diaSemana !== null && t.diaSemana !== undefined) ? String(t.diaSemana) : "";
+  updateDiaPreview();
   setFormPrioridad(t.prioridad);
   editandoId = id;
   document.getElementById("form-title").textContent = "Editando tarea";
@@ -2730,6 +3634,18 @@ function renderTareas() {
     const p = pr(t.prioridad);
     const hecho = t.estado === "hecho";
     const est = getEstadoBtnStyle(t.estado);
+    // Day badge
+    let dayBadge = '';
+    if (t.diaSemana !== null && t.diaSemana !== undefined) {
+      const today = new Date().toISOString().split('T')[0];
+      const isVencido = t.proximoDia && t.proximoDia < today;
+      const dColor = isVencido ? '#E24B4A' : '#C9A84C';
+      const dBg = isVencido ? 'rgba(226,75,74,0.12)' : 'rgba(201,168,76,0.12)';
+      const dBorder = isVencido ? 'rgba(226,75,74,0.3)' : 'rgba(201,168,76,0.3)';
+      const dLabel = DIAS_ES[t.diaSemana];
+      const dDate = t.proximoDia ? new Date(t.proximoDia+'T00:00:00').toLocaleDateString('es-ES',{day:'2-digit',month:'short'}) : '';
+      dayBadge = `<span class="chip" style="background:${dBg};color:${dColor};border:1px solid ${dBorder}" title="Día recurrente · próxima ocurrencia: ${t.proximoDia||'—'}">📅 ${dLabel}${dDate?' · '+dDate:''}</span>`;
+    }
     return `<div class="task-card${hecho ? " done" : ""} slide-in" style="border:1px solid ${hecho ? "#DDD7C8" : p.border};animation-delay:${i*0.03}s">
       <div class="task-inner">
         <div class="pr-bar" style="background:${hecho ? "#BDB5A5" : p.color}"></div>
@@ -2739,6 +3655,7 @@ function renderTareas() {
           <div class="task-chips">
             <span class="chip" style="background:${hecho ? "#DDD7C8" : p.bg};color:${hecho ? "#9A8A6A" : p.color};border:1px solid ${hecho ? "#CFC9B8" : p.border}">${p.label}</span>
             <span class="chip" style="background:#DDD7C8;color:#9A8A6A;border:1px solid #CFC9B8">${escT(t.categoria)}</span>
+            ${dayBadge}
           </div>
         </div>
         <div class="task-actions">
@@ -2751,6 +3668,29 @@ function renderTareas() {
 }
 
 // escT: función global definida en Global JS, disponible aquí
+
+function updateDiaPreview() {
+  const diaEl = document.getElementById("f-dia");
+  const prev = document.getElementById("f-dia-preview");
+  if (!diaEl || !prev) return;
+  const val = diaEl.value;
+  if (val === "") { prev.textContent = "—"; return; }
+  const dayNum = parseInt(val);
+  const next = nextWeekdayDate(dayNum);
+  const d = new Date(next + 'T00:00:00');
+  prev.textContent = `${DIAS_ES[dayNum]} · ${d.toLocaleDateString('es-ES',{day:'2-digit',month:'short'})}`;
+}
+
+// Wire up day change
+document.addEventListener('DOMContentLoaded', () => {
+  const diaEl = document.getElementById("f-dia");
+  if (diaEl) diaEl.addEventListener('change', updateDiaPreview);
+});
+// Also wire right away in case DOMContentLoaded already fired
+(function() {
+  const diaEl = document.getElementById("f-dia");
+  if (diaEl) diaEl.addEventListener('change', updateDiaPreview);
+})();
 
 // Build priority buttons
 const prBtns = document.getElementById("pr-btns");
@@ -2780,9 +3720,10 @@ renderTareas();
     { id: "cerrado",    label: "Cerrado",          color: "#3FB950", bg: "#0D2014" },
     { id: "perdido",    label: "Perdido",          color: "#F85149", bg: "#2A0D0D" },
   ];
-  const SERVICIOS = ["Beatmaking","Producción Completa","EP/Lanzamiento","Master por Stems","Edición + Mezcla","Edición + Mezcla + Master","Análisis de Marca Artística"];
-  const FUENTES   = ["Meta Ads","Orgánico","Referido","DM Outreach"];
-  const GUIONES   = ["Guión 1 v2","Guión 2 v2","Guión 3 v2"];
+  const SERVICIOS     = ["Beatmaking","Producción Completa","EP/Lanzamiento","Master por Stems","Edición + Mezcla","Edición + Mezcla + Master","Análisis de Marca Artística"];
+  const FUENTES       = ["Meta Ads","Orgánico","Referido","DM Outreach"];
+  const GUIONES       = ["Guión 1 v2","Guión 2 v2","Guión 3 v2"];
+  const PAISES        = ["España","Argentina","América","EEUU","Europa","Otro"];
 
   const fmtC = (n) => "€" + (n||0).toLocaleString("es-ES",{minimumFractionDigits:0,maximumFractionDigits:0});
   const fmtDateC = (d) => d ? new Date(d).toLocaleDateString("es-ES",{day:"2-digit",month:"short"}) : "";
@@ -2857,7 +3798,7 @@ renderTareas();
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             <CRMField label="WhatsApp" value={f.whatsapp} onChange={v=>set("whatsapp",v)} placeholder="+34 600 000 000"/>
-            <CRMField label="Nacionalidad" value={f.nacionalidad} onChange={v=>set("nacionalidad",v)} placeholder="España, México..."/>
+            <CRMSelect label="País" value={f.nacionalidad} onChange={v=>set("nacionalidad",v)} options={PAISES}/>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             <CRMField label="Fecha de contacto" value={f.fechaContacto} onChange={v=>set("fechaContacto",v)} type="date"/>
@@ -2894,7 +3835,7 @@ renderTareas();
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             <CRMField label="WhatsApp" value={f.whatsapp||""} onChange={v=>set("whatsapp",v)} placeholder="+34 600 000 000"/>
-            <CRMField label="Nacionalidad" value={f.nacionalidad||""} onChange={v=>set("nacionalidad",v)} placeholder="España, México..."/>
+            <CRMSelect label="País" value={f.nacionalidad||PAISES[0]} onChange={v=>set("nacionalidad",v)} options={PAISES}/>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             <CRMField label="Fecha de contacto" value={f.fechaContacto||""} onChange={v=>set("fechaContacto",v)} type="date"/>
@@ -3199,7 +4140,13 @@ renderTareas();
       return () => { window.crmForceRefresh = null; };
     },[]);
 
-    const saveLeads=(v)=>{setLeads(v);sset("larry:leads",v);};
+    const saveLeads=(v)=>{
+      // Detect leads that just became "cerrado" and auto-create client
+      const prev = leads;
+      const newlyClosed = v.filter(nl => nl.etapa === "cerrado" && !prev.find(ol => ol.id === nl.id && ol.etapa === "cerrado"));
+      newlyClosed.forEach(l => { if(window.crmAutoCreateClient) window.crmAutoCreateClient(l); });
+      setLeads(v);sset("larry:leads",v);
+    };
     const saveMeta=(v)=>{setMeta(v);sset("larry:meta",v);};
     const cerrados=leads.filter(l=>l.etapa==="cerrado");
     const perdidos=leads.filter(l=>l.etapa==="perdido");
@@ -3682,6 +4629,8 @@ render();
 
 })();
 </script>
+
+
 
 </body>
 </html>
