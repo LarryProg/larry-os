@@ -653,17 +653,14 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
 
     <div class="sb-section">
       <div class="sb-section-label">MÓDULOS</div>
-      <button class="sb-btn" onclick="switchModule('home')" id="sb-home">
-        <span class="sb-icon">🏠</span> Home
-      </button>
       <button class="sb-btn active" onclick="switchModule('finanzas')" id="sb-finanzas">
         <span class="sb-icon">💰</span> Finanzas
       </button>
+      <button class="sb-btn" onclick="switchModule('fin-clientes')" id="sb-fin-clientes">
+        <span class="sb-icon">🎤</span> Clientes
+      </button>
       <button class="sb-btn" onclick="switchModule('crm')" id="sb-crm">
         <span class="sb-icon">⬡</span> CRM
-      </button>
-      <button class="sb-btn" onclick="switchModule('clientes')" id="sb-clientes">
-        <span class="sb-icon">🎤</span> Clientes
       </button>
       <button class="sb-btn" onclick="switchModule('agenda')" id="sb-agenda">
         <span class="sb-icon">📅</span> Agenda
@@ -692,64 +689,6 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
   <!-- ═══ MAIN ═══ -->
   <div id="main-content">
 
-
-    <!-- ── HOME MODULE ── -->
-    <div id="module-home" class="module" style="background:#F0EBE0;overflow-y:auto">
-      <div style="padding:28px 32px 48px;max-width:900px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid #CFC9B8">
-          <div>
-            <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#2C2010" id="home-greeting">Buenos días ⚡</div>
-            <div style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace;letter-spacing:.12em;margin-top:2px" id="home-date-label">—</div>
-          </div>
-          <button onclick="renderHome()" style="padding:7px 14px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);border-radius:6px;color:#C9A84C;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em">↻ Actualizar</button>
-        </div>
-
-        <!-- KPI row -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px" id="home-kpis"></div>
-
-        <!-- 2 column layout -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-          <!-- Cobros urgentes -->
-          <div style="background:#EAE4D6;border:1px solid #CFC9B8;border-radius:10px;padding:18px">
-            <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#2C2010;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
-              ⚡ Cobros esta semana
-              <button onclick="switchModule('finanzas')" style="font-size:10px;color:#C9A84C;background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace">Ver todo →</button>
-            </div>
-            <div id="home-cobros" style="display:flex;flex-direction:column;gap:6px"></div>
-          </div>
-
-          <!-- Tareas urgentes -->
-          <div style="background:#EAE4D6;border:1px solid #CFC9B8;border-radius:10px;padding:18px">
-            <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#2C2010;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
-              🎛️ Tareas urgentes
-              <button onclick="switchModule('tareas')" style="font-size:10px;color:#C9A84C;background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace">Ver todo →</button>
-            </div>
-            <div id="home-tareas" style="display:flex;flex-direction:column;gap:6px"></div>
-          </div>
-        </div>
-
-        <!-- 2 column layout -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-          <!-- Próximas publicaciones -->
-          <div style="background:#EAE4D6;border:1px solid #CFC9B8;border-radius:10px;padding:18px">
-            <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#2C2010;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
-              📅 Próximas publicaciones
-              <button onclick="switchModule('agenda')" style="font-size:10px;color:#C9A84C;background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace">Agenda →</button>
-            </div>
-            <div id="home-agenda" style="display:flex;flex-direction:column;gap:6px"></div>
-          </div>
-
-          <!-- CRM activos -->
-          <div style="background:#EAE4D6;border:1px solid #CFC9B8;border-radius:10px;padding:18px">
-            <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#2C2010;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
-              ⬡ Leads en seguimiento
-              <button onclick="switchModule('crm')" style="font-size:10px;color:#C9A84C;background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace">CRM →</button>
-            </div>
-            <div id="home-leads" style="display:flex;flex-direction:column;gap:6px"></div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- ── FINANZAS MODULE ── -->
     <div id="module-finanzas" class="module active">
@@ -823,7 +762,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
 
           <div id="fin-page-clientes" class="fin-page" style="display:none">
             <div class="page-header">
-              <div><div class="page-title">Clientes</div><div class="page-subtitle">Proyectos y cobros · <span style="color:#4a8c62;font-size:11px">🎤 = sincronizado desde Clientes</span></div></div>
+              <div><div class="page-title">Clientes</div><div class="page-subtitle">Proyectos y cobros</div></div>
               <div style="display:flex;gap:10px;align-items:center">
                 <input type="text" class="search-input" placeholder="Buscar cliente..." id="search-clientes" oninput="renderClientes()">
                 <button class="btn btn-ghost btn-sm" onclick="renderClientes();renderDashboard();showToast('✓ Clientes actualizados')" title="Actualizar tabla de clientes">↻ Actualizar</button>
@@ -832,7 +771,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
               </div>
             </div>
             <div class="card">
-              <table><thead><tr><th>Nombre</th><th>Servicio</th><th>Mes</th><th>Precio total</th><th>Cobrado</th><th>Pendiente</th><th>Próximo cobro</th><th>Progreso</th><th>Estado</th><th></th></tr></thead>
+              <table><thead><tr><th>Nombre</th><th>Servicio</th><th>Mes</th><th>Precio total</th><th>Cobrado</th><th>Pendiente</th><th>Próximo cobro</th><th>Bonus entregados</th><th>Progreso</th><th>Estado</th><th></th></tr></thead>
               <tbody id="clientes-body"></tbody></table>
             </div>
           </div>
@@ -879,7 +818,6 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
       <div id="fin-subnav" style="display:none">
         <button class="active" data-fin-page="dashboard" onclick="navigateFin('dashboard',this)">◈ Dashboard</button>
         <button data-fin-page="graficas" onclick="navigateFin('graficas',this)">◉ Gráficas</button>
-        <button data-fin-page="clientes" onclick="navigateFin('clientes',this)">◎ Clientes</button>
         <button data-fin-page="gastos" onclick="navigateFin('gastos',this)">◐ Gastos &amp; Balance</button>
         <button onclick="printAnualPDF()" style="margin-left:auto;color:#C9A84C;border-bottom-color:transparent" title="Imprimir / exportar PDF completo del año">⬇ PDF Anual</button>
       </div>
@@ -995,6 +933,28 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
           </div>
         </div>
       </div>
+    <!-- ── FIN BONUS PANEL ── -->
+    <div id="fin-bonus-panel" style="
+      display:none; position:fixed; z-index:5000;
+      background:#EAE4D6; border:1px solid #C8C0AE;
+      border-radius:12px; padding:18px 20px; width:280px;
+      box-shadow:0 12px 40px rgba(44,32,16,0.22);
+      font-family:'DM Sans',sans-serif;
+    ">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:#2C2010" id="fin-bonus-panel-name"></div>
+          <div style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;margin-top:2px">BONUS ENTREGADOS</div>
+        </div>
+        <button onclick="closeFinBonusPanel()" style="background:none;border:none;font-size:18px;color:#9A8A6A;cursor:pointer;line-height:1;padding:2px 4px">×</button>
+      </div>
+      <div id="fin-bonus-grid" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button onclick="closeFinBonusPanel()" style="padding:7px 14px;background:transparent;border:1.5px solid #C8C0AE;border-radius:7px;font-size:12px;font-weight:600;color:#7A6A50;cursor:pointer;font-family:'DM Sans',sans-serif">Cancelar</button>
+        <button onclick="saveFinBonus()" style="padding:7px 14px;background:#B8882A;border:none;border-radius:7px;font-size:12px;font-weight:600;color:#0B0A09;cursor:pointer;font-family:'DM Sans',sans-serif">Guardar</button>
+      </div>
+    </div>
+
     </div><!-- /module-finanzas -->
 
     <!-- ── TAREAS MODULE ── -->
@@ -1542,6 +1502,13 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
 
   function clSave() { localStorage.setItem(CL_STORAGE_KEY, JSON.stringify(clClients)); }
 
+  // Recarga clClients desde localStorage y re-renderiza (llamado desde otros módulos)
+  window.clReload = function() {
+    clClients = JSON.parse(localStorage.getItem(CL_STORAGE_KEY) || '[]');
+    if (typeof clRender === 'function') clRender();
+    if (typeof clUpdateStats === 'function') clUpdateStats();
+  };
+
   // Returns "YYYY-MM" para el mes global activo (con fallback seguro al init)
   function clCurrentMesKey() {
     const m = typeof getSelectedMonth === 'function'
@@ -1600,6 +1567,29 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
           : c.mesKey <= mesKey; // activos: desde su mes de inicio hasta el mes actual
       return ms && mf && mes;
     });
+    // Ordenar por fecha de pago pendiente: vencidos primero, luego próximos, sin fecha al final
+    const today0 = new Date().toISOString().split('T')[0];
+    const getNextDate = (c) => {
+      const finPagadoSort = (typeof getFinPagado === 'function') ? getFinPagado(c.id) : null;
+      const pagadoSort = finPagadoSort !== null ? finPagadoSort : parseFloat(c.pagado || 0);
+      const debe = parseFloat(c.total || 0) - pagadoSort;
+      if (debe <= 0 || !(c.fechas||[]).length) return null;
+      const sorted = [...c.fechas].filter(f => f.date).sort((a,b) => a.date.localeCompare(b.date));
+      // Próxima fecha futura o, si no, la más reciente vencida
+      return sorted.find(f => f.date >= today0) || sorted[sorted.length - 1] || null;
+    };
+    list.sort((a, b) => {
+      const da = getNextDate(a), db = getNextDate(b);
+      if (!da && !db) return 0;
+      if (da && !db) return -1;
+      if (!da && db) return 1;
+      // Ambos tienen fecha: vencidos primero, luego por fecha ascendente
+      const aOver = da.date < today0, bOver = db.date < today0;
+      if (aOver && !bOver) return -1;
+      if (!aOver && bOver) return 1;
+      return da.date.localeCompare(db.date);
+    });
+
     if (!list.length) {
       const total = clClients.filter(c => {
         if (!c.mesKey) return true;
@@ -1891,6 +1881,23 @@ function escT(s) {
 let activeModule = 'finanzas';
 
 function switchModule(name) {
+  // Special case: fin-clientes shows the clientes page inside finanzas module
+  if (name === 'fin-clientes') {
+    document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+    document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('module-finanzas').classList.add('active');
+    document.getElementById('sb-fin-clientes').classList.add('active');
+    document.getElementById('fin-subnav').style.display = 'none';
+    // Show clientes page directly
+    document.querySelectorAll('.fin-page').forEach(p => p.style.display = 'none');
+    document.getElementById('fin-page-clientes').style.display = '';
+    renderClientes();
+    const agendaFab = document.getElementById('agenda-fab');
+    if (agendaFab) agendaFab.style.display = 'none';
+    activeModule = 'fin-clientes';
+    return;
+  }
+
   document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
   document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('module-' + name).classList.add('active');
@@ -1909,7 +1916,7 @@ function switchModule(name) {
   if (agendaFab) agendaFab.style.display = name === 'agenda' ? 'flex' : 'none';
 
   // Clientes: re-render al entrar para reflejar el mes activo
-  if (name === 'clientes') clRender();
+  if (name === 'clientes') { if (typeof window.clReload === 'function') window.clReload(); else clRender(); }
 
   activeModule = name;
 }
@@ -2021,6 +2028,7 @@ function onMonthChange() {
       renderGraficas();
     }
   }
+  if (activeModule === 'fin-clientes') { renderClientes(); }
   if (activeModule === 'clientes') clRender();
 }
 
@@ -2068,7 +2076,7 @@ function syncClToFin(clClient) {
     localStorage.setItem('larryOS_finanzas', JSON.stringify(finData));
     // Recargar datos de finanzas si el módulo está activo
     if (typeof load === 'function') { load(); }
-    if (activeModule === 'finanzas') { renderClientes(); renderDashboard(); }
+    if (activeModule === 'finanzas' || activeModule === 'fin-clientes') { renderClientes(); renderDashboard(); }
   } catch(e) { console.warn('syncClToFin error', e); }
 }
 
@@ -2099,9 +2107,7 @@ function getFinClientId(clId) {
 function openFinCobrosForCl(clId) {
   const finId = getFinClientId(clId);
   if (!finId) { showToast('⚠️ Primero guarda el cliente para sincronizar con Finanzas.'); return; }
-  switchModule('finanzas');
-  const btn = document.querySelector('#fin-subnav [data-fin-page="clientes"]');
-  if (btn) navigateFin('clientes', btn);
+  switchModule('fin-clientes');
   setTimeout(() => { if (typeof openModalPago === 'function') openModalPago(finId); }, 250);
 }
 
@@ -2181,6 +2187,75 @@ window.crmAutoCreateClient = crmAutoCreateClient;
 // Permite al CRM actualizar su año de filtro
 window.crmYearFilter = YEAR;
 function setCrmYear(y) { window.crmYearFilter = y; if (window.crmForceRefresh) window.crmForceRefresh(); }
+
+// ─── SYNC: Finanzas → larryCRM_v2 ────────────────────────────
+// Sincroniza un cliente de larryOS_finanzas → larryCRM_v2 automáticamente
+const FIN_PROC_MAP = {
+  'Beatmaking':'BEAT','Producción Completa':'PROD','Prod Completa':'PROD',
+  'Ep/Lanzamiento':'EP','EP/Lanzamiento':'EP','Mix':'MIX_SOLO',
+  'Mix&Master':'MIX','Mix & Master':'MIX','Master':'MASTER',
+  'Mix Solo':'MIX_SOLO'
+};
+function syncFinToClientes(finCliente) {
+  try {
+    const clRaw = localStorage.getItem('larryCRM_v2');
+    const clClients = clRaw ? JSON.parse(clRaw) : [];
+    const now = new Date();
+    const mesKey = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+    const proceso = FIN_PROC_MAP[finCliente.servicio] || 'PROD';
+    const etapa = finCliente.estado === 'completado' ? 3
+                : finCliente.estado === 'cancelado'  ? 3
+                : 1; // activo / pausado → En Producción
+    const cobrado = (finCliente.pagos||[]).reduce((s,p)=>s+Number(p.monto),0);
+
+    if (finCliente.clId) {
+      // Ya vinculado: actualizar el registro existente en larryCRM_v2
+      const idx = clClients.findIndex(x => x.id === finCliente.clId);
+      if (idx >= 0) {
+        clClients[idx].nombre  = finCliente.nombre;
+        clClients[idx].proceso = proceso;
+        clClients[idx].total   = String(finCliente.precio || 0);
+        clClients[idx].pagado  = String(cobrado);
+        clClients[idx].etapa   = etapa;
+        localStorage.setItem('larryCRM_v2', JSON.stringify(clClients));
+        if (typeof window.clReload === 'function') window.clReload();
+        return;
+      }
+    }
+
+    // No vinculado: buscar por nombre primero
+    const byName = clClients.findIndex(c => c.nombre.toLowerCase() === finCliente.nombre.toLowerCase());
+    if (byName >= 0) {
+      // Vincular y actualizar
+      const clId = clClients[byName].id;
+      clClients[byName].proceso = proceso;
+      clClients[byName].total   = String(finCliente.precio || 0);
+      clClients[byName].pagado  = String(cobrado);
+      clClients[byName].etapa   = etapa;
+      localStorage.setItem('larryCRM_v2', JSON.stringify(clClients));
+      // Guardar el clId en finanzas también
+      finCliente.clId = clId;
+      localStorage.setItem('larryOS_finanzas', JSON.stringify(appData));
+    } else {
+      // Crear nuevo en larryCRM_v2
+      const newId = 'fin_' + Date.now();
+      clClients.push({
+        id: newId,
+        nombre: finCliente.nombre,
+        proceso, etapa,
+        total: String(finCliente.precio || 0),
+        pagado: String(cobrado),
+        mesKey, bonus: [], fechas: [],
+        canciones: '', _fromFin: true
+      });
+      localStorage.setItem('larryCRM_v2', JSON.stringify(clClients));
+      // Vincular en finanzas
+      finCliente.clId = newId;
+      localStorage.setItem('larryOS_finanzas', JSON.stringify(appData));
+    }
+    if (typeof window.clReload === 'function') window.clReload();
+  } catch(e) { console.warn('syncFinToClientes error', e); }
+}
 
 // Sincroniza TODOS los clientes de larryCRM_v2 a larryOS_finanzas (bulk)
 function syncAllClToFin() {
@@ -2376,61 +2451,41 @@ function renderDashboard() {
     }
   })();
 
-  // Pendientes — agrupados por mes del último cobro
+  // Pendientes — ordenados por fecha de próximo cobro (vencidos primero, luego más próximos, sin fecha al final)
   const conPend = appData.clientes.filter(c=>totalPendiente(c)>0);
+  const today0dash = new Date().toISOString().split('T')[0];
 
-  // Group by month of last payment (same logic as renderClientes)
-  const getPendMesKey = (c) => {
-    if (c.pagos && c.pagos.length > 0) {
-      const last = [...c.pagos].sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
-      return last.fecha.substring(0, 7);
-    }
-    return '__nokey';
-  };
-
-  const pendSorted = [...conPend].sort((a,b) => {
-    const ka = getPendMesKey(a), kb = getPendMesKey(b);
-    if (ka === '__nokey' && kb === '__nokey') return a.nombre.localeCompare(b.nombre);
-    if (ka === '__nokey') return 1;
-    if (kb === '__nokey') return -1;
-    if (ka !== kb) return kb.localeCompare(ka);
-    return a.nombre.localeCompare(b.nombre);
-  });
-
-  const pendGroups = {}, pendOrder = [];
-  pendSorted.forEach(c => {
-    const mk = getPendMesKey(c);
-    if (!pendGroups[mk]) { pendGroups[mk] = []; pendOrder.push(mk); }
-    pendGroups[mk].push(c);
+  const pendSorted = [...conPend].sort((a, b) => {
+    const pa = getProximoCobro(a), pb = getProximoCobro(b);
+    if (!pa && !pb) return a.nombre.localeCompare(b.nombre);
+    if (pa && !pb) return -1;
+    if (!pa && pb) return 1;
+    const aOver = pa.date < today0dash, bOver = pb.date < today0dash;
+    if (aOver && !bOver) return -1;
+    if (!aOver && bOver) return 1;
+    return pa.date.localeCompare(pb.date);
   });
 
   let pendHtml = '';
-  pendOrder.forEach(mk => {
-    if (mk !== '__nokey') {
-      const [y, m] = mk.split('-');
-      const mesTitle = MONTHS[parseInt(m)-1] + ' ' + y;
-      pendHtml += `<tr style="background:rgba(201,168,76,0.08)"><td colspan="8" style="padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.8px;color:#9A8A6A;text-transform:uppercase;border-bottom:1px solid #C8C0AE">◈ ${mesTitle}</td></tr>`;
+  pendSorted.forEach(c => {
+    const proxCobro = getProximoCobro(c);
+    let proxPendHtml = '<span style="color:#9A8A6A;font-size:11px">—</span>';
+    if (proxCobro) {
+      const today = new Date().toISOString().split('T')[0];
+      const isVencido = proxCobro.date < today;
+      const color = isVencido ? '#F85149' : '#C9A84C';
+      proxPendHtml = `<div style="font-size:12px;font-weight:700;color:${color}">${isVencido?'⚠️ ':'📅 '}${fmtDate(proxCobro.date)}</div>${proxCobro.label?`<div style="font-size:10px;color:#9A8A6A">${proxCobro.label}</div>`:''}`;
     }
-    pendGroups[mk].forEach(c => {
-      const proxCobro = getProximoCobro(c);
-      let proxPendHtml = '<span style="color:#9A8A6A;font-size:11px">—</span>';
-      if (proxCobro) {
-        const today = new Date().toISOString().split('T')[0];
-        const isVencido = proxCobro.date < today;
-        const color = isVencido ? '#F85149' : '#C9A84C';
-        proxPendHtml = `<div style="font-size:12px;font-weight:700;color:${color}">${isVencido?'⚠️ ':'📅 '}${fmtDate(proxCobro.date)}</div>${proxCobro.label?`<div style="font-size:10px;color:#9A8A6A">${proxCobro.label}</div>`:''}`;
-      }
-      pendHtml += `<tr>
-        <td><strong>${c.nombre}</strong></td>
-        <td style="color:#7A6A50">${c.servicio||'—'}</td>
-        <td>${fmt(c.precio)}</td>
-        <td class="amount-pos">${fmt(totalCobrado(c))}</td>
-        <td class="amount-neg">${fmt(totalPendiente(c))}</td>
-        <td>${proxPendHtml}</td>
-        <td>${estadoBadge(c.estado)}</td>
-        <td><button class="btn btn-green btn-sm" onclick="openModalCliente('${c.id}')">📅 Fecha</button> <button class="btn btn-green btn-sm" onclick="openModalPago('${c.id}')">💰 Cobrar</button></td>
-      </tr>`;
-    });
+    pendHtml += `<tr>
+      <td><strong>${c.nombre}</strong></td>
+      <td style="color:#7A6A50">${c.servicio||'—'}</td>
+      <td>${fmt(c.precio)}</td>
+      <td class="amount-pos">${fmt(totalCobrado(c))}</td>
+      <td class="amount-neg">${fmt(totalPendiente(c))}</td>
+      <td>${proxPendHtml}</td>
+      <td>${estadoBadge(c.estado)}</td>
+      <td><button class="btn btn-green btn-sm" onclick="openModalCliente('${c.id}')">📅 Fecha</button> <button class="btn btn-green btn-sm" onclick="openModalPago('${c.id}')">💰 Cobrar</button></td>
+    </tr>`;
   });
 
   document.getElementById('dash-pendientes-body').innerHTML = pendHtml || '<tr class="empty-row"><td colspan="8">Sin cobros pendientes 🎉</td></tr>';
@@ -2535,17 +2590,33 @@ function renderClientes() {
   const q = (document.getElementById('search-clientes').value||'').toLowerCase();
   let list = appData.clientes.filter(c=>!q||c.nombre.toLowerCase().includes(q)||(c.servicio||'').toLowerCase().includes(q));
 
-  // Group by month of last cobro
+  const today0cl = new Date().toISOString().split('T')[0];
+
+  // Split: pendientes vs saldados
+  const conPendCl  = list.filter(c => totalPendiente(c) > 0);
+  const saldadosCl = list.filter(c => totalPendiente(c) <= 0);
+
+  // Sort pendientes by próximo cobro date (vencidos primero, luego más próximos, sin fecha al final)
+  conPendCl.sort((a, b) => {
+    const pa = getProximoCobro(a), pb = getProximoCobro(b);
+    if (!pa && !pb) return a.nombre.localeCompare(b.nombre);
+    if (pa && !pb) return -1;
+    if (!pa && pb) return 1;
+    const aOver = pa.date < today0cl, bOver = pb.date < today0cl;
+    if (aOver && !bOver) return -1;
+    if (!aOver && bOver) return 1;
+    return pa.date.localeCompare(pb.date);
+  });
+
+  // Group saldados by month of last cobro
   const getCMesKey = (c) => {
     if (c.pagos && c.pagos.length > 0) {
       const last = [...c.pagos].sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
-      return last.fecha.substring(0, 7); // YYYY-MM
+      return last.fecha.substring(0, 7);
     }
     return '__nokey';
   };
-
-  // Sort: most recent month first, __nokey at end, then by name
-  list = [...list].sort((a,b) => {
+  const saldSorted = [...saldadosCl].sort((a,b) => {
     const ka = getCMesKey(a), kb = getCMesKey(b);
     if (ka === '__nokey' && kb === '__nokey') return a.nombre.localeCompare(b.nombre);
     if (ka === '__nokey') return 1;
@@ -2553,69 +2624,96 @@ function renderClientes() {
     if (ka !== kb) return kb.localeCompare(ka);
     return a.nombre.localeCompare(b.nombre);
   });
-
-  // Group
   const groups = {}, groupOrder = [];
-  list.forEach(c => {
+  saldSorted.forEach(c => {
     const mk = getCMesKey(c);
     if (!groups[mk]) { groups[mk] = []; groupOrder.push(mk); }
     groups[mk].push(c);
   });
 
+  const makeRow = (c) => {
+    const ct=totalCobrado(c),pend=totalPendiente(c),pct=c.precio>0?Math.min(100,(ct/c.precio)*100):0;
+    const barClass=pct>=100?'progress-bar':pct>=50?'progress-bar amber':'progress-bar red';
+    const crmBadge = c.clId ? `<span title="Sincronizado desde Clientes" style="font-size:9px;background:rgba(74,140,98,0.15);color:#4a8c62;border-radius:3px;padding:1px 5px;margin-left:6px;font-family:'IBM Plex Mono',monospace">🎤</span>` : '';
+    let pagoIcon='';
+    if(c.precio>0){
+      if(pct>=100) pagoIcon=`<span title="Pago completo" style="font-size:11px;margin-left:5px">✅</span>`;
+      else if(ct>0) pagoIcon=`<span title="Pago parcial — falta ${fmt(pend)}" style="font-size:11px;margin-left:5px">⚠️</span>`;
+      else pagoIcon=`<span title="Sin cobrar" style="font-size:11px;margin-left:5px">🔴</span>`;
+    }
+    const proxCobro = getProximoCobro(c);
+    let proxHtml = '<span style="color:#9A8A6A;font-size:11px">—</span>';
+    if (pct >= 100) {
+      proxHtml = '<span style="color:#3FB950;font-size:11px;font-weight:600">✓ Saldado</span>';
+    } else if (proxCobro) {
+      const isVencido = proxCobro.date < today0cl;
+      const color = isVencido ? '#F85149' : '#C9A84C';
+      proxHtml = `<div style="font-size:11px;font-weight:600;color:${color}">${fmtDate(proxCobro.date)}</div>${proxCobro.label?`<div style="font-size:10px;color:#9A8A6A">${proxCobro.label}</div>`:''}`;
+    }
+    const mesLabel = getMesLabel(c);
+    // Bonus entregados desde larryCRM_v2
+    let bonusHtml = '<span style="color:#9A8A6A;font-size:11px">—</span>';
+    try {
+      const clRaw2 = localStorage.getItem('larryCRM_v2');
+      if (clRaw2 && c.clId) {
+        const clC = JSON.parse(clRaw2).find(x => x.id === c.clId);
+        if (clC) {
+          const CL_BONUS_LIST_FIN = ['Manual de Marca','Arsenal Creativo','Contrato Beat','Vocals Top','Escucha Top','Guía Lanzamiento Exitoso','Regalo Agenda'];
+          const done = (clC.bonus||[]);
+          const total = CL_BONUS_LIST_FIN.length;
+          const count = done.length;
+          const pct = Math.round((count/total)*100);
+          const color = count === 0 ? '#9A8A6A' : count === total ? '#3FB950' : '#C9A84C';
+          bonusHtml = `<div style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="openFinBonusPanel('${c.id}','${c.nombre}',event)" title="Editar bonus entregados">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:${color}">${count}/${total}</span>
+            <div style="background:#DDD7C8;border-radius:3px;height:4px;width:48px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${color};border-radius:3px"></div></div>
+            <span style="font-size:9px;color:#9A8A6A;margin-left:2px">✎</span>
+          </div>`;
+        }
+      }
+    } catch(e) {}
+    // Si no tiene clId, mostrar botón para abrir igual (bonus vacíos)
+    if (!c.clId && bonusHtml === '<span style="color:#9A8A6A;font-size:11px">—</span>') {
+      bonusHtml = `<span style="color:#C8C0AE;font-size:10px;font-style:italic">Sin sync</span>`;
+    }
+    return `<tr>
+      <td><strong>${c.nombre}</strong>${crmBadge}${pagoIcon}</td>
+      <td style="color:#7A6A50">${c.servicio||'—'}</td>
+      <td style="font-size:11px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">${mesLabel}</td>
+      <td>${fmt(c.precio)}</td>
+      <td class="amount-pos">${fmt(ct)}</td>
+      <td class="${pend>0?'amount-neg':''}">${pend>0?fmt(pend):'<span style="color:#3FB950;font-weight:600">—</span>'}</td>
+      <td>${proxHtml}</td>
+      <td>${bonusHtml}</td>
+      <td style="width:100px"><div class="progress-wrap"><div class="${barClass}" style="width:${pct}%"></div></div><span style="font-size:10px;color:#7A6A50">${Math.round(pct)}%</span></td>
+      <td>${estadoBadge(c.estado)}</td>
+      <td style="display:flex;gap:5px;padding:8px">
+        <button class="btn btn-green btn-sm" onclick="openModalPago('${c.id}')">💰 Cobrar</button>
+        <button class="btn btn-ghost btn-sm" onclick="openModalCliente('${c.id}')">✎</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCliente('${c.id}')">✕</button>
+      </td>
+    </tr>`;
+  };
+
   let html = '';
+
+  // Pendientes primero con separador
+  if (conPendCl.length) {
+    html += `<tr style="background:rgba(248,81,73,0.06)"><td colspan="11" style="padding:7px 10px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.8px;color:#F85149;text-transform:uppercase;border-bottom:1px solid rgba(248,81,73,0.2)">⚡ PENDIENTE DE COBRO</td></tr>`;
+    conPendCl.forEach(c => { html += makeRow(c); });
+  }
+
+  // Saldados agrupados por mes
   groupOrder.forEach(mk => {
-    // Only show separator for months with a real date
     if (mk !== '__nokey') {
       const [y, m] = mk.split('-');
       const mesTitle = MONTHS[parseInt(m)-1] + ' ' + y;
-      html += `<tr style="background:rgba(201,168,76,0.08)"><td colspan="10" style="padding:7px 10px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.8px;color:#9A8A6A;text-transform:uppercase;border-bottom:1px solid #C8C0AE">◈ ${mesTitle}</td></tr>`;
+      html += `<tr style="background:rgba(201,168,76,0.08)"><td colspan="11" style="padding:7px 10px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.8px;color:#9A8A6A;text-transform:uppercase;border-bottom:1px solid #C8C0AE">◈ ${mesTitle}</td></tr>`;
     }
-
-    groups[mk].forEach(c => {
-      const ct=totalCobrado(c),pend=totalPendiente(c),pct=c.precio>0?Math.min(100,(ct/c.precio)*100):0;
-      const barClass=pct>=100?'progress-bar':pct>=50?'progress-bar amber':'progress-bar red';
-      const crmBadge = c.clId ? `<span title="Sincronizado desde Clientes" style="font-size:9px;background:rgba(74,140,98,0.15);color:#4a8c62;border-radius:3px;padding:1px 5px;margin-left:6px;font-family:'IBM Plex Mono',monospace">🎤</span>` : '';
-      // Payment status icon
-      let pagoIcon='';
-      if(c.precio>0){
-        if(pct>=100) pagoIcon=`<span title="Pago completo" style="font-size:11px;margin-left:5px">✅</span>`;
-        else if(ct>0) pagoIcon=`<span title="Pago parcial — falta ${fmt(pend)}" style="font-size:11px;margin-left:5px">⚠️</span>`;
-        else pagoIcon=`<span title="Sin cobrar" style="font-size:11px;margin-left:5px">🔴</span>`;
-      }
-      // Próximo cobro
-      const proxCobro = getProximoCobro(c);
-      let proxHtml = '<span style="color:#9A8A6A;font-size:11px">—</span>';
-      if (pct >= 100) {
-        proxHtml = '<span style="color:#3FB950;font-size:11px;font-weight:600">✓ Saldado</span>';
-      } else if (proxCobro) {
-        const today = new Date().toISOString().split('T')[0];
-        const isVencido = proxCobro.date < today;
-        const color = isVencido ? '#F85149' : '#C9A84C';
-        proxHtml = `<div style="font-size:11px;font-weight:600;color:${color}">${fmtDate(proxCobro.date)}</div>${proxCobro.label?`<div style="font-size:10px;color:#9A8A6A">${proxCobro.label}</div>`:''}`;
-      }
-      // Mes label
-      const mesLabel = getMesLabel(c);
-
-      html += `<tr>
-        <td><strong>${c.nombre}</strong>${crmBadge}${pagoIcon}</td>
-        <td style="color:#7A6A50">${c.servicio||'—'}</td>
-        <td style="font-size:11px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">${mesLabel}</td>
-        <td>${fmt(c.precio)}</td>
-        <td class="amount-pos">${fmt(ct)}</td>
-        <td class="${pend>0?'amount-neg':''}">${pend>0?fmt(pend):'<span style="color:#3FB950;font-weight:600">—</span>'}</td>
-        <td>${proxHtml}</td>
-        <td style="width:100px"><div class="progress-wrap"><div class="${barClass}" style="width:${pct}%"></div></div><span style="font-size:10px;color:#7A6A50">${Math.round(pct)}%</span></td>
-        <td>${estadoBadge(c.estado)}</td>
-        <td style="display:flex;gap:5px;padding:8px">
-          <button class="btn btn-green btn-sm" onclick="openModalPago('${c.id}')">💰 Cobrar</button>
-          <button class="btn btn-ghost btn-sm" onclick="openModalCliente('${c.id}')">✎</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteCliente('${c.id}')">✕</button>
-        </td>
-      </tr>`;
-    });
+    groups[mk].forEach(c => { html += makeRow(c); });
   });
 
-  document.getElementById('clientes-body').innerHTML = html || '<tr class="empty-row"><td colspan="10">Sin clientes. Añade el primero o guarda uno desde el módulo Clientes.</td></tr>';
+  document.getElementById('clientes-body').innerHTML = html || '<tr class="empty-row"><td colspan="11">Sin clientes. Añade el primero o guarda uno desde el módulo Clientes.</td></tr>';
 }
 
 function openModalCliente(id=null) {
@@ -2740,6 +2838,9 @@ function saveCliente() {
     }catch(e){}
   }
   save();closeModal('modal-cliente');renderClientes();renderDashboard();
+  // Auto-sync hacia larryCRM_v2
+  const savedCl = appData.clientes.find(x=>x.id===(editingClienteId||appData.clientes[appData.clientes.length-1].id));
+  if (savedCl) syncFinToClientes(savedCl);
   // Fix 4: auto-completar si el cobro lleva a 100%
   if(editingClienteId){
     const c=appData.clientes.find(x=>x.id===editingClienteId);
@@ -2753,6 +2854,103 @@ function saveCliente() {
   else showToast(editingClienteId?'Cliente actualizado':'Cliente creado ✓');
 }
 function deleteCliente(id){customConfirm('¿Eliminar este cliente? Esta acción no se puede deshacer.',function(){appData.clientes=appData.clientes.filter(c=>c.id!==id);save();renderClientes();renderDashboard();renderBalance();showToast('Cliente eliminado');},'Eliminar');}
+
+// ─── FIN BONUS PANEL ─────────────────────────────────────────
+const FIN_BONUS_LIST = ['Manual de Marca','Arsenal Creativo','Contrato Beat','Vocals Top','Escucha Top','Guía Lanzamiento Exitoso','Regalo Agenda'];
+let _finBonusClienteId = null;
+
+function openFinBonusPanel(finClienteId, nombre, evt) {
+  evt && evt.stopPropagation();
+  const c = appData.clientes.find(x => x.id === finClienteId);
+  if (!c || !c.clId) { showToast('⚠️ Este cliente no está sincronizado con el módulo Clientes.'); return; }
+
+  _finBonusClienteId = finClienteId;
+
+  // Load current bonus from larryCRM_v2
+  let currentBonus = [];
+  try {
+    const raw = localStorage.getItem('larryCRM_v2');
+    if (raw) {
+      const clC = JSON.parse(raw).find(x => x.id === c.clId);
+      if (clC) currentBonus = clC.bonus || [];
+    }
+  } catch(e) {}
+
+  // Populate panel
+  document.getElementById('fin-bonus-panel-name').textContent = nombre;
+  document.getElementById('fin-bonus-grid').innerHTML = FIN_BONUS_LIST.map(b => {
+    const checked = currentBonus.includes(b);
+    return `<div onclick="this.classList.toggle('fin-bon-on'); this.querySelector('.fbb').textContent = this.classList.contains('fin-bon-on') ? '✓' : ''; " 
+      class="fin-bon-row ${checked ? 'fin-bon-on' : ''}"
+      style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;
+             background:${checked ? 'rgba(63,185,80,0.12)' : 'rgba(44,32,16,0.04)'};
+             border:1.5px solid ${checked ? 'rgba(63,185,80,0.35)' : '#CFC9B8'};
+             color:${checked ? '#3FB950' : '#7A6A50'};
+             transition:all .15s;user-select:none">
+      <div class="fbb" style="width:15px;height:15px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;
+           background:${checked ? '#3FB950' : 'transparent'};border:1.5px solid ${checked ? '#3FB950' : '#CFC9B8'};color:#fff">${checked ? '✓' : ''}</div>
+      ${b}
+    </div>`;
+  }).join('');
+
+  // Position panel near click
+  const panel = document.getElementById('fin-bonus-panel');
+  panel.style.display = 'block';
+  if (evt) {
+    const r = evt.target.closest('td') ? evt.target.closest('td').getBoundingClientRect() : evt.target.getBoundingClientRect();
+    let top = r.bottom + 6;
+    let left = r.left;
+    if (left + 280 > window.innerWidth - 16) left = window.innerWidth - 296;
+    if (top + 320 > window.innerHeight - 16) top = r.top - 330;
+    panel.style.top = top + window.scrollY + 'px';
+    panel.style.left = left + 'px';
+  }
+
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', _finBonusPanelOutside);
+  }, 10);
+}
+
+function _finBonusPanelOutside(e) {
+  const panel = document.getElementById('fin-bonus-panel');
+  if (panel && !panel.contains(e.target)) {
+    closeFinBonusPanel();
+  }
+}
+
+function closeFinBonusPanel() {
+  document.getElementById('fin-bonus-panel').style.display = 'none';
+  _finBonusClienteId = null;
+  document.removeEventListener('click', _finBonusPanelOutside);
+}
+
+function saveFinBonus() {
+  if (!_finBonusClienteId) return;
+  const c = appData.clientes.find(x => x.id === _finBonusClienteId);
+  if (!c || !c.clId) return;
+
+  // Collect checked bonuses
+  const checked = [...document.querySelectorAll('#fin-bonus-grid .fin-bon-row.fin-bon-on')]
+    .map(el => el.textContent.trim().replace(/^✓\s*/, '').trim());
+
+  // Save to larryCRM_v2
+  try {
+    const raw = localStorage.getItem('larryCRM_v2');
+    if (raw) {
+      const list = JSON.parse(raw);
+      const idx = list.findIndex(x => x.id === c.clId);
+      if (idx !== -1) {
+        list[idx].bonus = checked;
+        localStorage.setItem('larryCRM_v2', JSON.stringify(list));
+      }
+    }
+  } catch(e) { showToast('⚠️ Error al guardar bonus'); return; }
+
+  closeFinBonusPanel();
+  renderClientes();
+  showToast(`✓ Bonus de ${c.nombre} actualizados`);
+}
 
 // ─── PAGOS ────────────────────────────────────────────────────
 function openModalPago(clienteId) {
@@ -2783,22 +2981,8 @@ function savePago() {
     showToast(`✅ ${c.nombre} — pago completo. Estado → Completado`);
   }
   save();
-  // 🔗 BRIDGE: Actualizar pagado en Clientes si este cliente tiene clId
-  if (c.clId) {
-    try {
-      const clRaw = localStorage.getItem('larryCRM_v2');
-      if (clRaw) {
-        const clClients = JSON.parse(clRaw);
-        const clIdx = clClients.findIndex(x => x.id === c.clId);
-        if (clIdx >= 0) {
-          const totalPagado = c.pagos.reduce((s,p)=>s+Number(p.monto),0);
-          clClients[clIdx].pagado = String(totalPagado);
-          localStorage.setItem('larryCRM_v2', JSON.stringify(clClients));
-          if (activeModule === 'clientes' && typeof clRender === 'function') clRender();
-        }
-      }
-    } catch(e) {}
-  }
+  // Sync automático hacia larryCRM_v2
+  syncFinToClientes(c);
   openModalPago(editingPagoClienteId);renderClientes();renderDashboard();showToast(`Cobro de ${fmt(monto)} registrado ✓`);
 }
 function deletePago(clienteId,pagoId){const c=appData.clientes.find(x=>x.id===clienteId);c.pagos=c.pagos.filter(p=>p.id!==pagoId);save();openModalPago(clienteId);renderClientes();renderDashboard();showToast('Pago eliminado');}
@@ -3111,6 +3295,54 @@ function printAnualPDF() {
 // ─── INIT FINANZAS ────────────────────────────────────────────
 load();
 renderDashboard();
+
+// ─── SYNC INICIAL: Finanzas → larryCRM_v2 ─────────────────────
+// Si hay clientes en Finanzas que no están en larryCRM_v2, los empuja automáticamente
+(function initSyncFinToClientes() {
+  try {
+    if (!appData.clientes || !appData.clientes.length) return;
+    const clRaw = localStorage.getItem('larryCRM_v2');
+    const clClients = clRaw ? JSON.parse(clRaw) : [];
+    let changed = false;
+    const now = new Date();
+    const mesKey = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+    appData.clientes.forEach(finC => {
+      // Skip if already linked
+      if (finC.clId && clClients.find(x => x.id === finC.clId)) return;
+      // Try match by name
+      const byName = clClients.findIndex(c => c.nombre.toLowerCase() === finC.nombre.toLowerCase());
+      const proceso = FIN_PROC_MAP[finC.servicio] || 'PROD';
+      const etapa = finC.estado === 'completado' || finC.estado === 'cancelado' ? 3 : 1;
+      const cobrado = (finC.pagos||[]).reduce((s,p)=>s+Number(p.monto),0);
+      if (byName >= 0) {
+        // Vincular existente
+        clClients[byName].proceso = proceso;
+        clClients[byName].total   = String(finC.precio || 0);
+        clClients[byName].pagado  = String(cobrado);
+        clClients[byName].etapa   = etapa;
+        finC.clId = clClients[byName].id;
+        changed = true;
+      } else {
+        // Crear nuevo en larryCRM_v2
+        const newId = 'fin_' + finC.id;
+        clClients.push({
+          id: newId, nombre: finC.nombre,
+          proceso, etapa,
+          total: String(finC.precio || 0),
+          pagado: String(cobrado),
+          mesKey, bonus: [], fechas: [], canciones: '', _fromFin: true
+        });
+        finC.clId = newId;
+        changed = true;
+      }
+    });
+    if (changed) {
+      localStorage.setItem('larryCRM_v2', JSON.stringify(clClients));
+      localStorage.setItem('larryOS_finanzas', JSON.stringify(appData));
+      if (typeof window.clReload === 'function') window.clReload();
+    }
+  } catch(e) { console.warn('initSyncFinToClientes error', e); }
+})();
 </script>
 
 <!-- ══════════════════════════════════════════════════════════════
@@ -3207,7 +3439,7 @@ renderDashboard();
     try {
       const fd = JSON.parse(localStorage.getItem('larryOS_finanzas') || '{}');
       (fd.clientes||[]).filter(c=>(c.nombre||'').toLowerCase().includes(q)||(c.servicio||'').toLowerCase().includes(q))
-        .slice(0,4).forEach(c=>hits.push({ icon:'💰', module:'finanzas', label: c.nombre, sub: c.servicio||'', action: ()=>{ closeSearch(); switchModule('finanzas'); setTimeout(()=>{ const btn=document.querySelector('#fin-subnav [data-fin-page="clientes"]'); if(btn)navigateFin('clientes',btn); },200); } }));
+        .slice(0,4).forEach(c=>hits.push({ icon:'💰', module:'fin-clientes', label: c.nombre, sub: c.servicio||'', action: ()=>{ closeSearch(); switchModule('fin-clientes'); } }));
     } catch(e){}
 
     // Search CRM leads
@@ -3275,191 +3507,14 @@ function closeSidebar() {
   document.getElementById('sb-overlay-mobile').classList.remove('sb-open');
 }
 
-// Patch switchModule to close sidebar on mobile and support 'home'
+// Patch switchModule to close sidebar on mobile
 const _switchModuleBase = window.switchModule || function(){};
 window.switchModule = function(mod) {
   _switchModuleBase(mod);
   closeSidebar();
-  if (mod === 'home') setTimeout(renderHome, 50);
 };
 
 // ─── HOME MODULE RENDER ──────────────────────────────────────
-function renderHome() {
-  // Greeting
-  const hr = new Date().getHours();
-  const greet = hr < 12 ? 'Buenos días ⚡' : hr < 20 ? 'Buenas tardes ⚡' : 'Buenas noches ⚡';
-  const el = document.getElementById('home-greeting');
-  if (el) el.textContent = greet;
-  const dl = document.getElementById('home-date-label');
-  if (dl) dl.textContent = new Date().toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).toUpperCase();
-
-  // KPIs
-  const kpisEl = document.getElementById('home-kpis');
-  if (kpisEl) {
-    try {
-      const fd = JSON.parse(localStorage.getItem('larryOS_finanzas')||'{}');
-      const clientes = fd.clientes||[];
-      const gastos   = fd.gastos||[];
-      const mes = new Date().getMonth()+1, yr = new Date().getFullYear();
-      const ingMes = clientes.reduce((s,c)=>{
-        return s + (c.pagos||[]).filter(p=>{const d=new Date(p.fecha+'T12:00:00');return d.getFullYear()===yr&&d.getMonth()+1===mes;}).reduce((x,p)=>x+Number(p.monto),0);
-      },0);
-      const gasMes = gastos.filter(g=>{const d=new Date(g.fecha+'T12:00:00');return d.getFullYear()===yr&&d.getMonth()+1===mes;}).reduce((s,g)=>s+Number(g.monto),0);
-      const pendTotal = clientes.reduce((s,c)=>s+Math.max(0,Number(c.precio||0)-(c.pagos||[]).reduce((x,p)=>x+Number(p.monto),0)),0);
-      const tasks = JSON.parse(localStorage.getItem('larry_os_tasks')||'[]');
-      const tasksPend = tasks.filter(t=>t.estado!=='hecho').length;
-      const fmt2 = n => '€'+(n||0).toLocaleString('es-ES',{minimumFractionDigits:0,maximumFractionDigits:0});
-      kpisEl.innerHTML = [
-        {label:'Ingresos del mes',val:fmt2(ingMes),color:'#3FB950',bg:'rgba(63,185,80,0.08)'},
-        {label:'Gastos del mes',val:fmt2(gasMes),color:'#F85149',bg:'rgba(248,81,73,0.08)'},
-        {label:'Pendiente cobro',val:fmt2(pendTotal),color:'#C9A84C',bg:'rgba(201,168,76,0.08)'},
-        {label:'Tareas activas',val:tasksPend,color:'#58A6FF',bg:'rgba(88,166,255,0.08)'},
-      ].map(k=>`<div style="background:${k.bg};border:1px solid ${k.color}33;border-radius:10px;padding:16px;text-align:center">
-        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#9A8A6A;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">${k.label}</div>
-        <div style="font-size:24px;font-weight:700;color:${k.color};font-family:'Playfair Display',serif">${k.val}</div>
-      </div>`).join('');
-    } catch(e){}
-  }
-
-  // Cobros esta semana
-  const cobrosEl = document.getElementById('home-cobros');
-  if (cobrosEl) {
-    try {
-      const today2 = new Date(); today2.setHours(0,0,0,0);
-      const in7 = new Date(today2); in7.setDate(in7.getDate()+7);
-      let cobros = [];
-      const clRaw2 = JSON.parse(localStorage.getItem('larryCRM_v2')||'[]');
-      clRaw2.forEach(c=>{
-        const debe = parseFloat(c.total||0)-parseFloat(c.pagado||0);
-        if(debe<=0)return;
-        (c.fechas||[]).forEach(f=>{
-          if(!f.date)return;
-          const d=new Date(f.date+'T00:00:00');
-          if(d<=in7){const diff=Math.ceil((d-today2)/86400000);cobros.push({nombre:c.nombre,diff,date:f.date,label:f.label,overdue:diff<0});}
-        });
-      });
-      cobros.sort((a,b)=>a.diff-b.diff);
-      if(!cobros.length){cobrosEl.innerHTML='<div style="color:#9A8A6A;font-size:12px;font-style:italic">Sin cobros urgentes esta semana 🎉</div>';}
-      cobrosEl.innerHTML=cobros.slice(0,5).map(a=>{
-        const col=a.overdue?'#F85149':a.diff<=3?'#C9A84C':'#3FB950';
-        const when=a.overdue?Math.abs(a.diff)+'d vencido':a.diff===0?'Hoy':a.diff===1?'Mañana':'en '+a.diff+'d';
-        return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:5px 0;border-bottom:1px solid #CFC9B8">
-          <span style="font-weight:600;color:#2C2010">${a.nombre}${a.label?` <span style="font-weight:400;color:#9A8A6A">· ${a.label}</span>`:''}</span>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:${col}">${when}</span>
-        </div>`;
-      }).join('');
-    } catch(e){cobrosEl.innerHTML='<div style="color:#9A8A6A;font-size:12px">—</div>';}
-  }
-
-  // Tareas urgentes
-  const tareasEl = document.getElementById('home-tareas');
-  if (tareasEl) {
-    try {
-      const tasks2 = JSON.parse(localStorage.getItem('larry_os_tasks')||'[]');
-      const urgent = tasks2.filter(t=>t.estado!=='hecho'&&t.prioridad>=4).sort((a,b)=>b.prioridad-a.prioridad).slice(0,5);
-      const PRIOS_C=['#7F77DD','#378ADD','#1D9E75','#EF9F27','#E24B4A'];
-      if(!urgent.length){tareasEl.innerHTML='<div style="color:#9A8A6A;font-size:12px;font-style:italic">Sin tareas urgentes 🎉</div>';return;}
-      tareasEl.innerHTML=urgent.map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #CFC9B8;font-size:12px">
-        <div style="width:3px;height:18px;border-radius:2px;background:${PRIOS_C[t.prioridad-1]||'#9A8A6A'};flex-shrink:0"></div>
-        <span style="font-weight:600;color:#2C2010;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.titulo}</span>
-        <span style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">${t.categoria||''}</span>
-      </div>`).join('');
-    } catch(e){}
-  }
-
-  // Próximas publicaciones
-  const agendaEl = document.getElementById('home-agenda');
-  if (agendaEl) {
-    try {
-      const agData2 = JSON.parse(localStorage.getItem('agenda_v1')||'{}');
-      const today3 = new Date().toISOString().split('T')[0];
-      let items3 = [];
-      Object.entries(agData2).forEach(([date,entries])=>{
-        if(date>=today3)(entries||[]).forEach(e=>{items3.push({...e,date});});
-      });
-      items3.sort((a,b)=>a.date.localeCompare(b.date));
-      if(!items3.length){agendaEl.innerHTML='<div style="color:#9A8A6A;font-size:12px;font-style:italic">Sin contenido programado próximamente</div>';return;}
-      agendaEl.innerHTML=items3.slice(0,5).map(e=>{
-        const d=new Date(e.date+'T00:00:00');
-        const diff2=Math.ceil((d-new Date().setHours(0,0,0,0))/86400000);
-        const when2=diff2===0?'Hoy':diff2===1?'Mañana':'en '+diff2+'d';
-        return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #CFC9B8;font-size:12px">
-          <span style="font-size:14px">${e.type==='reel'?'🎬':e.type==='foto'?'📸':e.type==='carrusel'?'🖼️':e.type==='story'?'⭕':'📝'}</span>
-          <span style="font-weight:600;color:#2C2010;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.title}</span>
-          <span style="font-size:10px;color:#C9A84C;font-family:'IBM Plex Mono',monospace;font-weight:700">${when2}</span>
-        </div>`;
-      }).join('');
-    } catch(e){}
-  }
-
-  // Leads en seguimiento CRM
-  const leadsEl = document.getElementById('home-leads');
-  if (leadsEl) {
-    try {
-      const leads3 = JSON.parse(localStorage.getItem('larry:leads')||'[]');
-      const active3 = leads3.filter(l=>!['cerrado','perdido'].includes(l.etapa)).slice(0,5);
-      const ETAPA_COL={'lead':'#58A6FF','interesado':'#C9A84C','propuesta':'#F0B429','negociando':'#F85149'};
-      if(!active3.length){leadsEl.innerHTML='<div style="color:#9A8A6A;font-size:12px;font-style:italic">Sin leads activos en el pipeline</div>';return;}
-      leadsEl.innerHTML=active3.map(l=>{
-        const col3=ETAPA_COL[l.etapa]||'#9A8A6A';
-        return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #CFC9B8;font-size:12px">
-          <div style="width:7px;height:7px;border-radius:50%;background:${col3};flex-shrink:0"></div>
-          <span style="font-weight:600;color:#2C2010;flex:1">${l.instagram?'@'+l.instagram:l.nombre}</span>
-          <span style="font-size:10px;color:${col3};font-family:'IBM Plex Mono',monospace">${l.etapa.toUpperCase()}</span>
-        </div>`;
-      }).join('');
-    } catch(e){}
-  }
-}
-
-// ─── AGENDA → TAREAS ─────────────────────────────────────────
-function createTaskFromAgenda() {
-  // Read current agenda form values
-  const title  = document.getElementById('agenda-f-title').value.trim();
-  const date   = document.getElementById('agenda-f-date').value;
-  const plat   = document.getElementById('agenda-f-platform').value;
-  if (!title) { showToast('⚠️ Añade un título al contenido primero'); return; }
-
-  // Create task in larry_os_tasks
-  try {
-    const tasks4 = JSON.parse(localStorage.getItem('larry_os_tasks')||'[]');
-    const getId4 = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
-    tasks4.push({
-      id: getId4(),
-      titulo: '📅 ' + title + (plat ? ' [' + plat + ']' : ''),
-      descripcion: 'Contenido programado: ' + (date||'sin fecha'),
-      prioridad: 2,
-      categoria: 'Contenido',
-      diaSemana: null,
-      proximoDia: date||null,
-      estado: 'pendiente',
-      creadoEn: Date.now()
-    });
-    localStorage.setItem('larry_os_tasks', JSON.stringify(tasks4));
-    showToast('🎛️ Tarea creada: ' + title);
-  } catch(e) { showToast('⚠️ Error al crear la tarea'); }
-}
-
-// Show create-task button when overlay opens
-function _patchAgendaBtns(show) {
-  const btn = document.getElementById('agenda-btn-create-task');
-  if (btn) btn.style.display = show ? '' : 'none';
-}
-// We wrap after page load
-document.addEventListener('DOMContentLoaded', ()=>{
-  // Already loaded since we're at bottom — patch directly
-});
-// agenda-btn-create-task is shown when the overlay opens (handled inside the Agenda IIFE)
-
-// ─── RENDER HOME ON INIT / SIDEBAR HOME BUTTON ──────────────
-// Add 'home' support to the sidebar button map
-(function addHomeToSidebar(){
-  const sbHome = document.getElementById('sb-home');
-  if (sbHome) {
-    sbHome.onclick = function(){ switchModule('home'); };
-  }
-})();
-</script>
 
 <!-- ═══════════════════════════════════════════════════════════════
      TAREAS JS
