@@ -764,9 +764,12 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
             <div class="page-header">
               <div><div class="page-title">Clientes</div><div class="page-subtitle">Proyectos y cobros</div></div>
               <div style="display:flex;gap:10px;align-items:center">
+                <div style="display:flex;gap:6px;align-items:center">
+                  <button id="fcl-chip-all" onclick="setClientesFiltro('all')" style="padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid #C9A84C;background:#2C2010;color:#EAE4D6;cursor:pointer;font-family:'IBM Plex Mono',monospace;transition:all .15s">Todos</button>
+                  <button id="fcl-chip-activos" onclick="setClientesFiltro('activo')" style="padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid #CFC9B8;background:transparent;color:#7A6A50;cursor:pointer;font-family:'IBM Plex Mono',monospace;transition:all .15s">Solo Activos</button>
+                </div>
                 <input type="text" class="search-input" placeholder="Buscar cliente..." id="search-clientes" oninput="renderClientes()">
                 <button class="btn btn-ghost btn-sm" onclick="renderClientes();renderDashboard();showToast('✓ Clientes actualizados')" title="Actualizar tabla de clientes">↻ Actualizar</button>
-                <button class="btn btn-ghost btn-sm" onclick="syncAllClToFin()" title="Sincronizar todos los clientes desde el módulo Clientes">🔄 Sync</button>
                 <button class="btn btn-primary" onclick="openModalCliente()">+ Nuevo cliente</button>
               </div>
             </div>
@@ -2586,9 +2589,31 @@ function getMesLabel(client) {
   return '—';
 }
 
+let filtroClientesEstado = 'all';
+
+window.setClientesFiltro = function(val) {
+  filtroClientesEstado = val;
+  const chipAll    = document.getElementById('fcl-chip-all');
+  const chipActivo = document.getElementById('fcl-chip-activos');
+  if (chipAll && chipActivo) {
+    chipAll.style.background    = val === 'all'    ? '#2C2010' : 'transparent';
+    chipAll.style.color         = val === 'all'    ? '#EAE4D6' : '#7A6A50';
+    chipAll.style.borderColor   = val === 'all'    ? '#C9A84C' : '#CFC9B8';
+    chipActivo.style.background = val === 'activo' ? '#2C2010' : 'transparent';
+    chipActivo.style.color      = val === 'activo' ? '#EAE4D6' : '#7A6A50';
+    chipActivo.style.borderColor= val === 'activo' ? '#C9A84C' : '#CFC9B8';
+  }
+  renderClientes();
+};
+
 function renderClientes() {
   const q = (document.getElementById('search-clientes').value||'').toLowerCase();
   let list = appData.clientes.filter(c=>!q||c.nombre.toLowerCase().includes(q)||(c.servicio||'').toLowerCase().includes(q));
+
+  // Filtro por estado activo
+  if (filtroClientesEstado === 'activo') {
+    list = list.filter(c => !c.estado || c.estado === 'activo');
+  }
 
   const today0cl = new Date().toISOString().split('T')[0];
 
