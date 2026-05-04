@@ -4236,9 +4236,9 @@ renderTareas();
       : leads;
 
     const COLS = [
+      {label:"Estado actual",w:130,highlight:true},
       {label:"CONTACTADO O NO",w:130},{label:"Nombre / Usuario",w:145},{label:"Plataforma",w:120},
       {label:"Tipo de Cliente",w:110},{label:"NACIONALIDAD",w:110},{label:"Fecha de contacto",w:110},
-      {label:"Estado actual",w:130},
       {label:"Último mensaje",w:150},{label:"Última respuesta",w:150},
       {label:"Notas",w:100},{label:"Nivel",w:120},{label:"",w:44}
     ];
@@ -4247,7 +4247,9 @@ renderTareas();
       fontFamily:"'IBM Plex Mono',monospace",letterSpacing:".08em",fontWeight:700,
       whiteSpace:"pre-wrap",wordBreak:"break-word",borderBottom:"2px solid #BDB5A5",
       borderRight:"1px solid #CFC9B8",background:"#DDD7C8",verticalAlign:"top",lineHeight:1.35};
+    const thHighlight = {...thBase,background:"#C8BEA8",color:"#2C2010",borderBottom:"2px solid #A09070",borderRight:"2px solid #A09070"};
     const tdBase = {padding:"10px 14px",borderRight:"1px solid #E4DDD0",verticalAlign:"middle"};
+    const tdHighlight = {...tdBase,borderRight:"2px solid #C8BEA8",background:"rgba(180,160,120,0.08)"};
 
     return <div style={{flex:1,overflow:"hidden",display:'flex',flexDirection:'column'}}>
       {/* Header */}
@@ -4266,7 +4268,7 @@ renderTareas();
         <table style={{borderCollapse:'collapse',width:'max-content',minWidth:'100%'}}>
           <thead>
             <tr>
-              {COLS.map((c,i)=><th key={i} style={{...thBase,minWidth:c.w}}>{c.label}</th>)}
+              {COLS.map((c,i)=><th key={i} style={{...(c.highlight?thHighlight:thBase),minWidth:c.w}}>{c.label}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -4276,9 +4278,11 @@ renderTareas();
               return <tr key={l.id} style={{background:rowBg,borderBottom:"1px solid #E4DDD0",transition:"background .1s"}}
                 onMouseEnter={e=>e.currentTarget.style.background='#E8E2D4'}
                 onMouseLeave={e=>e.currentTarget.style.background=rowBg}>
-                {/* 1 Contactado */}
+                {/* 1 Estado */}
+                <td style={tdHighlight}><PillSelect leadId={l.id} field="estadoActual" value={derivedEstado(l)} options={ESTADO_OPTS} type="estado"/></td>
+                {/* 2 Contactado */}
                 <td style={tdBase}><PillSelect leadId={l.id} field="contactado" value={l.contactado||"CONTACTADO"} options={CONTACTO_OPTS} type="contactado"/></td>
-                {/* 2 Nombre */}
+                {/* 3 Nombre */}
                 <td style={{...tdBase}}>
                   <div style={{fontSize:13,fontWeight:700,color:"#2C2010",fontFamily:"'Syne',sans-serif",whiteSpace:"nowrap"}}>{l.instagram?`@${l.instagram}`:l.nombre}</div>
                   {l.nombre&&l.instagram&&<div style={{fontSize:10,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:1}}>{l.nombre}</div>}
@@ -4291,9 +4295,7 @@ renderTareas();
                 <td style={tdBase}><PillSelect leadId={l.id} field="nac" value={derivedNac(l)} options={NAC_OPTS} type="nacionalidad"/></td>
                 {/* 6 Fecha */}
                 <td style={tdBase}><div style={{fontSize:12,color:"#4A3A20",fontFamily:"'IBM Plex Mono',monospace",whiteSpace:"nowrap"}}>{l.fechaContacto?new Date(l.fechaContacto).toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit",year:"numeric"}):""}</div></td>
-                {/* 7 Estado */}
-                <td style={tdBase}><PillSelect leadId={l.id} field="estadoActual" value={derivedEstado(l)} options={ESTADO_OPTS} type="estado"/></td>
-                {/* 8 Último mensaje */}
+                {/* 7 Último mensaje */}
                 <td style={tdBase}><TextCell leadId={l.id} field="ultimoMensaje" value={l.ultimoMensaje} placeholder="Escribe aquí..."/></td>
                 {/* 9 Última respuesta */}
                 <td style={tdBase}><TextCell leadId={l.id} field="ultimaRespuesta" value={l.ultimaRespuesta} placeholder="Escribe aquí..."/></td>
