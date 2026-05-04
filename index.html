@@ -1909,6 +1909,13 @@ function switchModule(name) {
   const finSubnav = document.getElementById('fin-subnav');
   if (name === 'finanzas') {
     finSubnav.style.display = 'flex';
+    // Ensure dashboard fin-page is visible and others are hidden
+    document.querySelectorAll('.fin-page').forEach(p => p.style.display = 'none');
+    document.getElementById('fin-page-dashboard').style.display = 'block';
+    // Reset subnav active state to dashboard button
+    document.querySelectorAll('#fin-subnav button').forEach(b => b.classList.remove('active'));
+    const dashBtn = document.querySelector('#fin-subnav button[data-fin-page="dashboard"]');
+    if (dashBtn) dashBtn.classList.add('active');
     renderDashboard();
   } else {
     finSubnav.style.display = 'none';
@@ -3910,34 +3917,46 @@ renderTareas();
   }
 
   function AddLeadModal({ onClose, onSave }) {
-    const [f,setF] = useState({nombre:"",instagram:"",whatsapp:"",nacionalidad:"",servicio:SERVICIOS[0],fuente:FUENTES[0],ads:"—",valor:"",etapa:"lead",fechaContacto:new Date().toISOString().split("T")[0],proximoContacto:"",notas:""});
+    const ETAPA_MAP_ADD = { NUEVO:'lead', CONVERSACION:'interesado', INTERESADO:'interesado', CERRADO:'cerrado', PERDIDO:'perdido' };
+    const [f,setF] = React.useState({
+      nombre:"",instagram:"",whatsapp:"",nac:"ARGENTINA",
+      servicio:SERVICIOS[0],fuente:FUENTES[0],ads:"—",valor:"",
+      etapa:"lead",fechaContacto:new Date().toISOString().split("T")[0],proximoContacto:"",notas:"",
+      contactado:"CONTACTADO",canal:"WHATSAPP",tipoCliente:"NUEVO",
+      estadoActual:"NUEVO",tipoContacto:"CALIDO",ultimoMensaje:"",ultimaRespuesta:""
+    });
     const set=(k,v)=>setF(prev=>({...prev,[k]:v}));
     return <div className="crm-modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="crm-modal-box">
-        <CRMModalHeader title="Nuevo Lead" onClose={onClose}/>
+        <CRMModalHeader title="Nuevo Lead / Contacto" onClose={onClose}/>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             <CRMField label="Nombre" value={f.nombre} onChange={v=>set("nombre",v)} placeholder="Nombre del artista"/>
-            <CRMField label="Instagram" value={f.instagram} onChange={v=>set("instagram",v)} placeholder="@handle"/>
+            <CRMField label="Instagram / Usuario" value={f.instagram} onChange={v=>set("instagram",v)} placeholder="@handle"/>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             <CRMField label="WhatsApp" value={f.whatsapp} onChange={v=>set("whatsapp",v)} placeholder="+34 600 000 000"/>
-            <CRMSelect label="País" value={f.nacionalidad} onChange={v=>set("nacionalidad",v)} options={PAISES}/>
+            <CRMSelect label="Nacionalidad" value={f.nac} onChange={v=>set("nac",v)} options={["ARGENTINA","ESPANA","EUROPA","AMERICA","EEUU","COLOMBIA","CHILE","MEXICO","OTRO"]}/>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+            <CRMSelect label="Canal" value={f.canal} onChange={v=>set("canal",v)} options={["WHATSAPP","INSTAGRAM","OTRO"]}/>
+            <CRMSelect label="Tipo de Cliente" value={f.tipoCliente} onChange={v=>set("tipoCliente",v)} options={["NUEVO","COMPRO","RECURRENTE"]}/>
+            <CRMSelect label="Tipo de Contacto" value={f.tipoContacto} onChange={v=>set("tipoContacto",v)} options={["FRIO","CALIDO","CALIENTE","COLABORACION"]}/>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <CRMSelect label="Estado Actual" value={f.estadoActual} onChange={v=>{set("estadoActual",v);set("etapa",ETAPA_MAP_ADD[v]||"lead");}} options={["NUEVO","CONVERSACION","INTERESADO","CERRADO","PERDIDO"]}/>
             <CRMField label="Fecha de contacto" value={f.fechaContacto} onChange={v=>set("fechaContacto",v)} type="date"/>
-            <CRMField label="Próximo contacto" value={f.proximoContacto} onChange={v=>set("proximoContacto",v)} type="date"/>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <CRMField label="Ultimo mensaje enviado" value={f.ultimoMensaje} onChange={v=>set("ultimoMensaje",v)} placeholder="Ej: Le hable para definir..."/>
+            <CRMField label="Ultima respuesta del artista" value={f.ultimaRespuesta} onChange={v=>set("ultimaRespuesta",v)} placeholder="Ej: Como anda..."/>
           </div>
           <CRMSelect label="Servicio" value={f.servicio} onChange={v=>set("servicio",v)} options={SERVICIOS}/>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             <CRMSelect label="Fuente" value={f.fuente} onChange={v=>set("fuente",v)} options={FUENTES}/>
-            {f.fuente==="Meta Ads"&&<CRMField label="Ad (Meta)" value={f.ads==="—"?"":f.ads} onChange={v=>set("ads",v)} placeholder="Nombre del ad..."/>}
+            <CRMField label="Valor estimado (euros)" value={f.valor} onChange={v=>set("valor",v)} placeholder="0" type="number"/>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            <CRMField label="Valor estimado (€)" value={f.valor} onChange={v=>set("valor",v)} placeholder="0" type="number"/>
-            <CRMSelect label="Etapa inicial" value={f.etapa} onChange={v=>set("etapa",v)} options={ETAPAS.map(e=>e.id)} labels={ETAPAS.map(e=>e.label)}/>
-          </div>
-          <CRMTextarea label="Notas" value={f.notas} onChange={v=>set("notas",v)} placeholder="Info relevante..."/>
+          <CRMTextarea label="Notas / Contexto" value={f.notas} onChange={v=>set("notas",v)} placeholder="Info relevante sobre el artista..."/>
         </div>
         <div style={{display:"flex",gap:10,marginTop:24}}>
           <button className="crm-btn-ghost" onClick={onClose} style={{flex:1}}>Cancelar</button>
@@ -3946,7 +3965,7 @@ renderTareas();
       </div></div>;
   }
 
-  function EditLeadModal({ lead, onClose, onSave, onDelete }) {
+    function EditLeadModal({ lead, onClose, onSave, onDelete }) {
     const [f,setF] = useState({...lead});
     const set=(k,v)=>setF(prev=>({...prev,[k]:v}));
     return <div className="crm-modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
@@ -4116,99 +4135,181 @@ renderTareas();
 
   function PipelineTab({ leads, saveLeads, onOpenLead, onAdd }) {
     const [search, setSearch] = React.useState("");
-    const today = new Date(); today.setHours(0,0,0,0);
+    const [editingCell, setEditingCell] = React.useState(null);
+    const [editValue, setEditValue] = React.useState("");
 
-    function getDaysLabel(dateStr) {
-      if (!dateStr) return null;
-      const d = new Date(dateStr); d.setHours(0,0,0,0);
-      const diff = Math.round((d - today) / 86400000);
-      if (diff < 0) return { label: `${Math.abs(diff)}d vencido`, color: "#F85149", urgent: true };
-      if (diff === 0) return { label: "Hoy", color: "#F0B429", urgent: true };
-      if (diff <= 2) return { label: `En ${diff}d`, color: "#F0B429", urgent: false };
-      return { label: `En ${diff}d`, color: "#8A7A60", urgent: false };
+    const ETAPA_MAP = { NUEVO:'lead', CONVERSACION:'interesado', INTERESADO:'interesado', CERRADO:'cerrado', PERDIDO:'perdido' };
+    const CANAL_OPTS = ["WHATSAPP","INSTAGRAM","OTRO"];
+    const TIPO_CLI_OPTS = ["NUEVO","COMPRO","RECURRENTE"];
+    const ESTADO_OPTS = ["NUEVO","CONVERSACION","INTERESADO","CERRADO","PERDIDO"];
+    const CONTACTO_OPTS = ["CONTACTADO","NO CONTACTADO"];
+    const NAC_OPTS = ["ARGENTINA","ESPAÑA","EUROPA","AMERICA","EEUU","COLOMBIA","CHILE","MEXICO","OTRO"];
+    const TIPO_CONTACTO_OPTS = ["FRIO","CALIDO","CALIENTE","COLABORACION"];
+
+    function updateLead(id, field, value) {
+      const upd = leads.map(l => {
+        if (l.id !== id) return l;
+        const updated = {...l, [field]: value};
+        if (field === 'estadoActual') updated.etapa = ETAPA_MAP[value] || 'lead';
+        return updated;
+      });
+      saveLeads(upd);
     }
 
-    function getNacFlag(nac) {
-      if (!nac) return "";
-      const n = nac.toLowerCase();
-      if (n.includes("españa") || n.includes("spain")) return "🇪🇸 ";
-      if (n.includes("mexico") || n.includes("méxico")) return "🇲🇽 ";
-      if (n.includes("argentin")) return "🇦🇷 ";
-      if (n.includes("colombia") || n.includes("colombia")) return "🇨🇴 ";
-      if (n.includes("chile")) return "🇨🇱 ";
-      if (n.includes("peru") || n.includes("perú")) return "🇵🇪 ";
-      if (n.includes("venezuel")) return "🇻🇪 ";
-      if (n.includes("eeuu") || n.includes("usa") || n.includes("estados unidos")) return "🇺🇸 ";
-      if (n.includes("brasil") || n.includes("brazil")) return "🇧🇷 ";
-      if (n.includes("puerto rico")) return "🇵🇷 ";
-      if (n.includes("república dominicana") || n.includes("dominicana")) return "🇩🇴 ";
-      if (n.includes("ecuador")) return "🇪🇨 ";
-      if (n.includes("uruguay")) return "🇺🇾 ";
-      return "🌍 ";
+    function pillColors(type, value) {
+      const v = (value||"").toUpperCase();
+      const maps = {
+        contactado: { CONTACTADO:{bg:'#C8EAD0',color:'#1A5C2A'}, 'NO CONTACTADO':{bg:'#E4DDD0',color:'#7A6A50'} },
+        canal: { WHATSAPP:{bg:'#C8EAD0',color:'#1A5C2A'}, INSTAGRAM:{bg:'#FAD9C0',color:'#8C3A10'}, OTRO:{bg:'#E4DDD0',color:'#7A6A50'} },
+        tipoCliente: { NUEVO:{bg:'#C8DCF5',color:'#1A4A8C'}, COMPRO:{bg:'#C8EAD0',color:'#1A5C2A'}, RECURRENTE:{bg:'#C8EDD8',color:'#1A6040'} },
+        nacionalidad: {
+          ARGENTINA:{bg:'#BEE3DC',color:'#0D4A40'}, ESPAÑA:{bg:'#FAC8C6',color:'#8C1A18'}, ESPANA:{bg:'#FAC8C6',color:'#8C1A18'},
+          EUROPA:{bg:'#FAD9C0',color:'#8C4010'}, AMERICA:{bg:'#FAE0B0',color:'#8C5010'},
+          EEUU:{bg:'#C8DCF5',color:'#1A4A8C'}, COLOMBIA:{bg:'#C8EAD0',color:'#1A5C2A'},
+          CHILE:{bg:'#BEE3DC',color:'#0D4A40'}, MEXICO:{bg:'#FAD9C0',color:'#8C4010'}, OTRO:{bg:'#E4DDD0',color:'#7A6A50'}
+        },
+        estado: {
+          NUEVO:{bg:'#DCEAFD',color:'#1A3A8C'}, CONVERSACION:{bg:'#FAD9C0',color:'#8C3A10'},
+          INTERESADO:{bg:'#FFF0C0',color:'#7A5A00'}, CERRADO:{bg:'#C8EAD0',color:'#1A5C2A'}, PERDIDO:{bg:'#FAC8C6',color:'#8C1A18'}
+        },
+        tipoContacto: {
+          FRIO:{bg:'#DDE4F0',color:'#3A5080'}, CALIDO:{bg:'#FFF0C0',color:'#7A5A00'},
+          CALIENTE:{bg:'#FAD9C0',color:'#8C3A10'}, COLABORACION:{bg:'#EDD8FA',color:'#5A2A8C'}
+        }
+      };
+      return maps[type]?.[v] || {bg:'#E4DDD0', color:'#7A6A50'};
+    }
+
+    function PillSelect({leadId, field, value, options, type}) {
+      const {bg, color} = pillColors(type, value);
+      return <select value={value||""} onChange={e=>updateLead(leadId,field,e.target.value)}
+        style={{background:bg,color,border:'none',borderRadius:20,padding:'4px 10px 4px 10px',fontSize:11,fontWeight:700,
+          fontFamily:"'IBM Plex Mono',monospace",cursor:'pointer',appearance:'none',WebkitAppearance:'none',
+          outline:'none',minWidth:80,textAlign:'center',letterSpacing:'.03em',boxShadow:'none'}}>
+        {options.map(o=><option key={o} value={o}>{o}</option>)}
+      </select>;
+    }
+
+    function TextCell({leadId, field, value, placeholder}) {
+      const isEditing = editingCell && editingCell.id===leadId && editingCell.field===field;
+      if (isEditing) return <input autoFocus value={editValue}
+        onChange={e=>setEditValue(e.target.value)}
+        onBlur={()=>{ updateLead(leadId,field,editValue); setEditingCell(null); }}
+        onKeyDown={e=>{ if(e.key==='Enter'||e.key==='Escape'){updateLead(leadId,field,editValue);setEditingCell(null);} }}
+        style={{background:'transparent',border:'none',borderBottom:'1.5px solid #C9A84C',width:'100%',
+          fontSize:12,color:'#2C2010',fontFamily:"'DM Sans',sans-serif",outline:'none',padding:'2px 0',minWidth:100}}/>;
+      return <div onClick={()=>{setEditingCell({id:leadId,field});setEditValue(value||"");}}
+        style={{fontSize:12,color:value?'#2C2010':'#B0A090',cursor:'text',minHeight:20,padding:'2px 0',
+          fontFamily:"'DM Sans',sans-serif",fontStyle:value?'normal':'italic',whiteSpace:'pre-wrap',wordBreak:'break-word',maxWidth:180}}>
+        {value||placeholder}
+      </div>;
+    }
+
+    function derivedCanal(l) {
+      if (l.canal) return l.canal.toUpperCase();
+      const f = (l.fuente||"").toLowerCase();
+      if (f.includes("dm") || f.includes("instagram")) return "INSTAGRAM";
+      if (f.includes("whats") || f.includes("orgán") || f.includes("refer")) return "WHATSAPP";
+      return "OTRO";
+    }
+    function derivedEstado(l) {
+      if (l.estadoActual) return l.estadoActual.toUpperCase();
+      const e = l.etapa||"lead";
+      return e==='cerrado'?'CERRADO':e==='perdido'?'PERDIDO':e==='interesado'?'INTERESADO':e==='llamada'?'CONVERSACION':'NUEVO';
+    }
+    function derivedNac(l) {
+      const n = (l.nac||l.nacionalidad||"").toUpperCase();
+      if (!n) return "OTRO";
+      if (n.includes("ARGENTIN")) return "ARGENTINA";
+      if (n.includes("ESPA")) return "ESPAÑA";
+      if (n.includes("EUROP")) return "EUROPA";
+      if (n.includes("AMERIC")) return "AMERICA";
+      if (n.includes("EEUU")||n.includes("USA")) return "EEUU";
+      if (n.includes("COLOMB")) return "COLOMBIA";
+      if (n.includes("CHILE")) return "CHILE";
+      if (n.includes("MEXIC")) return "MEXICO";
+      return n;
     }
 
     const filteredLeads = search.trim()
-      ? leads.filter(l => {
-          const q = search.toLowerCase();
-          return (l.nombre||"").toLowerCase().includes(q) ||
-                 (l.instagram||"").toLowerCase().includes(q) ||
-                 (l.servicio||"").toLowerCase().includes(q) ||
-                 (l.nacionalidad||"").toLowerCase().includes(q);
-        })
+      ? leads.filter(l=>{const q=search.toLowerCase();return (l.nombre||"").toLowerCase().includes(q)||(l.instagram||"").toLowerCase().includes(q)||(l.estadoActual||l.etapa||"").toLowerCase().includes(q)||(l.nacionalidad||"").toLowerCase().includes(q);})
       : leads;
 
-    return <div style={{flex:1,overflow:"auto",padding:"28px 32px"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-        <div><h1 style={{fontSize:22,fontWeight:800,color:"#2C2010",fontFamily:"'Syne',sans-serif"}}>Pipeline</h1><p style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:3}}>Gestión de leads por etapa</p></div>
+    const COLS = [
+      {label:"CONTACTADO O NO",w:130},{label:"Nombre / Usuario",w:145},{label:"Plataforma",w:120},
+      {label:"Tipo de Cliente",w:110},{label:"NACIONALIDAD",w:110},{label:"Fecha de contacto",w:110},
+      {label:"Estado actual",w:130},
+      {label:"Último mensaje",w:150},{label:"Última respuesta",w:150},
+      {label:"Notas",w:100},{label:"Nivel",w:120},{label:"",w:44}
+    ];
+
+    const thBase = {padding:"10px 14px",textAlign:"left",fontSize:10,color:"#4A3A28",
+      fontFamily:"'IBM Plex Mono',monospace",letterSpacing:".08em",fontWeight:700,
+      whiteSpace:"pre-wrap",wordBreak:"break-word",borderBottom:"2px solid #BDB5A5",
+      borderRight:"1px solid #CFC9B8",background:"#DDD7C8",verticalAlign:"top",lineHeight:1.35};
+    const tdBase = {padding:"10px 14px",borderRight:"1px solid #E4DDD0",verticalAlign:"middle"};
+
+    return <div style={{flex:1,overflow:"hidden",display:'flex',flexDirection:'column'}}>
+      {/* Header */}
+      <div style={{padding:"18px 24px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",background:"#EDE8DB",borderBottom:"1px solid #CFC9B8",flexShrink:0}}>
+        <div>
+          <h1 style={{fontSize:20,fontWeight:800,color:"#2C2010",fontFamily:"'Syne',sans-serif"}}>Pipeline</h1>
+          <p style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:2}}>{leads.length} contactos · haz clic en una celda para editar</p>
+        </div>
         <div style={{display:"flex",gap:10,alignItems:"center"}}>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Buscar lead..." style={{background:"#DDD7C8",border:"1px solid #BDB5A5",borderRadius:4,color:"#2C2010",padding:"8px 12px",fontSize:12,fontFamily:"'IBM Plex Mono',monospace",outline:"none",width:180}}/>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Buscar..." style={{background:"#DDD7C8",border:"1px solid #BDB5A5",borderRadius:4,color:"#2C2010",padding:"8px 12px",fontSize:12,fontFamily:"'IBM Plex Mono',monospace",outline:"none",width:150}}/>
           <button className="crm-btn-gold" onClick={onAdd}>+ Nuevo Lead</button>
         </div>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12}}>
-        {ETAPAS.map(etapa=>{
-          const etapaLeads=filteredLeads.filter(l=>l.etapa===etapa.id);
-          const val=etapaLeads.reduce((s,l)=>s+(l.valor||0),0);
-          return <div key={etapa.id} style={{background:"#EDE8DB",border:"1px solid #1A1814",borderRadius:8,padding:14}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-              <span style={{fontSize:11,fontWeight:700,color:etapa.color,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:".05em"}}>{etapa.label.toUpperCase()}</span>
-              <span style={{fontSize:18,fontWeight:800,color:etapa.color,fontFamily:"'Syne',sans-serif"}}>{etapaLeads.length}</span>
-            </div>
-            {val>0&&<div style={{fontSize:10,color:"#8A7A60",fontFamily:"'IBM Plex Mono',monospace",marginBottom:10}}>{fmtC(val)}</div>}
-            <div style={{display:"flex",flexDirection:"column",gap:7}}>
-              {etapaLeads.map(l=>{
-                const daysInfo = getDaysLabel(l.proximoContacto);
-                const adInfo = (l.fuente==="Meta Ads") ? (l.ads||l.guion||null) : null;
-                return <div key={l.id} className="crm-lead-card" onClick={()=>onOpenLead(l)} style={{position:"relative"}}>
-                  {daysInfo&&daysInfo.urgent&&<div style={{position:"absolute",top:0,right:0,width:4,height:"100%",background:daysInfo.color,borderRadius:"0 6px 6px 0",opacity:.7}}/>}
-                  <div style={{fontSize:12,fontWeight:700,color:"#2C2010",marginBottom:2,fontFamily:"'Syne',sans-serif"}}>{l.instagram?`@${l.instagram}`:l.nombre}</div>
-                  {l.nombre&&l.instagram&&<div style={{fontSize:10,color:"#9A8A6A",fontFamily:"'IBM Plex Mono',monospace",marginBottom:2}}>{l.nombre}</div>}
-                  <div style={{fontSize:10,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>{l.servicio}</div>
-                  {l.nacionalidad&&<div style={{fontSize:10,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginBottom:3}}>{getNacFlag(l.nacionalidad)}{l.nacionalidad}</div>}
-                  {l.whatsapp&&<a href={`https://wa.me/${l.whatsapp.replace(/[^0-9]/g,"")}`} target="_blank" rel="noopener noreferrer"
-                    onClick={ev=>ev.stopPropagation()}
-                    style={{display:"inline-flex",alignItems:"center",gap:3,fontSize:10,color:"#3FB950",fontFamily:"'IBM Plex Mono',monospace",textDecoration:"none",marginBottom:4}}>
-                    <span>💬</span>{l.whatsapp}
-                  </a>}
-                  <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:4}}>
-                    {l.valor>0&&<span style={{fontSize:11,fontWeight:700,color:"#C9A84C",fontFamily:"'IBM Plex Mono',monospace"}}>{fmtC(l.valor)}</span>}
-                    {adInfo&&adInfo!=="—"&&<span style={{fontSize:9,background:"rgba(240,180,41,0.15)",color:"#F0B429",borderRadius:3,padding:"1px 5px",fontFamily:"'IBM Plex Mono',monospace"}}>📣 {adInfo}</span>}
-                  </div>
-                  {daysInfo&&<div style={{fontSize:9,color:daysInfo.color,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6,fontWeight:daysInfo.urgent?700:400}}>
-                    {daysInfo.urgent?"⚠️ ":"🗓 "}Próximo: {daysInfo.label}
-                  </div>}
-                  <div style={{display:"flex",gap:4,marginTop:4,flexWrap:"wrap"}}>
-                    {ETAPAS.filter(e=>e.id!==etapa.id).slice(0,2).map(e=><button key={e.id} className="crm-move-btn" style={{background:e.bg,color:e.color}}
-                      onClick={ev=>{ev.stopPropagation();saveLeads(leads.map(x=>x.id===l.id?{...x,etapa:e.id}:x));}}>→{e.label.slice(0,5)}</button>)}
-                    {etapa.id==="cerrado"&&<button className="crm-move-btn"
-                      style={{background:"rgba(74,140,98,0.2)",color:"#4a8c62",border:"none"}}
-                      onClick={ev=>{ev.stopPropagation();window.crmMakeClient&&window.crmMakeClient(l);}}>🎤 Cliente</button>}
-                  </div>
-                </div>;
-              })}
-            </div>
-          </div>;
-        })}
+      {/* Spreadsheet */}
+      <div style={{overflowX:'auto',overflowY:'auto',flex:1}}>
+        <table style={{borderCollapse:'collapse',width:'max-content',minWidth:'100%'}}>
+          <thead>
+            <tr>
+              {COLS.map((c,i)=><th key={i} style={{...thBase,minWidth:c.w}}>{c.label}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {filteredLeads.length===0&&<tr><td colSpan={12} style={{textAlign:'center',padding:56,color:'#9A8A6A',fontSize:13,fontFamily:"'IBM Plex Mono',monospace",fontStyle:'italic'}}>Sin contactos. Presioná "+ Nuevo Lead" para empezar.</td></tr>}
+            {filteredLeads.map((l,idx)=>{
+              const rowBg = idx%2===0?'#F5F0E4':'#EDE8DB';
+              return <tr key={l.id} style={{background:rowBg,borderBottom:"1px solid #E4DDD0",transition:"background .1s"}}
+                onMouseEnter={e=>e.currentTarget.style.background='#E8E2D4'}
+                onMouseLeave={e=>e.currentTarget.style.background=rowBg}>
+                {/* 1 Contactado */}
+                <td style={tdBase}><PillSelect leadId={l.id} field="contactado" value={l.contactado||"CONTACTADO"} options={CONTACTO_OPTS} type="contactado"/></td>
+                {/* 2 Nombre */}
+                <td style={{...tdBase}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"#2C2010",fontFamily:"'Syne',sans-serif",whiteSpace:"nowrap"}}>{l.instagram?`@${l.instagram}`:l.nombre}</div>
+                  {l.nombre&&l.instagram&&<div style={{fontSize:10,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:1}}>{l.nombre}</div>}
+                </td>
+                {/* 3 Canal */}
+                <td style={tdBase}><PillSelect leadId={l.id} field="canal" value={derivedCanal(l)} options={CANAL_OPTS} type="canal"/></td>
+                {/* 4 Tipo cliente */}
+                <td style={tdBase}><PillSelect leadId={l.id} field="tipoCliente" value={l.tipoCliente||"NUEVO"} options={TIPO_CLI_OPTS} type="tipoCliente"/></td>
+                {/* 5 Nacionalidad */}
+                <td style={tdBase}><PillSelect leadId={l.id} field="nac" value={derivedNac(l)} options={NAC_OPTS} type="nacionalidad"/></td>
+                {/* 6 Fecha */}
+                <td style={tdBase}><div style={{fontSize:12,color:"#4A3A20",fontFamily:"'IBM Plex Mono',monospace",whiteSpace:"nowrap"}}>{l.fechaContacto?new Date(l.fechaContacto).toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit",year:"numeric"}):""}</div></td>
+                {/* 7 Estado */}
+                <td style={tdBase}><PillSelect leadId={l.id} field="estadoActual" value={derivedEstado(l)} options={ESTADO_OPTS} type="estado"/></td>
+                {/* 8 Último mensaje */}
+                <td style={tdBase}><TextCell leadId={l.id} field="ultimoMensaje" value={l.ultimoMensaje} placeholder="Escribe aquí..."/></td>
+                {/* 9 Última respuesta */}
+                <td style={tdBase}><TextCell leadId={l.id} field="ultimaRespuesta" value={l.ultimaRespuesta} placeholder="Escribe aquí..."/></td>
+                {/* 10 Notas */}
+                <td style={tdBase}><TextCell leadId={l.id} field="notas" value={l.notas} placeholder="Notas..."/></td>
+                {/* 11 Tipo contacto */}
+                <td style={tdBase}><PillSelect leadId={l.id} field="tipoContacto" value={l.tipoContacto||"CALIDO"} options={TIPO_CONTACTO_OPTS} type="tipoContacto"/></td>
+                {/* 12 Acciones */}
+                <td style={{...tdBase,textAlign:'center',borderRight:'none'}}>
+                  <button onClick={()=>onOpenLead(l)} title="Editar lead completo" style={{fontSize:13,color:"#8A7A60",background:"none",border:"none",cursor:"pointer",padding:"3px 5px",borderRadius:4,transition:'all .15s'}}
+                    onMouseEnter={e=>e.currentTarget.style.color='#C9A84C'} onMouseLeave={e=>e.currentTarget.style.color='#8A7A60'}>✏️</button>
+                </td>
+              </tr>;
+            })}
+          </tbody>
+        </table>
       </div>
     </div>;
   }
