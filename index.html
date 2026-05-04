@@ -3516,6 +3516,8 @@ window.switchModule = function(mod) {
 
 // ─── HOME MODULE RENDER ──────────────────────────────────────
 
+</script>
+
 <!-- ═══════════════════════════════════════════════════════════════
      TAREAS JS
 ═══════════════════════════════════════════════════════════════════ -->
@@ -3845,9 +3847,9 @@ renderTareas();
     .crm-modal-overlay { position: fixed; inset: 0; background: #2C201088; z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px; }
     .crm-modal-box { background: #EAE4D6; border: 1px solid #BDB5A5; border-radius: 8px; padding: 28px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; animation: crmFadeUp .2s ease; }
     @keyframes crmFadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-    .crm-nav-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 20px; font-size: 13px; font-weight: 500; letter-spacing: .03em; transition: all .15s; text-align: left; background: transparent; border-left: 2px solid transparent; color: #7A6A50; font-family: 'Syne', sans-serif; border-top: none; border-right: none; border-bottom: none; cursor: pointer; }
-    .crm-nav-btn:hover { color: #6A5A40; }
-    .crm-nav-btn.active { color: #C9A84C; background: #E5DFCF; border-left-color: #C9A84C; font-weight: 700; }
+    .crm-nav-btn { display: flex; align-items: center; gap: 8px; padding: 10px 18px; font-size: 13px; font-weight: 500; letter-spacing: .03em; transition: all .15s; background: transparent; border-bottom: 2px solid transparent; color: #7A6A50; font-family: 'Syne', sans-serif; border-top: none; border-left: none; border-right: none; cursor: pointer; white-space: nowrap; }
+    .crm-nav-btn:hover { color: #6A5A40; background: rgba(44,32,16,0.03); }
+    .crm-nav-btn.active { color: #C9A84C; background: rgba(201,168,76,0.07); border-bottom-color: #C9A84C; font-weight: 700; }
     .crm-kpi { background: #E8E2D4; border: 1px solid #C8C0AE; border-radius: 6px; padding: 20px 24px; position: relative; overflow: hidden; transition: border-color .2s; }
     .crm-kpi:hover { border-color: #BDB5A5; }
     .crm-lead-card { background: #E8E2D4; border: 1px solid #C8C0AE; border-radius: 6px; padding: 13px 14px; cursor: pointer; transition: all .15s; }
@@ -3959,14 +3961,28 @@ renderTareas();
   }
 
   function AddMetaModal({ onClose, onSave }) {
-    const [f,setF] = useState({periodo:"",guion:GUIONES[0],gastado:"",conversaciones:"",alcance:"",impresiones:"",cpm:""});
+    const [f,setF] = useState({fechaInicio:"",fechaFin:"",guion:"",gastado:"",conversaciones:"",alcance:"",impresiones:"",cpm:""});
     const set=(k,v)=>setF(prev=>({...prev,[k]:v}));
+    const getPeriodo=()=>{
+      if(f.fechaInicio&&f.fechaFin){
+        const fmt=(s)=>{ const d=new Date(s); return d.toLocaleDateString("es-ES",{day:"2-digit",month:"short"}); };
+        return fmt(f.fechaInicio)+" – "+fmt(f.fechaFin);
+      }
+      if(f.fechaInicio) return new Date(f.fechaInicio).toLocaleDateString("es-ES",{day:"2-digit",month:"short"});
+      return "";
+    };
     return <div className="crm-modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="crm-modal-box">
         <CRMModalHeader title="Registrar Datos Meta" onClose={onClose}/>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
-          <CRMField label="Período" value={f.periodo} onChange={v=>set("periodo",v)} placeholder="Ej: Semana 14 Apr"/>
-          <CRMSelect label="Guión activo" value={f.guion} onChange={v=>set("guion",v)} options={GUIONES}/>
+          <div><label style={LABEL_S}>PERÍODO</label>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              <div><label style={{...LABEL_S,fontSize:9,marginBottom:3}}>FECHA INICIO</label><input className="crm-input" type="date" value={f.fechaInicio} onChange={e=>set("fechaInicio",e.target.value)}/></div>
+              <div><label style={{...LABEL_S,fontSize:9,marginBottom:3}}>FECHA FIN</label><input className="crm-input" type="date" value={f.fechaFin} onChange={e=>set("fechaFin",e.target.value)}/></div>
+            </div>
+            {getPeriodo()&&<div style={{fontSize:10,color:"#C9A84C",fontFamily:"'IBM Plex Mono',monospace",marginTop:5}}>📅 {getPeriodo()}</div>}
+          </div>
+          <CRMField label="Guión activo" value={f.guion} onChange={v=>set("guion",v)} placeholder="Ej: Guión 4 — Testimonios"/>
           <CRMField label="Gasto (€)" value={f.gastado} onChange={v=>set("gastado",v)} placeholder="0.00" type="number"/>
           <CRMField label="Conversaciones iniciadas" value={f.conversaciones} onChange={v=>set("conversaciones",v)} placeholder="0" type="number"/>
           <CRMField label="Alcance" value={f.alcance} onChange={v=>set("alcance",v)} placeholder="0" type="number"/>
@@ -3975,7 +3991,7 @@ renderTareas();
         </div>
         <div style={{display:"flex",gap:10,marginTop:24}}>
           <button className="crm-btn-ghost" onClick={onClose} style={{flex:1}}>Cancelar</button>
-          <button className="crm-btn-gold" onClick={()=>onSave(f)} style={{flex:2}}>Guardar</button>
+          <button className="crm-btn-gold" onClick={()=>onSave({...f,periodo:getPeriodo()})} style={{flex:2}}>Guardar</button>
         </div>
       </div></div>;
   }
@@ -3991,8 +4007,14 @@ renderTareas();
       { label:"Gasto Meta Total", value:"€"+totalGasto.toFixed(0), sub:"acumulado", color:"#F0B429" },
       { label:"Costo por Conv.", value:costoConv?"€"+costoConv:"—", sub:`${totalConvs} conversaciones`, color:"#F0B429" },
     ];
+    const roi=totalGasto>0?((ingresosCerrados/totalGasto)*100).toFixed(0):null;
+    const proyeccion=pipelinePotencial*(tasaCierre/100);
+    const total=ingresosCerrados+proyeccion;
+    const svcMap={};
+    cerrados.forEach(l=>{const s=l.servicio||"Sin categoría";svcMap[s]=(svcMap[s]||0)+(l.valor||0);});
+    const svcList=Object.entries(svcMap).sort((a,b)=>b[1]-a[1]);
     return <div style={{flex:1,overflow:"auto",padding:"28px 32px"}}>
-      <div style={{marginBottom:24}}><h1 style={{fontSize:22,fontWeight:800,color:"#2C2010",letterSpacing:".02em",fontFamily:"'Syne',sans-serif"}}>Resumen</h1><p style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:3}}>Vista global de tu negocio</p></div>
+      <div style={{marginBottom:24}}><h1 style={{fontSize:22,fontWeight:800,color:"#2C2010",letterSpacing:".02em",fontFamily:"'Syne',sans-serif"}}>Resumen & Finanzas</h1><p style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:3}}>Vista global de tu negocio</p></div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:24}}>
         {kpis.map((k,i)=><div key={i} className="crm-kpi">
           <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:k.color,opacity:.6}}/>
@@ -4001,7 +4023,7 @@ renderTareas();
           <div style={{fontSize:11,color:"#8A7A60",fontFamily:"'IBM Plex Mono',monospace"}}>{k.sub}</div>
         </div>)}
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:16}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:16,marginBottom:24}}>
         <div className="crm-panel">
           <span className="crm-section-label">FUNNEL DE VENTAS</span>
           {ETAPAS.map(e=>{
@@ -4031,6 +4053,38 @@ renderTareas();
           </div>)}
           {!recent.length&&<div style={{color:"#8A7A60",fontSize:12,fontFamily:"'IBM Plex Mono',monospace"}}>Sin leads todavía.</div>}
         </div>
+      </div>
+      {/* ── FINANZAS SECTION ── */}
+      <div style={{marginBottom:20}}><h2 style={{fontSize:17,fontWeight:800,color:"#2C2010",fontFamily:"'Syne',sans-serif",marginBottom:2}}>Balance & Proyección</h2><p style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace"}}>Ingresos confirmados y proyección de cierre</p></div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}}>
+        <div className="crm-kpi" style={{borderTop:"2px solid #C9A84C88",padding:28}}><div className="crm-section-label">INGRESOS CONFIRMADOS</div><div style={{fontSize:36,fontWeight:800,color:"#C9A84C",lineHeight:1,marginBottom:6,fontFamily:"'Syne',sans-serif"}}>{fmtC(ingresosCerrados)}</div><div style={{fontSize:12,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace"}}>{cerrados.length} cliente{cerrados.length!==1?"s":""} cerrado{cerrados.length!==1?"s":""}</div></div>
+        <div className="crm-kpi" style={{borderTop:"2px solid #58A6FF66",padding:28}}><div className="crm-section-label">PROYECCIÓN TOTAL</div><div style={{fontSize:36,fontWeight:800,color:"#58A6FF",lineHeight:1,marginBottom:6,fontFamily:"'Syne',sans-serif"}}>{fmtC(total)}</div><div style={{fontSize:12,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace"}}>Cerrado + {fmtC(proyeccion)} proyectado ({tasaCierre}% cierre)</div></div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:20}}>
+        {[{label:"Gasto Meta",value:"€"+totalGasto.toFixed(0),color:"#F0B429"},{label:"ROI Meta",value:roi?roi+"%":"—",color:"#3FB950"},{label:"Tasa de Cierre",value:tasaCierre+"%",color:"#3FB950"}].map((k,i)=>
+          <div key={i} className="crm-kpi"><div className="crm-section-label">{k.label.toUpperCase()}</div><div style={{fontSize:26,fontWeight:800,color:k.color,fontFamily:"'Syne',sans-serif"}}>{k.value}</div></div>
+        )}
+      </div>
+      <div className="crm-panel">
+        <span className="crm-section-label">INGRESOS POR SERVICIO</span>
+        {!svcList.length&&<div style={{color:"#8A7A60",fontSize:12,fontFamily:"'IBM Plex Mono',monospace"}}>Sin datos.</div>}
+        {svcList.map(([s,v])=>{const pct=ingresosCerrados>0?(v/ingresosCerrados)*100:0; return <div key={s} style={{marginBottom:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}><span style={{fontSize:11,color:"#6A5A40",fontFamily:"'IBM Plex Mono',monospace"}}>{s}</span><span style={{fontSize:11,color:"#C9A84C",fontFamily:"'IBM Plex Mono',monospace"}}>{fmtC(v)}</span></div>
+          <div style={{background:"#DDD7C8",borderRadius:2,height:4}}><div style={{width:pct+"%",height:"100%",background:"#C9A84C",borderRadius:2,transition:"width .5s"}}/></div>
+        </div>;})}
+        {cerrados.length>0&&<><div style={{height:16}}/><span className="crm-section-label">CLIENTES CERRADOS</span>
+          {cerrados.map(l=><div key={l.id} className="crm-row-item">
+            <div><div style={{fontSize:13,fontWeight:700,color:"#2C2010",fontFamily:"'Syne',sans-serif"}}>{l.instagram?`@${l.instagram}`:l.nombre}</div>
+            <div style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:2}}>{l.servicio} · {fmtDateC(l.fecha)}</div></div>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{fontSize:18,fontWeight:800,color:"#C9A84C",fontFamily:"'IBM Plex Mono',monospace"}}>{fmtC(l.valor)}</div>
+              <button onClick={()=>window.crmMakeClient&&window.crmMakeClient(l)}
+                style={{fontSize:10,background:"rgba(74,140,98,0.15)",color:"#4a8c62",border:"1px solid rgba(74,140,98,0.3)",borderRadius:4,padding:"3px 8px",cursor:"pointer",fontFamily:"'IBM Plex Mono',monospace",whiteSpace:"nowrap"}}>
+                🎤 Hacer Cliente
+              </button>
+            </div>
+          </div>)}
+        </>}
       </div>
     </div>;
   }
@@ -4259,34 +4313,36 @@ renderTareas();
 
     if(!ready) return <div style={{height:"100%",display:"flex",alignItems:"center",justifyContent:"center",color:"#C9A84C",fontFamily:"monospace",fontSize:13}}>Cargando CRM...</div>;
 
-    const tabs=[{id:"resumen",label:"Resumen",icon:"◈"},{id:"pipeline",label:"Pipeline",icon:"⬡"},{id:"meta",label:"Meta Ads",icon:"◉"},{id:"finanzas",label:"Finanzas",icon:"◎"}];
+    const tabs=[{id:"resumen",label:"Resumen & Finanzas",icon:"◈"},{id:"pipeline",label:"Pipeline",icon:"⬡"},{id:"meta",label:"Meta Ads",icon:"◉"}];
 
     return <>
       <style>{CRM_CSS}</style>
-      <div className="crm-wrap" style={{display:"flex",height:"100%",fontFamily:"'Syne',sans-serif",overflow:"hidden",background:"#F5F0E4"}}>
-        {/* CRM sub-nav */}
-        <div style={{width:160,background:"#EDE8DB",borderRight:"1px solid #1A1814",display:"flex",flexDirection:"column",flexShrink:0}}>
-          <div style={{padding:"18px 16px 14px",borderBottom:"1px solid #1A1814"}}>
-            <div style={{fontSize:10,color:"#9A8A6A",fontFamily:"'IBM Plex Mono',monospace",letterSpacing:".2em"}}>CRM · PIPELINE</div>
+      <div className="crm-wrap" style={{display:"flex",flexDirection:"column",height:"100%",fontFamily:"'Syne',sans-serif",overflow:"hidden",background:"#F5F0E4"}}>
+        <div style={{background:"#EDE8DB",borderBottom:"1px solid #1A1814",display:"flex",alignItems:"center",flexShrink:0}}>
+          <div style={{padding:"0 20px",borderRight:"1px solid #1A1814",marginRight:4,flexShrink:0}}>
+            <div style={{fontSize:9,color:"#9A8A6A",fontFamily:"'IBM Plex Mono',monospace",letterSpacing:".2em",lineHeight:"42px"}}>CRM</div>
           </div>
-          <nav style={{flex:1}}>
+          <nav style={{display:"flex",flex:1}}>
             {tabs.map(item=><button key={item.id} onClick={()=>setTab(item.id)} className={`crm-nav-btn${tab===item.id?" active":""}`}>
               <span style={{fontSize:14,opacity:tab===item.id?1:.4}}>{item.icon}</span>{item.label}
             </button>)}
           </nav>
-          <div style={{padding:"14px 16px",borderTop:"1px solid #1A1814"}}>
-            <div style={{fontSize:9,color:"#9A8A6A",fontFamily:"'IBM Plex Mono',monospace",letterSpacing:".15em",marginBottom:4}}>AÑO ACTIVO</div>
-            <div style={{fontSize:18,fontWeight:800,color:"#C9A84C",lineHeight:1,fontFamily:"'Syne',sans-serif",marginBottom:6}}>{crmYear}</div>
-            <div style={{fontSize:9,color:"#9A8A6A",fontFamily:"'IBM Plex Mono',monospace",letterSpacing:".15em",marginBottom:4,marginTop:8}}>LEADS TOTALES</div>
-            <div style={{fontSize:28,fontWeight:800,color:"#C9A84C",lineHeight:1,fontFamily:"'Syne',sans-serif"}}>{leads.length}</div>
-            <div style={{fontSize:9,color:"#9A8A6A",fontFamily:"'IBM Plex Mono',monospace",marginTop:3}}>{cerrados.length} cerrados</div>
+          <div style={{display:"flex",alignItems:"center",gap:16,padding:"0 20px",borderLeft:"1px solid #1A1814"}}>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:8,color:"#9A8A6A",fontFamily:"'IBM Plex Mono',monospace",letterSpacing:".15em"}}>AÑO</div>
+              <div style={{fontSize:15,fontWeight:800,color:"#C9A84C",lineHeight:1,fontFamily:"'Syne',sans-serif"}}>{crmYear}</div>
+            </div>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:8,color:"#9A8A6A",fontFamily:"'IBM Plex Mono',monospace",letterSpacing:".15em"}}>LEADS</div>
+              <div style={{fontSize:15,fontWeight:800,color:"#C9A84C",lineHeight:1,fontFamily:"'Syne',sans-serif"}}>{leads.length}</div>
+              <div style={{fontSize:8,color:"#9A8A6A",fontFamily:"'IBM Plex Mono',monospace"}}>{cerrados.length} cerrados</div>
+            </div>
           </div>
         </div>
         <main style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
           {tab==="resumen"&&<ResumenTab leads={leads} cerrados={cerrados} activos={activos} tasaCierre={tasaCierre} ingresosCerrados={ingresosCerrados} pipelinePotencial={pipelinePotencial} totalGasto={totalGasto} totalConvs={totalConvs} costoConv={costoConv}/>}
           {tab==="pipeline"&&<PipelineTab leads={leads} saveLeads={saveLeads} onOpenLead={openLead} onAdd={()=>setModal("addLead")}/>}
           {tab==="meta"&&<MetaTab meta={meta} saveMeta={saveMeta} onAdd={()=>setModal("addMeta")}/>}
-          {tab==="finanzas"&&<FinanzasCRMTab leads={leads} cerrados={cerrados} ingresosCerrados={ingresosCerrados} pipelinePotencial={pipelinePotencial} tasaCierre={tasaCierre} totalGasto={totalGasto}/>}
         </main>
       </div>
       {modal==="addLead"&&<AddLeadModal onClose={()=>setModal(null)} onSave={lead=>{saveLeads([...leads,{...lead,id:Date.now(),fecha:new Date().toISOString()}]);setModal(null);}}/>}
