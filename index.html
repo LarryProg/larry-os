@@ -714,14 +714,9 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
               </div>
               <div class="dash-alert-inner" style="display:flex;flex-direction:column;gap:6px"></div>
             </div>
-            <div class="dash-grid">
-              <div class="card"><div class="card-title">Clientes activos <span id="dash-activos-count" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:#9A8A6A;margin-left:6px"></span></div>
-                <table><thead><tr><th>Cliente</th><th>Etapa</th><th>Servicio</th><th>Pendiente</th></tr></thead><tbody id="dash-cobros-body"></tbody></table>
-              </div>
-              <div class="card"><div class="card-title">Últimos gastos</div>
+            <div class="card"><div class="card-title">Últimos gastos</div>
                 <table><thead><tr><th>Descripción</th><th>Cat.</th><th>Monto</th></tr></thead><tbody id="dash-gastos-body"></tbody></table>
               </div>
-            </div>
             <div class="card"><div class="card-title">Clientes con cobro pendiente</div>
               <table><thead><tr><th>Cliente</th><th>Servicio</th><th>Total</th><th>Cobrado</th><th>Pendiente</th><th>Próximo cobro</th><th>Estado</th><th></th></tr></thead><tbody id="dash-pendientes-body"></tbody></table>
             </div>
@@ -1713,10 +1708,14 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
 
   function clUpdateStats() {
     const mesKey  = clCurrentMesKey();
-    const visibles = clClients.filter(c => !c.mesKey || c.mesKey === mesKey);
+    const visibles = clClients.filter(c => {
+      if (!c.mesKey) return true; // legacy sin mesKey: mostrar siempre
+      const isTerminado = parseInt(c.etapa) >= 3;
+      return isTerminado ? c.mesKey === mesKey : c.mesKey <= mesKey;
+    });
     const total    = visibles.reduce((s,c)=>s+(parseFloat(c.total  )||0),0);
     const pagado   = visibles.reduce((s,c)=>s+(parseFloat(c.pagado||0)),0);
-    document.getElementById('cl-sClientes').textContent  = visibles.length;
+    document.getElementById('cl-sClientes').textContent  = visibles.filter(c=>parseInt(c.etapa)<3).length;
     document.getElementById('cl-sTotal').textContent     = `€${total.toFixed(0)}`;
     document.getElementById('cl-sCobrado').textContent   = `€${pagado.toFixed(0)}`;
     document.getElementById('cl-sPendiente').textContent = `€${Math.max(0,total-pagado).toFixed(0)}`;
@@ -2128,48 +2127,6 @@ function renderDashboard() {
   const nb = document.getElementById('kpi-balance');
   nb.textContent = fmt(neto); nb.className = 'kpi-value '+(neto>=0?'green':'red');
   document.getElementById('kpi-pendiente').textContent = fmt(pend);
-
-  // Clientes activos (etapa < 3 = no terminados)
-  (function(){
-    const CL_STAGE_LABELS = ['Sin Empezar','En Producción','En Revisión','Terminado'];
-    const stageBadgeColor = ['#9A8A6A','#C9A84C','#3FB950','#7A6A50'];
-    let activosHtml = '';
-    let activosCount = 0;
-    try {
-      const clRaw = localStorage.getItem('larryCRM_v2');
-      const clClients = clRaw ? JSON.parse(clRaw) : [];
-      const activos = clClients.filter(c => parseInt(c.etapa) < 3);
-      activosCount = activos.length;
-      activosHtml = activos.map(c => {
-        const etapa = parseInt(c.etapa)||0;
-        const pend = Math.max(0, parseFloat(c.total||0) - parseFloat(c.pagado||0));
-        const color = stageBadgeColor[etapa] || '#9A8A6A';
-        return `<tr>
-          <td><strong>${c.nombre||'—'}</strong></td>
-          <td><span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:${color}18;color:${color}"><span style="width:6px;height:6px;border-radius:50%;background:${color};display:inline-block"></span>${CL_STAGE_LABELS[etapa]}</span></td>
-          <td style="color:#7A6A50;font-size:12px">${c.servicio||'—'}</td>
-          <td class="${pend>0?'amount-neg':'amount-pos'}">${pend>0?fmt(pend):'✓ Saldado'}</td>
-        </tr>`;
-      }).join('');
-    } catch(e){}
-    // Fallback: also look at finanzas activos
-    if (!activosCount) {
-      const finActivos = appData.clientes.filter(c => c.estado === 'activo');
-      activosCount = finActivos.length;
-      activosHtml = finActivos.map(c => {
-        const pend = totalPendiente(c);
-        return `<tr>
-          <td><strong>${c.nombre}</strong></td>
-          <td><span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(63,185,80,0.1);color:#3FB950"><span style="width:6px;height:6px;border-radius:50%;background:#3FB950;display:inline-block"></span>Activo</span></td>
-          <td style="color:#7A6A50;font-size:12px">${c.servicio||'—'}</td>
-          <td class="${pend>0?'amount-neg':'amount-pos'}">${pend>0?fmt(pend):'✓ Saldado'}</td>
-        </tr>`;
-      }).join('');
-    }
-    const countEl = document.getElementById('dash-activos-count');
-    if (countEl) countEl.textContent = activosCount ? `(${activosCount})` : '';
-    document.getElementById('dash-cobros-body').innerHTML = activosHtml || '<tr class="empty-row"><td colspan="4">Sin clientes activos</td></tr>';
-  })();
 
   // Últimos gastos
   const gastosM = [...appData.gastos].sort((a,b)=>b.fecha.localeCompare(a.fecha));
