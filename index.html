@@ -3863,6 +3863,8 @@ renderTareas();
 
   function PipelineTab({ leads, saveLeads, onOpenLead, onAdd }) {
     const [search, setSearch] = React.useState("");
+    const [filterFuente, setFilterFuente] = React.useState("");
+    const [filterServicio, setFilterServicio] = React.useState("");
     const [editingCell, setEditingCell] = React.useState(null);
     const [editValue, setEditValue] = React.useState("");
 
@@ -4007,9 +4009,19 @@ renderTareas();
       return oa - ob;
     });
 
-    const filteredLeads = sortLeads(search.trim()
-      ? leads.filter(l=>{const q=search.toLowerCase();return (l.nombre||"").toLowerCase().includes(q)||(l.instagram||"").toLowerCase().includes(q)||(l.estadoActual||l.etapa||"").toLowerCase().includes(q)||(l.nacionalidad||"").toLowerCase().includes(q);})
-      : leads);
+    const filteredLeads = sortLeads(leads.filter(l => {
+      const q = search.trim().toLowerCase();
+      const matchSearch = !q ||
+        (l.nombre||"").toLowerCase().includes(q) ||
+        (l.instagram||"").toLowerCase().includes(q) ||
+        (l.estadoActual||l.etapa||"").toLowerCase().includes(q) ||
+        (l.nacionalidad||"").toLowerCase().includes(q) ||
+        (l.fuente||"").toLowerCase().includes(q) ||
+        (l.servicio||"").toLowerCase().includes(q);
+      const matchFuente = !filterFuente || (l.fuente||"").toLowerCase() === filterFuente.toLowerCase();
+      const matchServicio = !filterServicio || (l.servicio||"").toLowerCase() === filterServicio.toLowerCase();
+      return matchSearch && matchFuente && matchServicio;
+    }));
 
     const COLS = [
       {label:"Estado",w:95,highlight:true},
@@ -4038,8 +4050,17 @@ renderTareas();
           <h1 style={{fontSize:20,fontWeight:800,color:"#2C2010",fontFamily:"'Syne',sans-serif"}}>Pipeline</h1>
           <p style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:2}}>{leads.length} contactos · haz clic en una celda para editar</p>
         </div>
-        <div style={{display:"flex",gap:10,alignItems:"center"}}>
+        <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Buscar..." style={{background:"#DDD7C8",border:"1px solid #BDB5A5",borderRadius:4,color:"#2C2010",padding:"8px 12px",fontSize:12,fontFamily:"'IBM Plex Mono',monospace",outline:"none",width:150}}/>
+          <select value={filterFuente} onChange={e=>setFilterFuente(e.target.value)} style={{background:"#DDD7C8",border:"1px solid #BDB5A5",borderRadius:4,color:filterFuente?"#2C2010":"#7A6A50",padding:"8px 10px",fontSize:11,fontFamily:"'IBM Plex Mono',monospace",outline:"none",cursor:"pointer"}}>
+            <option value="">📡 Fuente</option>
+            {FUENTES.map(f=><option key={f} value={f}>{f}</option>)}
+          </select>
+          <select value={filterServicio} onChange={e=>setFilterServicio(e.target.value)} style={{background:"#DDD7C8",border:"1px solid #BDB5A5",borderRadius:4,color:filterServicio?"#2C2010":"#7A6A50",padding:"8px 10px",fontSize:11,fontFamily:"'IBM Plex Mono',monospace",outline:"none",cursor:"pointer"}}>
+            <option value="">🎛 Servicio</option>
+            {SERVICIOS.map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+          {(search||filterFuente||filterServicio)&&<button onClick={()=>{setSearch("");setFilterFuente("");setFilterServicio("");}} style={{background:"transparent",border:"1px solid #BDB5A5",borderRadius:4,color:"#9A8A6A",padding:"7px 10px",fontSize:11,fontFamily:"'IBM Plex Mono',monospace",cursor:"pointer"}} title="Limpiar filtros">✕ Limpiar</button>}
           <button className="crm-btn-gold" onClick={onAdd}>+ Nuevo Lead</button>
         </div>
       </div>
