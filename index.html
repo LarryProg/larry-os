@@ -1573,8 +1573,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
     // Ordenar por fecha de pago pendiente: vencidos primero, luego próximos, sin fecha al final
     const today0 = new Date().toISOString().split('T')[0];
     const getNextDate = (c) => {
-      const finPagadoSort = (typeof getFinPagado === 'function') ? getFinPagado(c.id) : null;
-      const pagadoSort = finPagadoSort !== null ? finPagadoSort : parseFloat(c.pagado || 0);
+      const pagadoSort = parseFloat(c.pagado || 0);
       const debe = parseFloat(c.total || 0) - pagadoSort;
       if (debe <= 0 || !(c.fechas||[]).length) return null;
       const sorted = [...c.fechas].filter(f => f.date).sort((a,b) => a.date.localeCompare(b.date));
@@ -1621,12 +1620,10 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
     div.className = `cl-client-card p-${c.proceso}`;
     const init   = c.nombre.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
     const total  = parseFloat(c.total  || 0);
-    // 🔗 BRIDGE: usar cobrado real de Finanzas si existe
-    const finPagado = (typeof getFinPagado === 'function') ? getFinPagado(c.id) : null;
-    const pagado = finPagado !== null ? finPagado : parseFloat(c.pagado || 0);
+    // usar cobrado local del módulo Clientes
+    const pagado = parseFloat(c.pagado || 0);
     const debe   = total - pagado;
     const pct    = total > 0 ? Math.min(100, (pagado/total)*100) : 0;
-    const hasFin = (typeof getFinClientId === 'function') && getFinClientId(c.id) !== null;
     const datesHTML = (c.fechas||[]).length
       ? `<div class="cl-card-dates">${(c.fechas||[]).map(f=>
           `<div class="cl-d-tag">${f.label?`<span>${f.label}:</span> `:''} ${clFmtDate(f.date)}</div>`
@@ -1702,7 +1699,6 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
       <div class="cl-card-bonus">${bonusHTML}</div>
       <div class="cl-card-actions">
         <button class="cl-btn-xs" onclick="clEditClient('${c.id}');event.stopPropagation()">✎ Editar</button>
-        <button class="cl-btn-xs" style="background:rgba(74,140,98,0.15);color:#4a8c62;border-color:rgba(74,140,98,0.3)" onclick="openFinCobrosForCl('${c.id}');event.stopPropagation()">💰 Cobros</button>
         <button class="cl-btn-xs del" onclick="clDelClient('${c.id}');event.stopPropagation()">✕ Eliminar</button>
       </div>
     `;
@@ -1719,11 +1715,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
     const mesKey  = clCurrentMesKey();
     const visibles = clClients.filter(c => !c.mesKey || c.mesKey === mesKey);
     const total    = visibles.reduce((s,c)=>s+(parseFloat(c.total  )||0),0);
-    // 🔗 BRIDGE: usar cobrado real de Finanzas si disponible
-    const pagado   = visibles.reduce((s,c)=>{
-      const fp = (typeof getFinPagado === 'function') ? getFinPagado(c.id) : null;
-      return s + (fp !== null ? fp : parseFloat(c.pagado || 0));
-    }, 0);
+    const pagado   = visibles.reduce((s,c)=>s+(parseFloat(c.pagado||0)),0);
     document.getElementById('cl-sClientes').textContent  = visibles.length;
     document.getElementById('cl-sTotal').textContent     = `€${total.toFixed(0)}`;
     document.getElementById('cl-sCobrado').textContent   = `€${pagado.toFixed(0)}`;
@@ -1838,8 +1830,6 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
       clClients.push(c);
     }
     clSave(); clCloseModal(); clRender();
-    // 🔗 BRIDGE: Sincronizar con Finanzas
-    if (typeof syncClToFin === 'function') syncClToFin(c);
     showToast(clEditingId ? 'Cliente actualizado ✓' : 'Nuevo cliente guardado ✓');
   };
 
@@ -2056,231 +2046,23 @@ initMonthSelect();
 initYearSelect();
 
 // ─── BRIDGE: CONEXIÓN CLIENTES ↔ FINANZAS ↔ CRM ─────────────
-const CL_PROC_LABELS_BRIDGE = { EP:'Ep/Lanzamiento', PROD:'Producción Completa', BEAT:'Beatmaking', MIX_SOLO:'Mix', MIX:'Mix & Master', MASTER:'Master' };
-
-// Sincroniza un cliente de larryCRM_v2 → larryOS_finanzas
-function syncClToFin(clClient) {
-  try {
-    const finRaw = localStorage.getItem('larryOS_finanzas');
-    const finData = finRaw ? JSON.parse(finRaw) : { clientes: [], gastos: [] };
-    if (!finData.clientes) finData.clientes = [];
-    const idx = finData.clientes.findIndex(x => x.clId === clClient.id);
-    const servicio = CL_PROC_LABELS_BRIDGE[clClient.proceso] || clClient.proceso || '';
-    const precio = parseFloat(clClient.total) || 0;
-    const estado = parseInt(clClient.etapa) >= 3 ? 'completado' : 'activo';
-    if (idx >= 0) {
-      finData.clientes[idx] = {
-        ...finData.clientes[idx],
-        nombre: clClient.nombre,
-        servicio, precio, estado
-      };
-    } else {
-      finData.clientes.push({
-        id: 'cl_' + clClient.id,
-        clId: clClient.id,
-        nombre: clClient.nombre,
-        servicio, precio, estado,
-        notas: '', pagos: []
-      });
-    }
-    localStorage.setItem('larryOS_finanzas', JSON.stringify(finData));
-    // Recargar datos de finanzas si el módulo está activo
-    if (typeof load === 'function') { load(); }
-    if (activeModule === 'finanzas' || activeModule === 'fin-clientes') { renderClientes(); renderDashboard(); }
-  } catch(e) { console.warn('syncClToFin error', e); }
-}
-
-// Obtiene el total cobrado real de Finanzas para un cliente de Clientes
-function getFinPagado(clId) {
-  try {
-    const finRaw = localStorage.getItem('larryOS_finanzas');
-    if (!finRaw) return null;
-    const finData = JSON.parse(finRaw);
-    const c = (finData.clientes || []).find(x => x.clId === clId);
-    if (!c) return null;
-    return (c.pagos || []).reduce((s, p) => s + Number(p.monto), 0);
-  } catch(e) { return null; }
-}
-
-// Obtiene el id de Finanzas para un clId dado
-function getFinClientId(clId) {
-  try {
-    const finRaw = localStorage.getItem('larryOS_finanzas');
-    if (!finRaw) return null;
-    const finData = JSON.parse(finRaw);
-    const c = (finData.clientes || []).find(x => x.clId === clId);
-    return c ? c.id : null;
-  } catch(e) { return null; }
-}
-
-// Navega a Finanzas → Clientes y abre el modal de cobros para ese cliente
-function openFinCobrosForCl(clId) {
-  const finId = getFinClientId(clId);
-  if (!finId) { showToast('⚠️ Primero guarda el cliente para sincronizar con Finanzas.'); return; }
-  switchModule('fin-clientes');
-  setTimeout(() => { if (typeof openModalPago === 'function') openModalPago(finId); }, 250);
-}
-
-// Convierte un lead de CRM en un nuevo cliente en el módulo Clientes
-function crmMakeClient(lead) {
-  switchModule('clientes');
-  setTimeout(() => {
-    const procMap = {
-      'Beatmaking': 'BEAT', 'Producción Completa': 'PROD',
-      'EP/Lanzamiento': 'EP', 'Ep/Lanzamiento': 'EP',
-      'Master': 'MASTER', 'Mix': 'MIX_SOLO',
-      'Master por Stems': 'MASTER',
-      'Edición + Mezcla': 'MIX_SOLO', 'Edición + Mezcla + Master': 'MIX',
-      'Mix & Master': 'MIX', 'Mix&Master': 'MIX',
-      'Análisis de Marca Artística': 'PROD'
-    };
-    const mockData = {
-      id: null, nombre: lead.nombre || '',
-      proceso: procMap[lead.servicio] || 'EP',
-      canciones: '', etapa: 1,
-      total: lead.valor || '', pagado: '',
-      mesKey: null, bonus: [], fechas: []
-    };
-    if (typeof clOpenModal === 'function') clOpenModal(mockData);
-  }, 150);
-}
+// ─── SYNC BRIDGE DESACTIVADO ─────────────────────────────────
+// Pipeline, Clientes y Finanzas son módulos independientes.
+function syncClToFin() {}
+function syncFinToClientes() {}
+function syncAllClToFin() {}
+function crmAutoCreateClient() {}
+function crmMakeClient() {}
+function getFinPagado() { return null; }
+function getFinClientId() { return null; }
+function openFinCobrosForCl() {}
 window.crmMakeClient = crmMakeClient;
-
-// Auto-crea silenciosamente un cliente en larryCRM_v2 y lo sincroniza
-// con larryOS_finanzas cuando un lead CRM pasa a "cerrado"
-function crmAutoCreateClient(lead) {
-  try {
-    const procMap = {
-      'Beatmaking':'BEAT','Producción Completa':'PROD','EP/Lanzamiento':'EP',
-      'Ep/Lanzamiento':'EP','Master':'MASTER','Mix':'MIX_SOLO',
-      'Master por Stems':'MASTER','Edición + Mezcla':'MIX_SOLO',
-      'Edición + Mezcla + Master':'MIX','Mix & Master':'MIX',
-      'Mix&Master':'MIX','Análisis de Marca Artística':'PROD'
-    };
-    const clRaw = localStorage.getItem('larryCRM_v2');
-    const clClients = clRaw ? JSON.parse(clRaw) : [];
-    // Check if already exists (by nombre match)
-    const exists = clClients.find(c => c.nombre === lead.nombre);
-    if (exists) {
-      // Just sync to finanzas if not already synced
-      syncClToFin(exists);
-      showToast('🔗 ' + lead.nombre + ' ya existe en Clientes — sincronizado con Finanzas');
-      return;
-    }
-    const now = new Date();
-    const mesKey = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-    const newClient = {
-      id: 'crm_' + Date.now(),
-      nombre: lead.nombre || lead.instagram || 'Lead sin nombre',
-      proceso: procMap[lead.servicio] || 'PROD',
-      canciones: '',
-      etapa: 1, // En Producción
-      total: String(lead.valor || ''),
-      pagado: '0',
-      mesKey: mesKey,
-      bonus: [],
-      fechas: [],
-      _fromCRM: true
-    };
-    clClients.push(newClient);
-    localStorage.setItem('larryCRM_v2', JSON.stringify(clClients));
-    // Now sync to finanzas
-    syncClToFin(newClient);
-    showToast('✅ ' + newClient.nombre + ' → auto-creado en Clientes y Finanzas');
-    // Refresh clientes module if active
-    if (activeModule === 'clientes' && typeof clRender === 'function') clRender();
-  } catch(e) { console.warn('crmAutoCreateClient error', e); }
-}
 window.crmAutoCreateClient = crmAutoCreateClient;
-
+// ─────────────────────────────────────────────────────────────
 
 // Permite al CRM actualizar su año de filtro
 window.crmYearFilter = YEAR;
 function setCrmYear(y) { window.crmYearFilter = y; if (window.crmForceRefresh) window.crmForceRefresh(); }
-
-// ─── SYNC: Finanzas → larryCRM_v2 ────────────────────────────
-// Sincroniza un cliente de larryOS_finanzas → larryCRM_v2 automáticamente
-const FIN_PROC_MAP = {
-  'Beatmaking':'BEAT','Producción Completa':'PROD','Prod Completa':'PROD',
-  'Ep/Lanzamiento':'EP','EP/Lanzamiento':'EP','Mix':'MIX_SOLO',
-  'Mix&Master':'MIX','Mix & Master':'MIX','Master':'MASTER',
-  'Mix Solo':'MIX_SOLO'
-};
-function syncFinToClientes(finCliente) {
-  try {
-    const clRaw = localStorage.getItem('larryCRM_v2');
-    const clClients = clRaw ? JSON.parse(clRaw) : [];
-    const now = new Date();
-    const mesKey = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-    const proceso = FIN_PROC_MAP[finCliente.servicio] || 'PROD';
-    const etapa = finCliente.estado === 'completado' ? 3
-                : finCliente.estado === 'cancelado'  ? 3
-                : 1; // activo / pausado → En Producción
-    const cobrado = (finCliente.pagos||[]).reduce((s,p)=>s+Number(p.monto),0);
-
-    if (finCliente.clId) {
-      // Ya vinculado: actualizar el registro existente en larryCRM_v2
-      const idx = clClients.findIndex(x => x.id === finCliente.clId);
-      if (idx >= 0) {
-        clClients[idx].nombre  = finCliente.nombre;
-        clClients[idx].proceso = proceso;
-        clClients[idx].total   = String(finCliente.precio || 0);
-        clClients[idx].pagado  = String(cobrado);
-        clClients[idx].etapa   = etapa;
-        localStorage.setItem('larryCRM_v2', JSON.stringify(clClients));
-        if (typeof window.clReload === 'function') window.clReload();
-        return;
-      }
-    }
-
-    // No vinculado: buscar por nombre primero
-    const byName = clClients.findIndex(c => c.nombre.toLowerCase() === finCliente.nombre.toLowerCase());
-    if (byName >= 0) {
-      // Vincular y actualizar
-      const clId = clClients[byName].id;
-      clClients[byName].proceso = proceso;
-      clClients[byName].total   = String(finCliente.precio || 0);
-      clClients[byName].pagado  = String(cobrado);
-      clClients[byName].etapa   = etapa;
-      localStorage.setItem('larryCRM_v2', JSON.stringify(clClients));
-      // Guardar el clId en finanzas también
-      finCliente.clId = clId;
-      localStorage.setItem('larryOS_finanzas', JSON.stringify(appData));
-    } else {
-      // Crear nuevo en larryCRM_v2
-      const newId = 'fin_' + Date.now();
-      clClients.push({
-        id: newId,
-        nombre: finCliente.nombre,
-        proceso, etapa,
-        total: String(finCliente.precio || 0),
-        pagado: String(cobrado),
-        mesKey, bonus: [], fechas: [],
-        canciones: '', _fromFin: true
-      });
-      localStorage.setItem('larryCRM_v2', JSON.stringify(clClients));
-      // Vincular en finanzas
-      finCliente.clId = newId;
-      localStorage.setItem('larryOS_finanzas', JSON.stringify(appData));
-    }
-    if (typeof window.clReload === 'function') window.clReload();
-  } catch(e) { console.warn('syncFinToClientes error', e); }
-}
-
-// Sincroniza TODOS los clientes de larryCRM_v2 a larryOS_finanzas (bulk)
-function syncAllClToFin() {
-  try {
-    const clRaw = localStorage.getItem('larryCRM_v2');
-    if (!clRaw) { showToast('Sin clientes en el módulo Clientes'); return; }
-    const clClients = JSON.parse(clRaw);
-    clClients.forEach(c => { if (typeof syncClToFin === 'function') syncClToFin(c); });
-    if (typeof load === 'function') load();
-    renderClientes(); renderDashboard();
-    showToast(`✓ ${clClients.length} clientes sincronizados con Finanzas`);
-  } catch(e) { console.warn('syncAllClToFin error', e); }
-}
-
-// ─────────────────────────────────────────────────────────────
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════════
@@ -2870,9 +2652,6 @@ function saveCliente() {
     }catch(e){}
   }
   save();closeModal('modal-cliente');renderClientes();renderDashboard();
-  // Auto-sync hacia larryCRM_v2
-  const savedCl = appData.clientes.find(x=>x.id===(editingClienteId||appData.clientes[appData.clientes.length-1].id));
-  if (savedCl) syncFinToClientes(savedCl);
   // Fix 4: auto-completar si el cobro lleva a 100%
   if(editingClienteId){
     const c=appData.clientes.find(x=>x.id===editingClienteId);
@@ -3013,8 +2792,6 @@ function savePago() {
     showToast(`✅ ${c.nombre} — pago completo. Estado → Completado`);
   }
   save();
-  // Sync automático hacia larryCRM_v2
-  syncFinToClientes(c);
   openModalPago(editingPagoClienteId);renderClientes();renderDashboard();showToast(`Cobro de ${fmt(monto)} registrado ✓`);
 }
 function deletePago(clienteId,pagoId){const c=appData.clientes.find(x=>x.id===clienteId);c.pagos=c.pagos.filter(p=>p.id!==pagoId);save();openModalPago(clienteId);renderClientes();renderDashboard();showToast('Pago eliminado');}
@@ -3945,11 +3722,11 @@ renderTareas();
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             <CRMSelect label="Estado Actual" value={f.estadoActual} onChange={v=>{set("estadoActual",v);set("etapa",ETAPA_MAP_ADD[v]||"lead");}} options={["NUEVO","CONVERSACION","INTERESADO","CERRADO","PERDIDO"]}/>
-            <CRMField label="Fecha de contacto" value={f.fechaContacto} onChange={v=>set("fechaContacto",v)} type="date"/>
+            <CRMSelect label="Contactado / No contactado" value={f.contactado} onChange={v=>set("contactado",v)} options={["CONTACTADO","NO CONTACTADO"]}/>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            <CRMField label="Ultimo mensaje enviado" value={f.ultimoMensaje} onChange={v=>set("ultimoMensaje",v)} placeholder="Ej: Le hable para definir..."/>
-            <CRMField label="Ultima respuesta del artista" value={f.ultimaRespuesta} onChange={v=>set("ultimaRespuesta",v)} placeholder="Ej: Como anda..."/>
+            <CRMField label="Fecha de contacto" value={f.fechaContacto} onChange={v=>set("fechaContacto",v)} type="date"/>
+            <CRMField label="📅 Próximo Contacto" value={f.proximoContacto||""} onChange={v=>set("proximoContacto",v)} type="date"/>
           </div>
           <CRMSelect label="Servicio" value={f.servicio} onChange={v=>set("servicio",v)} options={SERVICIOS}/>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
@@ -4120,13 +3897,7 @@ renderTareas();
           {cerrados.map(l=><div key={l.id} className="crm-row-item">
             <div><div style={{fontSize:13,fontWeight:700,color:"#2C2010",fontFamily:"'Syne',sans-serif"}}>{l.instagram?`@${l.instagram}`:l.nombre}</div>
             <div style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:2}}>{l.servicio} · {fmtDateC(l.fecha)}</div></div>
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <div style={{fontSize:18,fontWeight:800,color:"#C9A84C",fontFamily:"'IBM Plex Mono',monospace"}}>{fmtC(l.valor)}</div>
-              <button onClick={()=>window.crmMakeClient&&window.crmMakeClient(l)}
-                style={{fontSize:10,background:"rgba(74,140,98,0.15)",color:"#4a8c62",border:"1px solid rgba(74,140,98,0.3)",borderRadius:4,padding:"3px 8px",cursor:"pointer",fontFamily:"'IBM Plex Mono',monospace",whiteSpace:"nowrap"}}>
-                🎤 Hacer Cliente
-              </button>
-            </div>
+            <div style={{fontSize:18,fontWeight:800,color:"#C9A84C",fontFamily:"'IBM Plex Mono',monospace"}}>{fmtC(l.valor)}</div>
           </div>)}
         </>}
       </div>
@@ -4175,6 +3946,11 @@ renderTareas();
         tipoContacto: {
           FRIO:{bg:'#DDE4F0',color:'#3A5080'}, CALIDO:{bg:'#FFF0C0',color:'#7A5A00'},
           CALIENTE:{bg:'#FAD9C0',color:'#8C3A10'}, COLABORACION:{bg:'#EDD8FA',color:'#5A2A8C'}
+        },
+        fuente: {
+          'META ADS':{bg:'#EDD8FA',color:'#5A2A8C'}, 'ORGÁNICO':{bg:'#C8EAD0',color:'#1A5C2A'},
+          'ORGANICO':{bg:'#C8EAD0',color:'#1A5C2A'}, 'REFERIDO':{bg:'#FFF0C0',color:'#7A5A00'},
+          'DM OUTREACH':{bg:'#C8DCF5',color:'#1A4A8C'}
         }
       };
       return maps[type]?.[v] || {bg:'#E4DDD0', color:'#7A6A50'};
@@ -4183,9 +3959,9 @@ renderTareas();
     function PillSelect({leadId, field, value, options, type}) {
       const {bg, color} = pillColors(type, value);
       return <select value={value||""} onChange={e=>updateLead(leadId,field,e.target.value)}
-        style={{background:bg,color,border:'none',borderRadius:20,padding:'4px 10px 4px 10px',fontSize:11,fontWeight:700,
+        style={{background:bg,color,border:'none',borderRadius:20,padding:'2px 6px',fontSize:10,fontWeight:700,
           fontFamily:"'IBM Plex Mono',monospace",cursor:'pointer',appearance:'none',WebkitAppearance:'none',
-          outline:'none',minWidth:80,textAlign:'center',letterSpacing:'.03em',boxShadow:'none'}}>
+          outline:'none',width:'100%',textAlign:'center',letterSpacing:'.02em',boxShadow:'none',overflow:'hidden',textOverflow:'ellipsis'}}>
         {options.map(o=><option key={o} value={o}>{o}</option>)}
       </select>;
     }
@@ -4197,12 +3973,47 @@ renderTareas();
         onBlur={()=>{ updateLead(leadId,field,editValue); setEditingCell(null); }}
         onKeyDown={e=>{ if(e.key==='Enter'||e.key==='Escape'){updateLead(leadId,field,editValue);setEditingCell(null);} }}
         style={{background:'transparent',border:'none',borderBottom:'1.5px solid #C9A84C',width:'100%',
-          fontSize:12,color:'#2C2010',fontFamily:"'DM Sans',sans-serif",outline:'none',padding:'2px 0',minWidth:100}}/>;
+          fontSize:11,color:'#2C2010',fontFamily:"'DM Sans',sans-serif",outline:'none',padding:'1px 0'}}/>;
       return <div onClick={()=>{setEditingCell({id:leadId,field});setEditValue(value||"");}}
-        style={{fontSize:12,color:value?'#2C2010':'#B0A090',cursor:'text',minHeight:20,padding:'2px 0',
-          fontFamily:"'DM Sans',sans-serif",fontStyle:value?'normal':'italic',whiteSpace:'pre-wrap',wordBreak:'break-word',maxWidth:180}}>
+        style={{fontSize:11,color:value?'#2C2010':'#B0A090',cursor:'text',fontFamily:"'DM Sans',sans-serif",
+          fontStyle:value?'normal':'italic',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
         {value||placeholder}
       </div>;
+    }
+
+    function DatePickerCell({leadId, field, value}) {
+      const formatted = value ? new Date(value+'T00:00:00').toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'}) : null;
+      const isEditing = editingCell && editingCell.id===leadId && editingCell.field===field;
+      if (isEditing) return <input autoFocus type="date" value={editValue}
+        onChange={e=>setEditValue(e.target.value)}
+        onBlur={()=>{ updateLead(leadId,field,editValue); setEditingCell(null); }}
+        onKeyDown={e=>{ if(e.key==='Enter'||e.key==='Escape'){updateLead(leadId,field,editValue);setEditingCell(null);} }}
+        style={{background:'transparent',border:'none',borderBottom:'1.5px solid #C9A84C',width:'100%',
+          fontSize:10,color:'#2C2010',fontFamily:"'IBM Plex Mono',monospace",outline:'none',padding:'1px 0'}}/>;
+      return <div onClick={()=>{setEditingCell({id:leadId,field});setEditValue(value||'');}}
+        style={{fontSize:10,color:value?'#2C2010':'#B0A090',cursor:'pointer',fontFamily:"'IBM Plex Mono',monospace",
+          fontStyle:value?'normal':'italic',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+        {value ? `📅 ${formatted}` : '— sin fecha'}
+      </div>;
+    }
+
+    function FuenteCell({leadId, value}) {
+      const {bg,color} = pillColors('fuente', (value||'').toUpperCase());
+      return <select value={value||FUENTES[0]} onChange={e=>updateLead(leadId,'fuente',e.target.value)}
+        style={{background:bg,color,border:'none',borderRadius:20,padding:'2px 6px',fontSize:10,fontWeight:700,
+          fontFamily:"'IBM Plex Mono',monospace",cursor:'pointer',appearance:'none',WebkitAppearance:'none',
+          outline:'none',width:'100%',textAlign:'center',overflow:'hidden',textOverflow:'ellipsis'}}>
+        {FUENTES.map(o=><option key={o} value={o}>{o}</option>)}
+      </select>;
+    }
+
+    function ServicioCell({leadId, value}) {
+      return <select value={value||SERVICIOS[0]} onChange={e=>updateLead(leadId,'servicio',e.target.value)}
+        style={{background:'#E4DDD0',color:'#4A3A20',border:'none',borderRadius:4,padding:'2px 5px',fontSize:10,fontWeight:600,
+          fontFamily:"'DM Sans',sans-serif",cursor:'pointer',appearance:'none',WebkitAppearance:'none',
+          outline:'none',width:'100%',overflow:'hidden',textOverflow:'ellipsis'}}>
+        {SERVICIOS.map(o=><option key={o} value={o}>{o}</option>)}
+      </select>;
     }
 
     function derivedCanal(l) {
@@ -4231,25 +4042,37 @@ renderTareas();
       return n;
     }
 
-    const filteredLeads = search.trim()
+    const ESTADO_ORDER = {CERRADO:0,INTERESADO:1,CONVERSACION:2,NUEVO:3,PERDIDO:4};
+    const sortLeads = arr => [...arr].sort((a,b)=>{
+      const ea = (a.estadoActual||derivedEstado(a)).toUpperCase();
+      const eb = (b.estadoActual||derivedEstado(b)).toUpperCase();
+      const oa = ESTADO_ORDER[ea]??3, ob = ESTADO_ORDER[eb]??3;
+      return oa - ob;
+    });
+
+    const filteredLeads = sortLeads(search.trim()
       ? leads.filter(l=>{const q=search.toLowerCase();return (l.nombre||"").toLowerCase().includes(q)||(l.instagram||"").toLowerCase().includes(q)||(l.estadoActual||l.etapa||"").toLowerCase().includes(q)||(l.nacionalidad||"").toLowerCase().includes(q);})
-      : leads;
+      : leads);
 
     const COLS = [
-      {label:"Estado actual",w:130,highlight:true},
-      {label:"CONTACTADO O NO",w:130},{label:"Nombre / Usuario",w:145},{label:"Plataforma",w:120},
-      {label:"Tipo de Cliente",w:110},{label:"NACIONALIDAD",w:110},{label:"Fecha de contacto",w:110},
-      {label:"Último mensaje",w:150},{label:"Última respuesta",w:150},
-      {label:"Notas",w:100},{label:"Nivel",w:120},{label:"",w:44}
+      {label:"Estado",w:95,highlight:true},
+      {label:"Contactado",w:70},{label:"Nombre / Usuario",w:110},{label:"Canal",w:65},
+      {label:"Tipo Cliente",w:70},{label:"País",w:70},{label:"F. Contacto",w:78},
+      {label:"Próximo Contacto",w:98,proximoHighlight:true},
+      {label:"Fuente",w:82},{label:"Valor €",w:62},{label:"Servicio",w:105},
+      {label:"Notas",w:70},{label:"Nivel",w:75},{label:"",w:30}
     ];
 
-    const thBase = {padding:"10px 14px",textAlign:"left",fontSize:10,color:"#4A3A28",
-      fontFamily:"'IBM Plex Mono',monospace",letterSpacing:".08em",fontWeight:700,
-      whiteSpace:"pre-wrap",wordBreak:"break-word",borderBottom:"2px solid #BDB5A5",
-      borderRight:"1px solid #CFC9B8",background:"#DDD7C8",verticalAlign:"top",lineHeight:1.35};
+    const thBase = {padding:"7px 7px",textAlign:"left",fontSize:9,color:"#4A3A28",
+      fontFamily:"'IBM Plex Mono',monospace",letterSpacing:".06em",fontWeight:700,
+      whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
+      borderBottom:"2px solid #BDB5A5",borderRight:"1px solid #CFC9B8",
+      background:"#DDD7C8",verticalAlign:"middle",lineHeight:1.3};
     const thHighlight = {...thBase,background:"#C8BEA8",color:"#2C2010",borderBottom:"2px solid #A09070",borderRight:"2px solid #A09070"};
-    const tdBase = {padding:"10px 14px",borderRight:"1px solid #E4DDD0",verticalAlign:"middle"};
+    const thProximo = {...thBase,background:"#C9A84C",color:"#2C2010",borderBottom:"2px solid #A08030",borderRight:"2px solid #A08030",textShadow:"0 1px 0 rgba(255,255,255,0.3)"};
+    const tdBase = {padding:"6px 7px",borderRight:"1px solid #E4DDD0",verticalAlign:"middle",overflow:"hidden",maxWidth:0};
     const tdHighlight = {...tdBase,borderRight:"2px solid #C8BEA8",background:"rgba(180,160,120,0.08)"};
+    const tdProximo = {...tdBase,borderRight:"2px solid #C9A84C",background:"rgba(201,168,76,0.10)"};
 
     return <div style={{flex:1,overflow:"hidden",display:'flex',flexDirection:'column'}}>
       {/* Header */}
@@ -4265,14 +4088,15 @@ renderTareas();
       </div>
       {/* Spreadsheet */}
       <div style={{overflowX:'auto',overflowY:'auto',flex:1}}>
-        <table style={{borderCollapse:'collapse',width:'max-content',minWidth:'100%'}}>
+        <table style={{borderCollapse:'collapse',width:'100%',tableLayout:'fixed'}}>
+          <colgroup>{COLS.map((c,i)=><col key={i} style={{width:c.w}}/>)}</colgroup>
           <thead>
             <tr>
-              {COLS.map((c,i)=><th key={i} style={{...(c.highlight?thHighlight:thBase),minWidth:c.w}}>{c.label}</th>)}
+              {COLS.map((c,i)=><th key={i} style={{...(c.proximoHighlight?thProximo:c.highlight?thHighlight:thBase)}}>{c.label}</th>)}
             </tr>
           </thead>
           <tbody>
-            {filteredLeads.length===0&&<tr><td colSpan={12} style={{textAlign:'center',padding:56,color:'#9A8A6A',fontSize:13,fontFamily:"'IBM Plex Mono',monospace",fontStyle:'italic'}}>Sin contactos. Presioná "+ Nuevo Lead" para empezar.</td></tr>}
+            {filteredLeads.length===0&&<tr><td colSpan={14} style={{textAlign:'center',padding:56,color:'#9A8A6A',fontSize:13,fontFamily:"'IBM Plex Mono',monospace",fontStyle:'italic'}}>Sin contactos. Presioná "+ Nuevo Lead" para empezar.</td></tr>}
             {filteredLeads.map((l,idx)=>{
               const rowBg = idx%2===0?'#F5F0E4':'#EDE8DB';
               return <tr key={l.id} style={{background:rowBg,borderBottom:"1px solid #E4DDD0",transition:"background .1s"}}
@@ -4284,8 +4108,8 @@ renderTareas();
                 <td style={tdBase}><PillSelect leadId={l.id} field="contactado" value={l.contactado||"CONTACTADO"} options={CONTACTO_OPTS} type="contactado"/></td>
                 {/* 3 Nombre */}
                 <td style={{...tdBase}}>
-                  <div style={{fontSize:13,fontWeight:700,color:"#2C2010",fontFamily:"'Syne',sans-serif",whiteSpace:"nowrap"}}>{l.instagram?`@${l.instagram}`:l.nombre}</div>
-                  {l.nombre&&l.instagram&&<div style={{fontSize:10,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:1}}>{l.nombre}</div>}
+                  <div style={{fontSize:11,fontWeight:700,color:"#2C2010",fontFamily:"'Syne',sans-serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{l.instagram?`@${l.instagram}`:l.nombre}</div>
+                  {l.nombre&&l.instagram&&<div style={{fontSize:9,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.nombre}</div>}
                 </td>
                 {/* 3 Canal */}
                 <td style={tdBase}><PillSelect leadId={l.id} field="canal" value={derivedCanal(l)} options={CANAL_OPTS} type="canal"/></td>
@@ -4294,18 +4118,22 @@ renderTareas();
                 {/* 5 Nacionalidad */}
                 <td style={tdBase}><PillSelect leadId={l.id} field="nac" value={derivedNac(l)} options={NAC_OPTS} type="nacionalidad"/></td>
                 {/* 6 Fecha */}
-                <td style={tdBase}><div style={{fontSize:12,color:"#4A3A20",fontFamily:"'IBM Plex Mono',monospace",whiteSpace:"nowrap"}}>{l.fechaContacto?new Date(l.fechaContacto).toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit",year:"numeric"}):""}</div></td>
-                {/* 7 Último mensaje */}
-                <td style={tdBase}><TextCell leadId={l.id} field="ultimoMensaje" value={l.ultimoMensaje} placeholder="Escribe aquí..."/></td>
-                {/* 9 Última respuesta */}
-                <td style={tdBase}><TextCell leadId={l.id} field="ultimaRespuesta" value={l.ultimaRespuesta} placeholder="Escribe aquí..."/></td>
+                <td style={tdBase}><div style={{fontSize:10,color:"#4A3A20",fontFamily:"'IBM Plex Mono',monospace",whiteSpace:"nowrap"}}>{l.fechaContacto?new Date(l.fechaContacto).toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit"}):""}</div></td>
+                {/* 7 Próximo Contacto — COLUMNA RESALTADA */}
+                <td style={tdProximo}><DatePickerCell leadId={l.id} field="proximoContacto" value={l.proximoContacto}/></td>
+                {/* 8 Fuente */}
+                <td style={tdBase}><FuenteCell leadId={l.id} value={l.fuente}/></td>
+                {/* 9 Valor Estimado */}
+                <td style={tdBase}><TextCell leadId={l.id} field="valor" value={l.valor?(l.valor+''):""} placeholder="€ 0"/></td>
+                {/* 10 Servicio */}
+                <td style={tdBase}><ServicioCell leadId={l.id} value={l.servicio}/></td>
                 {/* 10 Notas */}
                 <td style={tdBase}><TextCell leadId={l.id} field="notas" value={l.notas} placeholder="Notas..."/></td>
                 {/* 11 Tipo contacto */}
                 <td style={tdBase}><PillSelect leadId={l.id} field="tipoContacto" value={l.tipoContacto||"CALIDO"} options={TIPO_CONTACTO_OPTS} type="tipoContacto"/></td>
                 {/* 12 Acciones */}
                 <td style={{...tdBase,textAlign:'center',borderRight:'none'}}>
-                  <button onClick={()=>onOpenLead(l)} title="Editar lead completo" style={{fontSize:13,color:"#8A7A60",background:"none",border:"none",cursor:"pointer",padding:"3px 5px",borderRadius:4,transition:'all .15s'}}
+                  <button onClick={()=>onOpenLead(l)} title="Editar lead completo" style={{fontSize:11,color:"#8A7A60",background:"none",border:"none",cursor:"pointer",padding:"2px 4px",borderRadius:4,transition:'all .15s'}}
                     onMouseEnter={e=>e.currentTarget.style.color='#C9A84C'} onMouseLeave={e=>e.currentTarget.style.color='#8A7A60'}>✏️</button>
                 </td>
               </tr>;
@@ -4385,13 +4213,7 @@ renderTareas();
           {cerrados.map(l=><div key={l.id} className="crm-row-item">
             <div><div style={{fontSize:13,fontWeight:700,color:"#2C2010",fontFamily:"'Syne',sans-serif"}}>{l.instagram?`@${l.instagram}`:l.nombre}</div>
             <div style={{fontSize:11,color:"#7A6A50",fontFamily:"'IBM Plex Mono',monospace",marginTop:2}}>{l.servicio} · {fmtDateC(l.fecha)}</div></div>
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <div style={{fontSize:18,fontWeight:800,color:"#C9A84C",fontFamily:"'IBM Plex Mono',monospace"}}>{fmtC(l.valor)}</div>
-              <button onClick={()=>window.crmMakeClient&&window.crmMakeClient(l)}
-                style={{fontSize:10,background:"rgba(74,140,98,0.15)",color:"#4a8c62",border:"1px solid rgba(74,140,98,0.3)",borderRadius:4,padding:"3px 8px",cursor:"pointer",fontFamily:"'IBM Plex Mono',monospace",whiteSpace:"nowrap"}}>
-                🎤 Hacer Cliente
-              </button>
-            </div>
+            <div style={{fontSize:18,fontWeight:800,color:"#C9A84C",fontFamily:"'IBM Plex Mono',monospace"}}>{fmtC(l.valor)}</div>
           </div>)}
         </>}
       </div>
@@ -4422,8 +4244,6 @@ renderTareas();
     const saveLeads=(v)=>{
       // Detect leads that just became "cerrado" and auto-create client
       const prev = leads;
-      const newlyClosed = v.filter(nl => nl.etapa === "cerrado" && !prev.find(ol => ol.id === nl.id && ol.etapa === "cerrado"));
-      newlyClosed.forEach(l => { if(window.crmAutoCreateClient) window.crmAutoCreateClient(l); });
       setLeads(v);sset("larry:leads",v);
     };
     const saveMeta=(v)=>{setMeta(v);sset("larry:meta",v);};
