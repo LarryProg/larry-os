@@ -3887,7 +3887,7 @@ renderTareas();
     function pillColors(type, value) {
       const v = (value||"").toUpperCase();
       const maps = {
-        contactado: { CONTACTADO:{bg:'#C8EAD0',color:'#1A5C2A'}, 'NO CONTACTADO':{bg:'#E4DDD0',color:'#7A6A50'} },
+        contactado: { CONTACTADO:{bg:'#C8EAD0',color:'#1A5C2A'}, 'NO CONTACTADO':{bg:'#FAC8C6',color:'#8C1A18'} },
         canal: { WHATSAPP:{bg:'#C8EAD0',color:'#1A5C2A'}, INSTAGRAM:{bg:'#FAD9C0',color:'#8C3A10'}, OTRO:{bg:'#E4DDD0',color:'#7A6A50'} },
         tipoCliente: { NUEVO:{bg:'#C8DCF5',color:'#1A4A8C'}, COMPRO:{bg:'#C8EAD0',color:'#1A5C2A'}, RECURRENTE:{bg:'#C8EDD8',color:'#1A6040'} },
         nacionalidad: {
@@ -4055,9 +4055,12 @@ renderTareas();
           <tbody>
             {filteredLeads.length===0&&<tr><td colSpan={14} style={{textAlign:'center',padding:56,color:'#9A8A6A',fontSize:13,fontFamily:"'IBM Plex Mono',monospace",fontStyle:'italic'}}>Sin contactos. Presioná "+ Nuevo Lead" para empezar.</td></tr>}
             {filteredLeads.map((l,idx)=>{
-              const rowBg = idx%2===0?'#F5F0E4':'#EDE8DB';
+              const estadoVal = derivedEstado(l);
+              const estadoClr = pillColors('estado', estadoVal);
+              const rowBg = estadoClr.bg + '55';
+              const rowHover = estadoClr.bg + '99';
               return <tr key={l.id} style={{background:rowBg,borderBottom:"1px solid #E4DDD0",transition:"background .1s"}}
-                onMouseEnter={e=>e.currentTarget.style.background='#E8E2D4'}
+                onMouseEnter={e=>e.currentTarget.style.background=rowHover}
                 onMouseLeave={e=>e.currentTarget.style.background=rowBg}>
                 {/* 1 Estado */}
                 <td style={tdHighlight}><PillSelect leadId={l.id} field="estadoActual" value={derivedEstado(l)} options={ESTADO_OPTS} type="estado"/></td>
