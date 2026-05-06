@@ -1614,6 +1614,9 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
     const div    = document.createElement('div');
     div.className = `cl-client-card p-${c.proceso}`;
     const init   = c.nombre.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    // Bridge desactivado: estas vars siempre son null/false
+    const finPagado = null;
+    const hasFin    = false;
     const total  = parseFloat(c.total  || 0);
     // usar cobrado local del módulo Clientes
     const pagado = parseFloat(c.pagado || 0);
@@ -1995,7 +1998,7 @@ function initMonthSelect() {
 function initYearSelect() {
   const sel = document.getElementById('globalYear');
   const currentYear = new Date().getFullYear();
-  for (let y = 2026; y <= 2030; y++) {
+  for (let y = currentYear - 1; y <= currentYear + 4; y++) {
     const o = document.createElement('option');
     o.value = y; o.textContent = y;
     if (y === currentYear) o.selected = true;
@@ -2112,7 +2115,6 @@ function navigateFin(page, btn) {
   btn.classList.add('active');
   if(page==='dashboard') renderDashboard();
   else if(page==='graficas') renderGraficas();
-  else if(page==='clientes') renderClientes();
   else if(page==='gastos') { renderGastos(); renderBalance(); }
 }
 
@@ -2587,6 +2589,28 @@ function saveCliente() {
       newCl.pagos.push({id:crypto.randomUUID(),monto:cobroMonto,fecha:cobroFecha,nota:cobroNota||'Cobro inicial'});
     }
     appData.clientes.push(newCl);
+    // ── Auto-sync inmediato: vincula el cliente nuevo a larryCRM_v2 ──
+    try {
+      const _now2 = new Date();
+      const _mesKey2 = _now2.getFullYear() + '-' + String(_now2.getMonth()+1).padStart(2,'0');
+      const _procMap = {'Beatmaking':'BEAT','Mix':'MIX_SOLO','Master':'MASTER','Mix&Master':'MIX','Prod Completa':'PROD','Ep/Lanzamiento':'EP'};
+      const _clRaw2 = localStorage.getItem('larryCRM_v2');
+      const _clList2 = _clRaw2 ? JSON.parse(_clRaw2) : [];
+      const _byName2 = _clList2.findIndex(x => x.nombre.toLowerCase() === newCl.nombre.toLowerCase());
+      if (_byName2 >= 0) {
+        newCl.clId = _clList2[_byName2].id;
+      } else {
+        const _newClId2 = 'fin_' + newCl.id;
+        _clList2.push({
+          id: _newClId2, nombre: newCl.nombre,
+          proceso: _procMap[newCl.servicio] || 'PROD', etapa: 1,
+          total: String(newCl.precio || 0), pagado: String(cobroMonto),
+          mesKey: _mesKey2, bonus: [], fechas: [], canciones: '', _fromFin: true
+        });
+        newCl.clId = _newClId2;
+      }
+      localStorage.setItem('larryCRM_v2', JSON.stringify(_clList2));
+    } catch(_e2) {}
   }
   // Sync proximoCobro to larryCRM_v2 fechas so the card in Clientes also lo muestra
   if(proxFecha&&pendienteReal>0){
@@ -2630,7 +2654,33 @@ let _finBonusClienteId = null;
 function openFinBonusPanel(finClienteId, nombre, evt) {
   evt && evt.stopPropagation();
   const c = appData.clientes.find(x => x.id === finClienteId);
-  if (!c || !c.clId) { showToast('⚠️ Este cliente no está sincronizado con el módulo Clientes.'); return; }
+  if (!c) { showToast('⚠️ Cliente no encontrado.'); return; }
+  // Auto-sync si no tiene clId (clientes creados antes del fix)
+  if (!c.clId) {
+    try {
+      const _now3 = new Date();
+      const _mesKey3 = _now3.getFullYear() + '-' + String(_now3.getMonth()+1).padStart(2,'0');
+      const _procMap3 = {'Beatmaking':'BEAT','Mix':'MIX_SOLO','Master':'MASTER','Mix&Master':'MIX','Prod Completa':'PROD','Ep/Lanzamiento':'EP'};
+      const _clRaw3 = localStorage.getItem('larryCRM_v2');
+      const _clList3 = _clRaw3 ? JSON.parse(_clRaw3) : [];
+      const _byName3 = _clList3.findIndex(x => x.nombre.toLowerCase() === c.nombre.toLowerCase());
+      if (_byName3 >= 0) {
+        c.clId = _clList3[_byName3].id;
+      } else {
+        const _newClId3 = 'fin_' + c.id;
+        _clList3.push({
+          id: _newClId3, nombre: c.nombre,
+          proceso: _procMap3[c.servicio] || 'PROD', etapa: 1,
+          total: String(c.precio || 0),
+          pagado: String((c.pagos||[]).reduce((s,p)=>s+Number(p.monto),0)),
+          mesKey: _mesKey3, bonus: [], fechas: [], canciones: '', _fromFin: true
+        });
+        c.clId = _newClId3;
+      }
+      localStorage.setItem('larryCRM_v2', JSON.stringify(_clList3));
+      save();
+    } catch(_e3) { showToast('⚠️ Error al sincronizar cliente.'); return; }
+  }
 
   _finBonusClienteId = finClienteId;
 
@@ -2744,12 +2794,13 @@ function savePago() {
   c.pagos.push({id:crypto.randomUUID(),monto,fecha,nota:document.getElementById('p-nota').value.trim()});
   // Fix 4: auto-completar estado si llegó al 100%
   const totalCobradoActual = c.pagos.reduce((s,p)=>s+Number(p.monto),0);
+  let toastMsg = `Cobro de ${fmt(monto)} registrado ✓`;
   if(c.precio>0 && totalCobradoActual>=Number(c.precio) && c.estado!=='completado'){
     c.estado='completado';
-    showToast(`✅ ${c.nombre} — pago completo. Estado → Completado`);
+    toastMsg = `✅ ${c.nombre} — pago completo. Estado → Completado`;
   }
   save();
-  openModalPago(editingPagoClienteId);renderClientes();renderDashboard();showToast(`Cobro de ${fmt(monto)} registrado ✓`);
+  openModalPago(editingPagoClienteId);renderClientes();renderDashboard();showToast(toastMsg);
 }
 function deletePago(clienteId,pagoId){const c=appData.clientes.find(x=>x.id===clienteId);c.pagos=c.pagos.filter(p=>p.id!==pagoId);save();openModalPago(clienteId);renderClientes();renderDashboard();showToast('Pago eliminado');}
 
@@ -3064,6 +3115,7 @@ renderDashboard();
 
 // ─── SYNC INICIAL: Finanzas → larryCRM_v2 ─────────────────────
 // Si hay clientes en Finanzas que no están en larryCRM_v2, los empuja automáticamente
+const FIN_PROC_MAP = {'Beatmaking':'BEAT','Mix':'MIX_SOLO','Master':'MASTER','Mix&Master':'MIX','Prod Completa':'PROD','Ep/Lanzamiento':'EP'};
 (function initSyncFinToClientes() {
   try {
     if (!appData.clientes || !appData.clientes.length) return;
@@ -3313,7 +3365,7 @@ function checkEscaladoPrioridad() {
   today.setHours(0,0,0,0);
   let changed = false;
   tareas = tareas.map(t => {
-    if (t.estado === 'hecho' || !t.diaSemana && t.diaSemana !== 0) return t;
+    if (t.estado === 'hecho' || t.diaSemana == null) return t;
     if (!t.proximoDia) return t;
     const due = new Date(t.proximoDia + 'T00:00:00');
     if (due <= today) {
