@@ -242,7 +242,8 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border-radius: 999px; padding: 7px 12px;
   box-shadow: 0 2px 16px rgba(0,0,0,0.14), 0 0 0 0.5px rgba(0,0,0,0.08);
-  z-index: 50; user-select: none; white-space: nowrap;
+  z-index: 5000; user-select: none; white-space: nowrap;
+  max-width: calc(100% - 32px);
 }
 #notas-toolbar .label { font-size: 11px; font-weight: 600; color: #999; letter-spacing: 0.07em; text-transform: uppercase; padding-right: 4px; }
 .notas-color-dot { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2.5px solid transparent; transition: transform 0.14s, border-color 0.14s; flex-shrink: 0; }
@@ -283,7 +284,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
 #notas-modal .btn-cancel:hover { background: #e4e4e4; }
 #notas-modal .btn-confirm { background: #c0392b; color: #fff; }
 #notas-modal .btn-confirm:hover { background: #a93226; }
-#notas-shortcut { position: absolute; bottom: 18px; right: 22px; font-size: 11px; color: rgba(0,0,0,0.28); font-weight: 500; letter-spacing: 0.03em; user-select: none; pointer-events: none; }
+#notas-shortcut { position: absolute; bottom: 18px; right: 22px; font-size: 11px; color: rgba(0,0,0,0.28); font-weight: 500; letter-spacing: 0.03em; user-select: none; pointer-events: none; z-index: 5000; }
 
 /* ═══════════════════════════════════════════════════════════════════
    CRM MODULE  (React rendered inside #crm-root)
@@ -673,13 +674,14 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
       <select class="sb-month-select" id="globalYear" onchange="onYearChange()" style="margin-bottom:8px"></select>
       <div class="sb-month-label">MES ACTIVO</div>
       <select class="sb-month-select" id="globalMonth" onchange="onMonthChange()"></select>
-      <div style="margin-top:12px;display:flex;gap:6px">
-        <button onclick="openGlobalSearch&&openGlobalSearch()" title="Búsqueda global (Cmd+K)" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;background:rgba(44,32,16,0.05);border:1px solid #BDB5A5;border-radius:6px;color:#7A6A50;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em;transition:all .15s;margin-bottom:6px" onmouseover="this.style.background='rgba(201,168,76,0.12)'" onmouseout="this.style.background='rgba(44,32,16,0.05)'">Buscar</button>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
+        <button onclick="openGlobalSearch&&openGlobalSearch()" title="Búsqueda global (Cmd+K)" style="width:100%;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;background:rgba(44,32,16,0.05);border:1px solid #BDB5A5;border-radius:6px;color:#7A6A50;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em;transition:all .15s" onmouseover="this.style.background='rgba(201,168,76,0.12)'" onmouseout="this.style.background='rgba(44,32,16,0.05)'">Buscar</button>
         <div style="display:flex;gap:6px">
-        <button onclick="backupData()" title="Descargar copia de seguridad de todos los datos" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);border-radius:6px;color:#C9A84C;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em;transition:all .15s" onmouseover="this.style.background='rgba(201,168,76,0.22)'" onmouseout="this.style.background='rgba(201,168,76,0.12)'">⬇ Backup</button>
-        <button onclick="document.getElementById('restore-input').click()" title="Cargar copia de seguridad" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;background:rgba(44,32,16,0.05);border:1px solid #BDB5A5;border-radius:6px;color:#7A6A50;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em;transition:all .15s" onmouseover="this.style.background='rgba(44,32,16,0.1)'" onmouseout="this.style.background='rgba(44,32,16,0.05)'">⬆ Restaurar</button>
-        <input type="file" id="restore-input" accept=".json" style="display:none" onchange="restoreData(event)">
-      </div></div>
+          <button onclick="backupData()" title="Descargar copia de seguridad de todos los datos" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);border-radius:6px;color:#C9A84C;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em;transition:all .15s" onmouseover="this.style.background='rgba(201,168,76,0.22)'" onmouseout="this.style.background='rgba(201,168,76,0.12)'">⬇ Backup</button>
+          <button onclick="document.getElementById('restore-input').click()" title="Cargar copia de seguridad" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;background:rgba(44,32,16,0.05);border:1px solid #BDB5A5;border-radius:6px;color:#7A6A50;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.05em;transition:all .15s" onmouseover="this.style.background='rgba(44,32,16,0.1)'" onmouseout="this.style.background='rgba(44,32,16,0.05)'">⬆ Restaurar</button>
+          <input type="file" id="restore-input" accept=".json" style="display:none" onchange="restoreData(event)">
+        </div>
+      </div>
     </div>
   </aside>
 
@@ -1901,7 +1903,7 @@ function showToast(msg) {
 }
 
 // ─── BACKUP / RESTORE ────────────────────────────────────────
-const BACKUP_KEYS = ['larryOS_finanzas','larryCRM_v2','larry_os_tasks','agenda_v1','larry:leads','larry:meta'];
+const BACKUP_KEYS = ['larryOS_finanzas','larryCRM_v2','notas_rapidas_v1','agenda_v1','larry:leads','larry:meta'];
 
 function backupData() {
   const backup = { _version: 1, _date: new Date().toISOString(), _app: 'LarryOS' };
@@ -3237,11 +3239,11 @@ const FIN_PROC_MAP = {'Beatmaking':'BEAT','Mix':'MIX_SOLO','Master':'MASTER','Mi
         .slice(0,4).forEach(c=>hits.push({ icon:'🎤', module:'clientes', label: c.nombre, sub: ['Sin Empezar','En Producción','En Revisión','Terminado'][parseInt(c.etapa,10)]||'', action: ()=>{ closeSearch(); switchModule('clientes'); } }));
     } catch(e){}
 
-    // Search Tareas
+    // Search Notas
     try {
-      const tasks = JSON.parse(localStorage.getItem('larry_os_tasks') || '[]');
-      tasks.filter(t=>(t.titulo||'').toLowerCase().includes(q)||(t.descripcion||'').toLowerCase().includes(q))
-        .slice(0,4).forEach(t=>hits.push({ icon:'🎛️', module:'tareas', label: t.titulo, sub: t.categoria||'', action: ()=>{ closeSearch(); switchModule('tareas'); } }));
+      const notasRaw = JSON.parse(localStorage.getItem('notas_rapidas_v1') || '[]');
+      notasRaw.filter(n=>(n.text||'').toLowerCase().includes(q))
+        .slice(0,4).forEach(n=>hits.push({ icon:'📝', module:'tareas', label: (n.text||'').slice(0,40)||'Nota sin texto', sub: '', action: ()=>{ closeSearch(); switchModule('tareas'); } }));
     } catch(e){}
 
     // Search Agenda
@@ -3439,16 +3441,17 @@ window.switchModule = function(mod) {
       y: ev.touches ? ev.touches[0].clientY : ev.clientY
     });
 
-    const rect = board.getBoundingClientRect();
+    const rect0 = board.getBoundingClientRect();
     const { x: sx, y: sy } = getXY(e);
     const startL = parseFloat(el.style.left) || 0;
     const startT = parseFloat(el.style.top)  || 0;
-    const ox = sx - rect.left - startL;
-    const oy = sy - rect.top  - startT;
+    const ox = sx - rect0.left - startL;
+    const oy = sy - rect0.top  - startT;
 
     const onMove = ev => {
       if (ev.cancelable) ev.preventDefault();
       const { x, y } = getXY(ev);
+      const rect = board.getBoundingClientRect();
       const bw = board.offsetWidth;
       const bh = board.offsetHeight;
       el.style.left = Math.max(0, Math.min(bw - 230, x - rect.left - ox)) + 'px';
