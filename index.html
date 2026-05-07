@@ -3157,7 +3157,7 @@ const FIN_PROC_MAP = {'Beatmaking':'BEAT','Mix':'MIX_SOLO','Master':'MASTER','Mi
       <span style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">💰 Finanzas</span>
       <span style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">🎤 Clientes</span>
       <span style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">⬡ CRM</span>
-      <span style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">🎛️ Tareas</span>
+      <span style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">📝 Notas</span>
       <span style="font-size:10px;color:#9A8A6A;font-family:'IBM Plex Mono',monospace">📅 Agenda</span>
     </div>
   </div>
@@ -3213,9 +3213,12 @@ const FIN_PROC_MAP = {'Beatmaking':'BEAT','Mix':'MIX_SOLO','Master':'MASTER','Mi
   });
   overlay.onclick = (e) => { if (e.target === overlay) closeSearch(); };
 
+  let _searchTimer = null;
   input.addEventListener('input', () => {
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(() => {
     const q = input.value.trim().toLowerCase();
-    if (!q) { results.innerHTML = `<div style="padding:20px;text-align:center;color:#9A8A6A;font-size:12px;font-family:'IBM Plex Mono',monospace">Escribe para buscar…</div>`; return; }
+    if (q.length < 2) { results.innerHTML = `<div style="padding:20px;text-align:center;color:#9A8A6A;font-size:12px;font-family:'IBM Plex Mono',monospace">Escribe para buscar…</div>`; return; }
     let hits = [];
 
     // Search Finanzas clientes
@@ -3243,7 +3246,7 @@ const FIN_PROC_MAP = {'Beatmaking':'BEAT','Mix':'MIX_SOLO','Master':'MASTER','Mi
     try {
       const notasRaw = JSON.parse(localStorage.getItem('notas_rapidas_v1') || '[]');
       notasRaw.filter(n=>(n.text||'').toLowerCase().includes(q))
-        .slice(0,4).forEach(n=>hits.push({ icon:'📝', module:'tareas', label: (n.text||'').slice(0,40)||'Nota sin texto', sub: '', action: ()=>{ closeSearch(); switchModule('tareas'); } }));
+        .slice(0,4).forEach(n=>hits.push({ icon:'📝', module:'tareas', label: (n.text||'').length>40 ? (n.text||'').slice(0,40)+'…' : (n.text||'')||'Nota sin texto', sub: '', action: ()=>{ closeSearch(); switchModule('tareas'); } }));
     } catch(e){}
 
     // Search Agenda
@@ -3271,6 +3274,7 @@ const FIN_PROC_MAP = {'Beatmaking':'BEAT','Mix':'MIX_SOLO','Master':'MASTER','Mi
       el.onmouseleave = ()=>el.style.background='';
       el.onclick = ()=>hits[i].action();
     });
+    }, 160);
   });
 
   // Expose opener for sidebar button
@@ -3521,6 +3525,11 @@ window.switchModule = function(mod) {
   });
 
   /* ---- Init ---- */
+  // Adapt shortcut tip to platform
+  const tip = document.getElementById('notas-shortcut');
+  if (tip && (navigator.platform.toUpperCase().includes('MAC') || navigator.userAgent.includes('Mac OS'))) {
+    tip.textContent = '⌘N · doble clic para nueva nota';
+  }
   load();
   updateHint();
 })();
@@ -4185,7 +4194,6 @@ window.switchModule = function(mod) {
     const cerrados=leads.filter(l=>l.etapa==="cerrado");
     const perdidos=leads.filter(l=>l.etapa==="perdido");
     const activos=leads.filter(l=>!["cerrado","perdido"].includes(l.etapa));
-    const resueltos=cerrados.length+perdidos.length;
     const tasaCierre=leads.length>0?Math.round((cerrados.length/leads.length)*100):0;
     const ingresosCerrados=cerrados.reduce((s,l)=>s+(l.valor||0),0);
     const pipelinePotencial=activos.reduce((s,l)=>s+(l.valor||0),0);
@@ -4653,7 +4661,7 @@ document.getElementById('agenda-btn-import-trigger').onclick=()=>document.getEle
 document.getElementById('agenda-btn-import').onchange=(e)=>{
   const file=e.target.files[0]; if(!file) return;
   const r=new FileReader();
-  r.onload=(ev)=>{ try{ entries=JSON.parse(ev.target.result); agendaSave(); render(); }catch{ alert('Archivo inválido'); } };
+  r.onload=(ev)=>{ try{ entries=JSON.parse(ev.target.result); agendaSave(); render(); showToast('✓ Agenda importada'); }catch{ showToast('⚠ Archivo inválido'); } };
   r.readAsText(file); e.target.value='';
 };
 
