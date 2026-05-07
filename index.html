@@ -6,7 +6,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 <title>Larry OS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=Caveat:wght@400;600;700&display=swap" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -221,72 +221,69 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
 #module-finanzas .form-input::placeholder { color: var(--muted); }
 
 /* ═══════════════════════════════════════════════════════════════════
-   TAREAS MODULE
+   NOTAS MODULE  (embedded sticky notes board)
 ═══════════════════════════════════════════════════════════════════ */
 #module-tareas {
-  background: #F0EBE0; overflow-y: auto; padding: 0;
+  position: relative;
+  overflow: hidden;
+  background-color: #d6cfc0;
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(255,220,120,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 80%, rgba(150,190,255,0.14) 0%, transparent 55%),
+    radial-gradient(circle at 1px 1px, rgba(0,0,0,0.06) 1px, transparent 0);
+  background-size: 100% 100%, 100% 100%, 28px 28px;
+  font-family: 'DM Sans', sans-serif;
 }
-#module-tareas .t-wrap { padding: 28px 32px 48px; max-width: 820px; }
-#module-tareas .t-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid #CFC9B8; }
-#module-tareas .t-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: #2C2010; }
-#module-tareas .t-sub { font-size: 10px; color: #9A8A6A; font-family: 'IBM Plex Mono', monospace; letter-spacing: .12em; margin-top: 2px; }
-#module-tareas .criticos-badge { display: flex; align-items: center; background: rgba(226,75,74,0.10); border: 1px solid rgba(226,75,74,0.3); border-radius: 20px; padding: 5px 12px; gap: 6px; }
-#module-tareas .criticos-badge span { font-size: 12px; font-weight: 700; color: #E24B4A; }
-#module-tareas .counts { font-size: 12px; color: #9A8A6A; font-weight: 500; font-family: 'IBM Plex Mono', monospace; }
-@keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-#module-tareas .live-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 2px; animation: pulse-dot 1.8s ease-in-out infinite; background: #E24B4A; }
-#module-tareas .hero { margin-bottom: 20px; border-radius: 12px; padding: 18px 20px; }
-#module-tareas .hero-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; margin-bottom: 6px; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; }
-#module-tareas .hero h2 { font-size: 17px; font-weight: 700; color: #2C2010; margin-bottom: 5px; letter-spacing: -0.01em; font-family: 'Syne', sans-serif; }
-#module-tareas .hero p { font-size: 12px; color: #7A6A50; line-height: 1.5; margin-bottom: 8px; }
-#module-tareas .hero-footer { display: flex; align-items: center; gap: 8px; }
-#module-tareas .chip { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; padding: 3px 8px; border-radius: 4px; display: inline-block; font-family: 'IBM Plex Mono', monospace; }
-#module-tareas .controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-#module-tareas .filtros { display: flex; gap: 6px; }
-#module-tareas .filtro-btn { background: transparent; border: 1px solid #CFC9B8; color: #9A8A6A; font-size: 12px; font-weight: 500; letter-spacing: 0.05em; padding: 5px 13px; border-radius: 20px; cursor: pointer; transition: all 0.15s; font-family: 'IBM Plex Mono', monospace; }
-#module-tareas .filtro-btn.activo { background: #DDD7C8; border-color: #C9A84C; color: #C9A84C; }
-#module-tareas .filtro-btn:hover:not(.activo) { border-color: #BDB5A5; color: #7A6A50; }
-#module-tareas .new-btn { border: none; cursor: pointer; font-family: 'Syne', sans-serif; background: #C9A84C; color: #0B0A09; font-size: 13px; font-weight: 700; padding: 8px 18px; border-radius: 8px; letter-spacing: 0.02em; transition: opacity 0.15s; }
-#module-tareas .new-btn:hover { opacity: 0.85; }
-#module-tareas .new-btn.open { background: #DDD7C8; color: #C9A84C; }
-#module-tareas .form-wrap { background: #EAE4D6; border: 1px solid #CFC9B8; border-radius: 10px; padding: 18px; margin-bottom: 18px; }
-#module-tareas .form-title { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #C9A84C; margin-bottom: 14px; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; }
-#module-tareas .form-grid { display: grid; gap: 10px; }
-#module-tareas .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-#module-tareas input, #module-tareas textarea, #module-tareas select { background: #EDE8DB; border: 1px solid #CFC9B8; color: #2C2010; border-radius: 7px; padding: 9px 11px; width: 100%; font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; transition: border-color 0.2s; }
-#module-tareas input:focus, #module-tareas textarea:focus, #module-tareas select:focus { border-color: #C9A84C55; }
-#module-tareas select option { background: #EDE8DB; }
-#module-tareas textarea { resize: none; }
-#module-tareas .field-label { font-size: 10px; color: #9A8A6A; margin-bottom: 5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; }
-#module-tareas .pr-btns { display: flex; gap: 5px; }
-#module-tareas .pr-btn { flex: 1; padding: 5px 4px; border-radius: 5px; font-size: 9px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; border: 1px solid #CFC9B8; background: transparent; color: #9A8A6A; font-family: 'IBM Plex Mono', monospace; transition: all 0.15s; }
-#module-tareas .form-actions { display: flex; justify-content: flex-end; margin-top: 4px; }
-#module-tareas .submit-btn { border: none; cursor: pointer; font-family: 'Syne', sans-serif; color: #0B0A09; font-size: 13px; font-weight: 700; padding: 8px 20px; border-radius: 7px; transition: opacity 0.15s; }
-#module-tareas .submit-btn:hover { opacity: 0.85; }
-#module-tareas .summary { display: flex; gap: 7px; margin-bottom: 18px; }
-#module-tareas .summary-item { flex: 1; background: #EAE4D6; border: 1px solid #CFC9B8; border-radius: 7px; padding: 7px 9px; text-align: center; }
-#module-tareas .summary-item .num { font-size: 17px; font-weight: 700; font-family: 'Syne', sans-serif; }
-#module-tareas .summary-item .lbl { font-size: 9px; color: #9A8A6A; font-weight: 700; letter-spacing: 0.08em; margin-top: 1px; font-family: 'IBM Plex Mono', monospace; }
-#module-tareas .task-list { display: grid; gap: 7px; }
-#module-tareas .task-card { background: #EAE4D6; border-radius: 9px; padding: 12px 14px; transition: transform 0.15s ease, opacity 0.2s; }
-#module-tareas .task-card:hover { transform: translateY(-1px); }
-#module-tareas .task-card.done { opacity: 0.4; }
-#module-tareas .task-inner { display: flex; align-items: flex-start; gap: 10px; }
-#module-tareas .pr-bar { width: 3px; min-height: 38px; border-radius: 2px; flex-shrink: 0; margin-top: 2px; }
-#module-tareas .task-body { flex: 1; min-width: 0; }
-#module-tareas .task-title { font-size: 13px; font-weight: 600; color: #2C2010; word-break: break-word; margin-bottom: 3px; }
-#module-tareas .task-title.done { text-decoration: line-through; color: #9A8A6A; }
-#module-tareas .task-desc { font-size: 11px; color: #9A8A6A; line-height: 1.5; margin-bottom: 7px; word-break: break-word; }
-#module-tareas .task-chips { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
-#module-tareas .task-actions { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
-#module-tareas .estado-btn { font-size: 9px; font-weight: 700; letter-spacing: 0.06em; padding: 3px 7px; border-radius: 4px; border: 1px solid; cursor: pointer; font-family: 'IBM Plex Mono', monospace; transition: opacity 0.15s; }
-#module-tareas .estado-btn:hover { opacity: 0.8; }
-#module-tareas .icon-btn { background: transparent; border: none; cursor: pointer; color: #9A8A6A; font-size: 12px; padding: 3px 6px; border-radius: 4px; transition: color 0.15s, background 0.15s; }
-#module-tareas .icon-btn:hover { color: #7A6A50; background: #DDD7C8; }
-#module-tareas .icon-btn.del:hover { color: #F85149; background: rgba(248,81,73,0.1); }
-#module-tareas .t-empty { text-align: center; padding: 48px 0; color: #9A8A6A; font-size: 13px; font-family: 'IBM Plex Mono', monospace; }
-@keyframes slideIn { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
-#module-tareas .slide-in { animation: slideIn 0.22s ease forwards; }
+#notas-toolbar {
+  position: absolute;
+  top: 16px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-radius: 999px; padding: 7px 12px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.14), 0 0 0 0.5px rgba(0,0,0,0.08);
+  z-index: 50; user-select: none; white-space: nowrap;
+}
+#notas-toolbar .label { font-size: 11px; font-weight: 600; color: #999; letter-spacing: 0.07em; text-transform: uppercase; padding-right: 4px; }
+.notas-color-dot { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2.5px solid transparent; transition: transform 0.14s, border-color 0.14s; flex-shrink: 0; }
+.notas-color-dot:hover { transform: scale(1.25); }
+.notas-color-dot.active { border-color: rgba(0,0,0,0.45); transform: scale(1.18); }
+.notas-sep { width: 1px; height: 20px; background: rgba(0,0,0,0.12); margin: 0 4px; }
+#notas-addBtn { background: #1a1a18; color: #fff; border: none; border-radius: 999px; padding: 5px 16px; font-size: 13px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.14s, transform 0.1s; white-space: nowrap; }
+#notas-addBtn:hover { background: #333; }
+#notas-addBtn:active { transform: scale(0.96); }
+#notas-clearBtn { background: transparent; color: #c0392b; border: 1px solid rgba(192,57,43,0.3); border-radius: 999px; padding: 5px 14px; font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; transition: background 0.14s, border-color 0.14s; white-space: nowrap; }
+#notas-clearBtn:hover { background: rgba(192,57,43,0.08); border-color: rgba(192,57,43,0.6); }
+.notas-note { position: absolute; width: 220px; min-height: 170px; border-radius: 2px; display: flex; flex-direction: column; box-shadow: 4px 6px 24px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.1); transition: box-shadow 0.18s; animation: notasNoteIn 0.22s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes notasNoteIn { from { opacity: 0; transform: scale(0.82) rotate(var(--r, 0deg)); } to { opacity: 1; transform: scale(1) rotate(var(--r, 0deg)); } }
+.notas-note.dragging { box-shadow: 10px 16px 40px rgba(0,0,0,0.32); z-index: 8000 !important; transition: none; }
+.notas-note::after { content: ''; position: absolute; bottom: 0; right: 0; width: 22px; height: 22px; background: linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.12) 50%); pointer-events: none; border-radius: 0 0 2px 0; }
+.notas-tape { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 52px; height: 16px; background: rgba(255,255,255,0.55); border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); pointer-events: none; z-index: 1; }
+.notas-header { height: 34px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px 0 12px; border-radius: 2px 2px 0 0; cursor: grab; flex-shrink: 0; }
+.notas-header:active { cursor: grabbing; }
+.notas-date { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: rgba(0,0,0,0.45); text-transform: uppercase; pointer-events: none; }
+.notas-del { width: 18px; height: 18px; border-radius: 50%; background: rgba(0,0,0,0.13); border: none; cursor: pointer; font-size: 10px; color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; transition: background 0.14s, color 0.14s; line-height: 1; font-family: monospace; }
+.notas-del:hover { background: rgba(0,0,0,0.28); color: rgba(0,0,0,0.85); }
+.notas-body { flex: 1; padding: 6px 12px 14px; display: flex; flex-direction: column; }
+.notas-text { flex: 1; min-height: 110px; background: transparent; border: none; outline: none; resize: none; font-family: 'Caveat', cursive; font-size: 18px; font-weight: 400; line-height: 1.5; color: rgba(0,0,0,0.72); width: 100%; cursor: text; overflow: hidden; }
+.notas-text::placeholder { color: rgba(0,0,0,0.28); }
+#notas-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; color: rgba(0,0,0,0.25); pointer-events: none; transition: opacity 0.3s; }
+#notas-hint .hint-icon { font-size: 52px; margin-bottom: 10px; line-height: 1; }
+#notas-hint p { font-size: 15px; font-weight: 500; }
+#notas-hint small { font-size: 12px; opacity: 0.7; }
+#notas-modal-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.35); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); z-index: 99999; align-items: center; justify-content: center; }
+#notas-modal-overlay.show { display: flex; }
+#notas-modal { background: #fff; border-radius: 14px; padding: 28px 32px; max-width: 320px; width: 90%; text-align: center; box-shadow: 0 8px 40px rgba(0,0,0,0.25); animation: notasModalIn 0.18s ease; }
+@keyframes notasModalIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+#notas-modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; color: #1a1a18; }
+#notas-modal p  { font-size: 13px; color: #777; margin-bottom: 22px; }
+#notas-modal .btns { display: flex; gap: 10px; justify-content: center; }
+#notas-modal button { border-radius: 999px; padding: 8px 22px; font-size: 13px; font-family: 'DM Sans', sans-serif; font-weight: 600; cursor: pointer; border: none; transition: background 0.14s; }
+#notas-modal .btn-cancel  { background: #f0f0f0; color: #555; }
+#notas-modal .btn-cancel:hover { background: #e4e4e4; }
+#notas-modal .btn-confirm { background: #c0392b; color: #fff; }
+#notas-modal .btn-confirm:hover { background: #a93226; }
+#notas-shortcut { position: absolute; bottom: 18px; right: 22px; font-size: 11px; color: rgba(0,0,0,0.28); font-weight: 500; letter-spacing: 0.03em; user-select: none; pointer-events: none; }
 
 /* ═══════════════════════════════════════════════════════════════════
    CRM MODULE  (React rendered inside #crm-root)
@@ -666,7 +663,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
         <span class="sb-icon">📅</span> Agenda
       </button>
       <button class="sb-btn" onclick="switchModule('tareas')" id="sb-tareas">
-        <span class="sb-icon">🎛️</span> Tareas
+        <span class="sb-icon">📝</span> Notas
       </button>
     </div>
 
@@ -957,78 +954,44 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
 
     <!-- ── TAREAS MODULE ── -->
     <div id="module-tareas" class="module">
-      <div class="t-wrap">
-        <div class="t-header">
-          <div>
-            <div class="t-title">Tareas @larry.prod</div>
-            <div class="t-sub">SISTEMA DE CONTROL</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:14px">
-            <div id="criticos-badge" class="criticos-badge" style="display:none">
-              <span class="live-dot"></span>
-              <span id="criticos-text"></span>
-            </div>
-            <div id="counts" class="counts"></div>
-          </div>
-        </div>
-
-        <div id="t-hero"></div>
-
-        <div class="controls">
-          <div class="filtros">
-            <button class="filtro-btn activo" data-filtro="pendientes" onclick="setFiltro('pendientes',this)">Pendientes</button>
-            <button class="filtro-btn" data-filtro="en curso" onclick="setFiltro('en curso',this)">En curso</button>
-            <button class="filtro-btn" data-filtro="hecho" onclick="setFiltro('hecho',this)">Resueltas</button>
-          </div>
-          <button class="new-btn" id="new-btn" onclick="toggleForm()">+ Nueva tarea</button>
-        </div>
-
-        <div id="form-wrap" class="form-wrap slide-in" style="display:none">
-          <div class="form-title" id="form-title">Nueva tarea</div>
-          <div class="form-grid">
-            <input id="f-titulo" type="text" placeholder="¿Qué tenés que hacer?" onkeydown="if(event.key==='Enter')submitForm()" />
-            <textarea id="f-desc" rows="2" placeholder="Descripción o contexto (opcional)"></textarea>
-            <div class="form-row">
-              <div>
-                <div class="field-label">Prioridad</div>
-                <div class="pr-btns" id="pr-btns"></div>
-              </div>
-              <div>
-                <div class="field-label">Categoría</div>
-                <select id="f-cat">
-                  <option>Ads</option><option>ManyChat</option><option>Landing</option>
-                  <option>Ventas</option><option>Música</option><option>Admin</option><option>Otro</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div>
-                <div class="field-label">📅 Día recurrente</div>
-                <select id="f-dia" style="background:#EDE8DB;border:1px solid #CFC9B8;color:#2C2010;border-radius:7px;padding:9px 11px;width:100%;font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
-                  <option value="">— Ninguno —</option>
-                  <option value="1">Lunes</option>
-                  <option value="2">Martes</option>
-                  <option value="3">Miércoles</option>
-                  <option value="4">Jueves</option>
-                  <option value="5">Viernes</option>
-                  <option value="6">Sábado</option>
-                  <option value="0">Domingo</option>
-                </select>
-              </div>
-              <div style="display:flex;flex-direction:column;justify-content:flex-end">
-                <div class="field-label">Próximo día</div>
-                <div id="f-dia-preview" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9A8A6A;padding:9px 0">—</div>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button class="submit-btn" id="submit-btn" onclick="submitForm()" style="background:#C9A84C">Agregar tarea</button>
-            </div>
-          </div>
-        </div>
-
-        <div id="t-summary" class="summary"></div>
-        <div id="task-list" class="task-list"></div>
+      <div id="notas-toolbar">
+        <span class="label">Color</span>
+        <div class="notas-color-dot active" data-color="#fff9a3" data-dark="#e8d800" style="background:#fff9a3" title="Amarillo"></div>
+        <div class="notas-color-dot" data-color="#b5e8f7" data-dark="#7dceed" style="background:#b5e8f7" title="Azul"></div>
+        <div class="notas-color-dot" data-color="#c8f7b5" data-dark="#8be87a" style="background:#c8f7b5" title="Verde"></div>
+        <div class="notas-color-dot" data-color="#f7b5d8" data-dark="#ef7bb8" style="background:#f7b5d8" title="Rosa"></div>
+        <div class="notas-color-dot" data-color="#e0b5f7" data-dark="#c77af7" style="background:#e0b5f7" title="Lila"></div>
+        <div class="notas-color-dot" data-color="#ffd3a3" data-dark="#ffaa52" style="background:#ffd3a3" title="Naranja"></div>
+        <div class="notas-color-dot" data-color="#ffffff" data-dark="#ddd" style="background:#fff;border:1.5px solid #ddd" title="Blanca"></div>
+        <div class="notas-sep"></div>
+        <button id="notas-addBtn">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <line x1="6.5" y1="1" x2="6.5" y2="12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <line x1="1" y1="6.5" x2="12" y2="6.5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Nueva nota
+        </button>
+        <button id="notas-clearBtn">Limpiar todo</button>
       </div>
+
+      <div id="notas-hint">
+        <div class="hint-icon">📝</div>
+        <p>No hay notas todavía</p>
+        <small>Hacé clic en "Nueva nota" o doble clic en el tablero</small>
+      </div>
+
+      <div id="notas-modal-overlay">
+        <div id="notas-modal">
+          <h3>¿Eliminar todo?</h3>
+          <p>Se van a borrar todas las notas permanentemente.</p>
+          <div class="btns">
+            <button class="btn-cancel" id="notas-cancelBtn">Cancelar</button>
+            <button class="btn-confirm" id="notas-confirmBtn">Eliminar todo</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="notas-shortcut">Ctrl+N · doble clic para nueva nota</div>
     </div>
 
     <!-- ── CRM MODULE ── -->
@@ -3337,291 +3300,227 @@ window.switchModule = function(mod) {
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════════
-     TAREAS JS
+     NOTAS JS
 ═══════════════════════════════════════════════════════════════════ -->
 <script>
-const PRIORIDADES = [
-  { id: 5, label: "CRÍTICO", color: "#E24B4A", bg: "rgba(226,75,74,0.10)", border: "rgba(226,75,74,0.30)" },
-  { id: 4, label: "ALTO",    color: "#EF9F27", bg: "rgba(239,159,39,0.10)", border: "rgba(239,159,39,0.30)" },
-  { id: 3, label: "MEDIO",   color: "#1D9E75", bg: "rgba(29,158,117,0.10)", border: "rgba(29,158,117,0.30)" },
-  { id: 2, label: "BAJO",    color: "#378ADD", bg: "rgba(55,138,221,0.10)", border: "rgba(55,138,221,0.30)" },
-  { id: 1, label: "IDEA",    color: "#7F77DD", bg: "rgba(127,119,221,0.10)", border: "rgba(127,119,221,0.30)" },
-];
+(function () {
+  const STORAGE_KEY = 'notas_rapidas_v1';
+  const board = document.getElementById('module-tareas');
+  let notes = [];
+  let selectedColor = '#fff9a3';
+  let selectedDark  = '#e8d800';
+  let zCounter = 100;
+  let idCounter = 0;
 
-const DIAS_ES = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-
-// Compute next occurrence of a weekday (0=Sun,...,6=Sat) from today or a given date
-function nextWeekdayDate(dayNum, fromDate) {
-  const d = fromDate ? new Date(fromDate) : new Date();
-  d.setHours(0,0,0,0);
-  const diff = (dayNum - d.getDay() + 7) % 7;
-  d.setDate(d.getDate() + (diff === 0 ? 7 : diff));
-  return d.toISOString().split('T')[0];
-}
-
-// Escalate priority of tasks that missed their day
-function checkEscaladoPrioridad() {
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  let changed = false;
-  tareas = tareas.map(t => {
-    if (t.estado === 'hecho' || t.diaSemana == null) return t;
-    if (!t.proximoDia) return t;
-    const due = new Date(t.proximoDia + 'T00:00:00');
-    if (due <= today) {
-      // Missed — escalate priority and advance to next week
-      const newPr = Math.min(5, (t.prioridad || 1) + 1);
-      const newDia = nextWeekdayDate(parseInt(t.diaSemana), t.proximoDia);
-      changed = true;
-      return { ...t, prioridad: newPr, proximoDia: newDia };
-    }
-    return t;
+  /* ---- Color picker ---- */
+  board.querySelectorAll('.notas-color-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      board.querySelectorAll('.notas-color-dot').forEach(d => d.classList.remove('active'));
+      dot.classList.add('active');
+      selectedColor = dot.dataset.color;
+      selectedDark  = dot.dataset.dark;
+    });
   });
-  if (changed) { saveT(); }
-}
 
-let tareas = (() => { try { return JSON.parse(localStorage.getItem("larry_os_tasks") || "[]"); } catch(e) { console.warn('Larry OS: datos de tareas corruptos, reiniciando.', e); return []; } })();
-let filtro = "pendientes";
-let editandoId = null;
-let formPrioridad = 3;
-
-// Run escalation check on load
-checkEscaladoPrioridad();
-
-function saveT() { safeSave("larry_os_tasks", tareas); }
-function getId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
-function pr(id) { return PRIORIDADES.find(p => p.id === id); }
-
-function setFiltro(f, btn) {
-  filtro = f;
-  document.querySelectorAll("#module-tareas .filtro-btn").forEach(b => b.classList.remove("activo"));
-  btn.classList.add("activo");
-  renderTareas();
-}
-
-function toggleForm() {
-  const fw = document.getElementById("form-wrap");
-  const nb = document.getElementById("new-btn");
-  const visible = fw.style.display !== "none";
-  fw.style.display = visible ? "none" : "block";
-  nb.textContent = visible ? "+ Nueva tarea" : "✕ Cancelar";
-  nb.classList.toggle("open", !visible);
-  if (!visible) {
-    editandoId = null;
-    document.getElementById("f-titulo").value = "";
-    document.getElementById("f-desc").value = "";
-    document.getElementById("f-cat").value = "Otro";
-    document.getElementById("f-dia").value = "";
-    document.getElementById("f-dia-preview").textContent = "—";
-    setFormPrioridad(3);
-    document.getElementById("form-title").textContent = "Nueva tarea";
-    document.getElementById("submit-btn").textContent = "Agregar tarea";
-    document.getElementById("f-titulo").focus();
+  /* ---- Persistence ---- */
+  function save() {
+    const data = notes.map(n => ({
+      id: n.id,
+      color: n.color,
+      dark: n.dark,
+      text: n.el.querySelector('.notas-text').value,
+      x: parseFloat(n.el.style.left),
+      y: parseFloat(n.el.style.top),
+      rot: n.rot,
+      z: parseInt(n.el.style.zIndex) || 100
+    }));
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
   }
-}
 
-function setFormPrioridad(id) {
-  formPrioridad = id;
-  document.querySelectorAll(".pr-btn").forEach(b => {
-    const pid = parseInt(b.dataset.id);
-    const p = pr(pid);
-    if (pid === id) {
-      b.style.background = p.bg; b.style.borderColor = p.border; b.style.color = p.color;
-    } else {
-      b.style.background = "transparent"; b.style.borderColor = "#CFC9B8"; b.style.color = "#9A8A6A";
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      JSON.parse(raw).forEach(n => createNote({
+        color: n.color, dark: n.dark,
+        text: n.text, x: n.x, y: n.y,
+        rot: n.rot, z: n.z,
+        focus: false
+      }));
+    } catch(e) {}
+  }
+
+  /* ---- Create note ---- */
+  function createNote(opts = {}) {
+    const id     = ++idCounter;
+    const color  = opts.color || selectedColor;
+    const dark   = opts.dark  || selectedDark;
+    const rot    = opts.rot   !== undefined ? opts.rot : (Math.random() - 0.5) * 4;
+    const z      = opts.z     || ++zCounter;
+    const bw     = board.offsetWidth;
+    const bh     = board.offsetHeight;
+    const x = opts.x !== undefined ? opts.x : Math.random() * Math.max(40, bw - 260) + 20;
+    const y = opts.y !== undefined ? opts.y : Math.random() * Math.max(40, bh - 280) + 70;
+
+    const el = document.createElement('div');
+    el.className = 'notas-note';
+    el.style.cssText = `left:${x}px;top:${y}px;z-index:${z};background:${color};transform:rotate(${rot}deg);--r:${rot}deg;`;
+
+    const dateStr = new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'2-digit' }).toUpperCase();
+
+    el.innerHTML = `
+      <div class="notas-tape"></div>
+      <div class="notas-header" style="background:${dark}">
+        <span class="notas-date">${dateStr}</span>
+        <button class="notas-del" title="Eliminar nota">&#x2715;</button>
+      </div>
+      <div class="notas-body">
+        <textarea class="notas-text" placeholder="Escribí algo..."></textarea>
+      </div>
+    `;
+
+    const ta = el.querySelector('.notas-text');
+    if (opts.text) { ta.value = opts.text; }
+
+    el.querySelector('.notas-header').addEventListener('mousedown',  e => startDrag(e, el, rot));
+    el.querySelector('.notas-header').addEventListener('touchstart', e => startDrag(e, el, rot), { passive: false });
+
+    el.querySelector('.notas-del').addEventListener('click', e => {
+      e.stopPropagation();
+      removeNote(id, el);
+    });
+
+    ta.addEventListener('mousedown', e => e.stopPropagation());
+    ta.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+    ta.addEventListener('input', () => {
+      ta.style.height = 'auto';
+      ta.style.height = Math.max(110, ta.scrollHeight) + 'px';
+      save();
+    });
+
+    el.addEventListener('mousedown', () => bringFront(el));
+    el.addEventListener('touchstart', () => bringFront(el), { passive: true });
+
+    board.appendChild(el);
+    notes.push({ id, el, color, dark, rot });
+    updateHint();
+    save();
+
+    if (opts.focus !== false) {
+      setTimeout(() => ta.focus(), 80);
+    }
+  }
+
+  function removeNote(id, el) {
+    el.style.transition = 'opacity 0.18s, transform 0.18s';
+    el.style.opacity = '0';
+    el.style.transform += ' scale(0.82)';
+    setTimeout(() => {
+      el.remove();
+      notes = notes.filter(n => n.id !== id);
+      updateHint();
+      save();
+    }, 200);
+  }
+
+  function bringFront(el) {
+    el.style.zIndex = ++zCounter;
+  }
+
+  /* ---- Drag ---- */
+  function startDrag(e, el, rot) {
+    if (e.target.classList.contains('notas-del')) return;
+    e.preventDefault();
+    bringFront(el);
+    el.classList.add('dragging');
+
+    const getXY = ev => ({
+      x: ev.touches ? ev.touches[0].clientX : ev.clientX,
+      y: ev.touches ? ev.touches[0].clientY : ev.clientY
+    });
+
+    const rect = board.getBoundingClientRect();
+    const { x: sx, y: sy } = getXY(e);
+    const startL = parseFloat(el.style.left) || 0;
+    const startT = parseFloat(el.style.top)  || 0;
+    const ox = sx - rect.left - startL;
+    const oy = sy - rect.top  - startT;
+
+    const onMove = ev => {
+      if (ev.cancelable) ev.preventDefault();
+      const { x, y } = getXY(ev);
+      const bw = board.offsetWidth;
+      const bh = board.offsetHeight;
+      el.style.left = Math.max(0, Math.min(bw - 230, x - rect.left - ox)) + 'px';
+      el.style.top  = Math.max(56, Math.min(bh - 60,  y - rect.top  - oy)) + 'px';
+    };
+
+    const onUp = () => {
+      el.classList.remove('dragging');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+      save();
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }
+
+  /* ---- Hint ---- */
+  function updateHint() {
+    document.getElementById('notas-hint').style.opacity = notes.length === 0 ? '1' : '0';
+  }
+
+  /* ---- Buttons ---- */
+  document.getElementById('notas-addBtn').addEventListener('click', () => createNote());
+
+  document.getElementById('notas-clearBtn').addEventListener('click', () => {
+    if (notes.length === 0) return;
+    document.getElementById('notas-modal-overlay').classList.add('show');
+  });
+
+  document.getElementById('notas-cancelBtn').addEventListener('click', () => {
+    document.getElementById('notas-modal-overlay').classList.remove('show');
+  });
+
+  document.getElementById('notas-confirmBtn').addEventListener('click', () => {
+    document.getElementById('notas-modal-overlay').classList.remove('show');
+    notes.forEach(n => n.el.remove());
+    notes = [];
+    updateHint();
+    save();
+  });
+
+  document.getElementById('notas-modal-overlay').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('show');
+  });
+
+  /* ---- Double click = new note ---- */
+  board.addEventListener('dblclick', e => {
+    if (!e.target.closest('.notas-note') && !e.target.closest('#notas-toolbar') && !e.target.closest('#notas-modal')) {
+      const rect = board.getBoundingClientRect();
+      createNote({ x: e.clientX - rect.left - 110, y: e.clientY - rect.top - 30 });
     }
   });
-  const sb = document.getElementById("submit-btn");
-  sb.style.background = pr(id).color;
-}
 
-function submitForm() {
-  const titulo = document.getElementById("f-titulo").value.trim();
-  if (!titulo) { document.getElementById("f-titulo").focus(); return; }
-  const diaVal = document.getElementById("f-dia").value;
-  const diaSemana = diaVal !== "" ? parseInt(diaVal) : null;
-  // Compute next occurrence of that weekday
-  let proximoDia = null;
-  if (diaSemana !== null) {
-    proximoDia = nextWeekdayDate(diaSemana);
-  }
-  const t = { titulo, descripcion: document.getElementById("f-desc").value.trim(), prioridad: formPrioridad, categoria: document.getElementById("f-cat").value, diaSemana, proximoDia };
-  if (editandoId) {
-    tareas = tareas.map(x => x.id === editandoId ? { ...x, ...t } : x);
-    editandoId = null;
-  } else {
-    tareas.push({ id: getId(), ...t, estado: "pendiente", creadoEn: Date.now() });
-  }
-  saveT(); toggleForm(); renderTareas();
-}
-
-function cambiarEstado(id) {
-  tareas = tareas.map(t => {
-    if (t.id !== id) return t;
-    const next = t.estado === "pendiente" ? "en curso" : t.estado === "en curso" ? "hecho" : "pendiente";
-    return { ...t, estado: next };
-  });
-  saveT(); renderTareas();
-}
-
-function borrarTarea(id) {
-  customConfirm("¿Borrar esta tarea?", function(){
-    tareas = tareas.filter(t => t.id !== id);
-    saveT(); renderTareas();
-  }, "Borrar");
-}
-
-function editarTarea(id) {
-  const t = tareas.find(x => x.id === id);
-  if (!t) return;
-  const fw = document.getElementById("form-wrap");
-  const nb = document.getElementById("new-btn");
-  fw.style.display = "block";
-  nb.textContent = "✕ Cancelar";
-  nb.classList.add("open");
-  document.getElementById("f-titulo").value = t.titulo;
-  document.getElementById("f-desc").value = t.descripcion || "";
-  document.getElementById("f-cat").value = t.categoria;
-  const diaEl = document.getElementById("f-dia");
-  diaEl.value = (t.diaSemana !== null && t.diaSemana !== undefined) ? String(t.diaSemana) : "";
-  updateDiaPreview();
-  setFormPrioridad(t.prioridad);
-  editandoId = id;
-  document.getElementById("form-title").textContent = "Editando tarea";
-  document.getElementById("submit-btn").textContent = "Guardar cambios";
-  document.getElementById("f-titulo").focus();
-}
-
-function getEstadoBtnStyle(estado) {
-  if (estado === "pendiente") return { bg: "#DDD7C8", color: "#9A8A6A", border: "#CFC9B8", label: "Pendiente" };
-  if (estado === "en curso")  return { bg: "rgba(29,158,117,0.12)", color: "#1D9E75", border: "rgba(29,158,117,0.3)", label: "En curso" };
-  return { bg: "rgba(55,138,221,0.12)", color: "#378ADD", border: "rgba(55,138,221,0.3)", label: "Hecho" };
-}
-
-function renderTareas() {
-  const pendientes = tareas.filter(t => t.estado !== "hecho");
-  const criticos = pendientes.filter(t => t.prioridad === 5);
-  const hechos = tareas.filter(t => t.estado === "hecho");
-  const cb = document.getElementById("criticos-badge");
-  if (criticos.length > 0) { cb.style.display = "flex"; document.getElementById("criticos-text").textContent = `${criticos.length} crítico${criticos.length > 1 ? "s" : ""}`; }
-  else { cb.style.display = "none"; }
-  document.getElementById("counts").textContent = `${pendientes.length} pendientes · ${hechos.length} resueltas`;
-
-  // Hero
-  const topTarea = [...pendientes].sort((a,b) => b.prioridad - a.prioridad)[0];
-  const heroEl = document.getElementById("t-hero");
-  if (topTarea && filtro !== "hecho") {
-    const p = pr(topTarea.prioridad);
-    heroEl.innerHTML = `<div class="hero slide-in" style="background:linear-gradient(135deg,${p.bg},rgba(20,18,16,0.8));border:1px solid ${p.border}">
-      <div class="hero-label" style="color:${p.color}">→ Próxima acción</div>
-      <h2>${escT(topTarea.titulo)}</h2>
-      ${topTarea.descripcion ? `<p>${escT(topTarea.descripcion)}</p>` : ""}
-      <div class="hero-footer">
-        <span class="chip" style="background:${p.bg};color:${p.color};border:1px solid ${p.border}">${p.label}</span>
-        <span class="chip" style="background:#DDD7C8;color:#9A8A6A;border:1px solid #CFC9B8">${escT(topTarea.categoria)}</span>
-        <button onclick="cambiarEstado('${topTarea.id}')" style="margin-left:auto;background:${p.color};color:#0B0A09;font-size:11px;font-weight:700;padding:5px 14px;border-radius:6px;border:none;cursor:pointer;font-family:'Syne',sans-serif">Marcar en curso →</button>
-      </div></div>`;
-  } else { heroEl.innerHTML = ""; }
-
-  // Summary
-  const summaryEl = document.getElementById("t-summary");
-  if (filtro !== "hecho") {
-    const bars = PRIORIDADES.slice().reverse().map(p => {
-      const cnt = tareas.filter(t => t.prioridad === p.id && t.estado !== "hecho").length;
-      if (!cnt) return "";
-      return `<div class="summary-item"><div class="num" style="color:${p.color}">${cnt}</div><div class="lbl">${p.label}</div></div>`;
-    }).join("");
-    summaryEl.innerHTML = bars;
-    summaryEl.style.display = bars ? "flex" : "none";
-  } else { summaryEl.style.display = "none"; }
-
-  // Task list
-  let lista = tareas.filter(t =>
-    filtro === "hecho" ? t.estado === "hecho" :
-    filtro === "en curso" ? t.estado === "en curso" :
-    t.estado === "pendiente"
-  ).sort((a,b) => b.prioridad - a.prioridad);
-
-  const listEl = document.getElementById("task-list");
-  if (!lista.length) {
-    listEl.innerHTML = `<div class="t-empty">${filtro === "hecho" ? "No hay tareas resueltas todavía." : "Todo limpio. Agregá una tarea nueva."}</div>`;
-    return;
-  }
-  listEl.innerHTML = lista.map((t, i) => {
-    const p = pr(t.prioridad);
-    const hecho = t.estado === "hecho";
-    const est = getEstadoBtnStyle(t.estado);
-    // Day badge
-    let dayBadge = '';
-    if (t.diaSemana !== null && t.diaSemana !== undefined) {
-      const today = new Date().toISOString().split('T')[0];
-      const isVencido = t.proximoDia && t.proximoDia < today;
-      const dColor = isVencido ? '#E24B4A' : '#C9A84C';
-      const dBg = isVencido ? 'rgba(226,75,74,0.12)' : 'rgba(201,168,76,0.12)';
-      const dBorder = isVencido ? 'rgba(226,75,74,0.3)' : 'rgba(201,168,76,0.3)';
-      const dLabel = DIAS_ES[t.diaSemana];
-      const dDate = t.proximoDia ? new Date(t.proximoDia+'T00:00:00').toLocaleDateString('es-ES',{day:'2-digit',month:'short'}) : '';
-      dayBadge = `<span class="chip" style="background:${dBg};color:${dColor};border:1px solid ${dBorder}" title="Día recurrente · próxima ocurrencia: ${t.proximoDia||'—'}">📅 ${dLabel}${dDate?' · '+dDate:''}</span>`;
+  /* ---- Ctrl+N (only when Tareas module is active) ---- */
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+      if (document.getElementById('module-tareas').classList.contains('active')) {
+        e.preventDefault();
+        createNote();
+      }
     }
-    return `<div class="task-card${hecho ? " done" : ""} slide-in" style="border:1px solid ${hecho ? "#DDD7C8" : p.border};animation-delay:${i*0.03}s">
-      <div class="task-inner">
-        <div class="pr-bar" style="background:${hecho ? "#BDB5A5" : p.color}"></div>
-        <div class="task-body">
-          <div class="task-title${hecho ? " done" : ""}">${escT(t.titulo)}</div>
-          ${t.descripcion ? `<div class="task-desc">${escT(t.descripcion)}</div>` : ""}
-          <div class="task-chips">
-            <span class="chip" style="background:${hecho ? "#DDD7C8" : p.bg};color:${hecho ? "#9A8A6A" : p.color};border:1px solid ${hecho ? "#CFC9B8" : p.border}">${p.label}</span>
-            <span class="chip" style="background:#DDD7C8;color:#9A8A6A;border:1px solid #CFC9B8">${escT(t.categoria)}</span>
-            ${dayBadge}
-          </div>
-        </div>
-        <div class="task-actions">
-          <button class="estado-btn" onclick="cambiarEstado('${t.id}')" style="background:${est.bg};color:${est.color};border-color:${est.border}">${est.label}</button>
-          <button class="icon-btn" onclick="editarTarea('${t.id}')" title="Editar">✎</button>
-          <button class="icon-btn del" onclick="borrarTarea('${t.id}')" title="Borrar">✕</button>
-        </div>
-      </div></div>`;
-  }).join("");
-}
+  });
 
-// escT: función global definida en Global JS, disponible aquí
-
-function updateDiaPreview() {
-  const diaEl = document.getElementById("f-dia");
-  const prev = document.getElementById("f-dia-preview");
-  if (!diaEl || !prev) return;
-  const val = diaEl.value;
-  if (val === "") { prev.textContent = "—"; return; }
-  const dayNum = parseInt(val);
-  const next = nextWeekdayDate(dayNum);
-  const d = new Date(next + 'T00:00:00');
-  prev.textContent = `${DIAS_ES[dayNum]} · ${d.toLocaleDateString('es-ES',{day:'2-digit',month:'short'})}`;
-}
-
-// Wire up day change
-document.addEventListener('DOMContentLoaded', () => {
-  const diaEl = document.getElementById("f-dia");
-  if (diaEl) diaEl.addEventListener('change', updateDiaPreview);
-});
-// Also wire right away in case DOMContentLoaded already fired
-(function() {
-  const diaEl = document.getElementById("f-dia");
-  if (diaEl) diaEl.addEventListener('change', updateDiaPreview);
+  /* ---- Init ---- */
+  load();
+  updateHint();
 })();
-
-// Build priority buttons
-const prBtns = document.getElementById("pr-btns");
-[...PRIORIDADES].reverse().forEach(p => {
-  const btn = document.createElement("button");
-  btn.className = "pr-btn";
-  btn.dataset.id = p.id;
-  btn.textContent = p.label.slice(0, 3);
-  btn.type = "button";
-  btn.onclick = () => setFormPrioridad(p.id);
-  prBtns.appendChild(btn);
-});
-setFormPrioridad(3);
-renderTareas();
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════════
