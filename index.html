@@ -1792,6 +1792,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
     } else {
       clClients.push(c);
     }
+    const _wasEditing = !!clEditingId; // capturar ANTES de clCloseModal (lo resetea a null)
     clSave();
     // ─── BRIDGE: CRM_v2 → Finanzas ───────────────────────────────
     // Mantiene appData.clientes sincronizado cuando se guarda desde el módulo Clientes
@@ -1838,7 +1839,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F5F0E4; color: #2C2010; 
     } catch(_brE) { console.warn('Larry OS: error en bridge CRM→Fin', _brE); }
     // ─────────────────────────────────────────────────────────────
     clCloseModal(); clRender();
-    showToast(clEditingId ? 'Cliente actualizado ✓' : 'Nuevo cliente guardado ✓');
+    showToast(_wasEditing ? 'Cliente actualizado ✓' : 'Nuevo cliente guardado ✓');
   };
 
   window.clEditClient = function(id) { const c = clClients.find(x=>x.id===id); if(c) clOpenModal(c); };
@@ -2014,30 +2015,65 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'DM Sans',sans-serif;b
 .bcard-x:hover{background:rgba(0,0,0,.54)}
 
 /* ── LINK WIDGET ────────────────────────────────── */
-.lwcard{background:#fff;border-radius:11px;overflow:hidden;cursor:default}
-.lwcard-hero{width:100%;height:126px;object-fit:cover;display:block}
-.lwcard-hero-ph{width:100%;height:126px;display:flex;align-items:center;justify-content:center;font-size:30px;background:linear-gradient(135deg,#f0ede8 0%,#e4e0d6 100%)}
-.lwcard-body{padding:10px 12px 12px}
-.lwcard-site{display:flex;align-items:center;gap:5px;margin-bottom:6px}
-.lwcard-fav{width:15px;height:15px;border-radius:3px;object-fit:contain}
-.lwcard-pub{font-size:10.5px;font-weight:600;color:#AAAA9A;text-transform:uppercase;letter-spacing:.4px}
-.lwcard-title{font-size:13px;font-weight:600;color:#1a1a1a;line-height:1.4;margin-bottom:4px}
-.lwcard-desc{font-size:11.5px;color:#777;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:9px}
-.lwcard-link{display:flex;align-items:center;gap:5px;border:none;background:#F5F3EE;border-radius:7px;padding:6px 9px;width:100%;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:11px;color:#4A90E2;text-align:left;transition:background .12s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lwcard-link:hover{background:#ECE9E0}
-.lwcard-loading{padding:24px 16px;text-align:center;color:#C5C2B8;font-size:12.5px}
-.lw-dot{display:inline-block;animation:ldot 1.1s ease-in-out infinite}
-.lw-dot:nth-child(2){animation-delay:.18s}.lw-dot:nth-child(3){animation-delay:.36s}
-@keyframes ldot{0%,60%,100%{opacity:.18}30%{opacity:1}}
-.lwcard-url-bar{margin-top:8px;font-size:11px;color:#CCC;display:none;gap:5px;align-items:center}
+.lwcard{background:#fff;border-radius:11px;overflow:hidden;cursor:default;display:flex;flex-direction:column}
+.lwcard-row{display:flex;align-items:stretch;min-height:78px}
+.lwcard-thumb{width:80px;flex-shrink:0;overflow:hidden;background:linear-gradient(135deg,#f0ede8,#e4e0d6)}
+.lwcard-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.lwcard-thumb-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:22px}
+.lwcard-content{flex:1;padding:9px 11px 8px;display:flex;flex-direction:column;gap:3px;min-width:0;overflow:hidden}
+.lwcard-site{display:flex;align-items:center;gap:5px}
+.lwcard-fav{width:13px;height:13px;border-radius:3px;object-fit:contain;flex-shrink:0}
+.lwcard-pub{font-size:9.5px;font-weight:700;color:#AAAA9A;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lwcard-title{font-size:12.5px;font-weight:700;color:#1a1a1a;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lwcard-desc{font-size:11px;color:#888;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lwcard-footer{border-top:1px solid #F0EDE8;padding:6px 10px;display:flex;align-items:center;gap:7px}
+.lwcard-link{flex:1;font-size:10.5px;color:#4A90E2;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;pointer-events:all;z-index:10;position:relative}
+.lwcard-link:hover{text-decoration:underline}
+.lwcard-open-btn{flex-shrink:0;border:none;background:#4A90E2;color:#fff;border-radius:6px;padding:4px 9px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;pointer-events:all;z-index:10;position:relative}
+.lwcard-open-btn:hover{background:#357ABD}
+.lwcard-url-bar{padding:5px 10px;border-top:1px solid #F0EDE8;display:none;align-items:center;gap:5px;background:#FAFAF8}
 .lwcard:hover .lwcard-url-bar{display:flex}
 .lwcard-url-inp{flex:1;border:1px solid rgba(0,0,0,.08);border-radius:6px;padding:4px 7px;font-family:'DM Sans',sans-serif;font-size:11px;outline:none;color:#4A90E2;background:rgba(255,255,255,.7)}
 .lwcard-url-inp:focus{border-color:#4A90E2}
 .lwcard-reload{border:none;background:rgba(0,0,0,.07);border-radius:6px;padding:4px 7px;cursor:pointer;font-size:11px;color:#555;font-family:'DM Sans',sans-serif}
 .lwcard-reload:hover{background:rgba(0,0,0,.13)}
+.lwcard-loading{padding:22px 16px;text-align:center;color:#C5C2B8;font-size:12px}
+.lw-dot{display:inline-block;animation:ldot 1.1s ease-in-out infinite}
+.lw-dot:nth-child(2){animation-delay:.18s}.lw-dot:nth-child(3){animation-delay:.36s}
+@keyframes ldot{0%,60%,100%{opacity:.18}30%{opacity:1}}
+.lwcard-notes{width:100%;border:none;border-top:1px solid #F0EDE8;background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;color:#555;outline:none;resize:none;padding:7px 11px 8px;line-height:1.5;min-height:34px}
+.lwcard-notes::placeholder{color:#C5C2B8}/* ── TITLE CARD ─────────────────────────────────── */
+.title-card{position:absolute;border-radius:10px;min-width:200px;cursor:default;display:flex;flex-direction:row;align-items:stretch;box-shadow:none!important;border:1.5px solid transparent;transition:border-color .15s}
+.title-card:hover{border-color:rgba(0,0,0,.09)!important}
+.title-card.sel{border-color:#4A90E2!important;box-shadow:0 0 0 3px rgba(74,144,226,.18)!important}
+.title-drag{width:18px;flex-shrink:0;cursor:move;display:flex;align-items:center;justify-content:center;border-radius:8px 0 0 8px;opacity:0;transition:opacity .15s;color:rgba(0,0,0,.3);font-size:9px;letter-spacing:1px;user-select:none}
+.title-card:hover .title-drag{opacity:1}
+.title-main{flex:1;display:flex;flex-direction:column;min-width:0}
+.title-bar{display:none;align-items:center;gap:4px;padding:4px 6px 2px;justify-content:flex-end}
+.title-card:hover .title-bar{display:flex}
+.title-cpick-wrap{position:relative}
+.title-inp{background:transparent;border:none;outline:none;font-family:'DM Serif Display',serif;font-size:26px;font-weight:700;color:#1a1a1a;width:100%;cursor:text;padding:6px 10px 8px}
+.title-inp::placeholder{color:rgba(0,0,0,.18)}
+.title-colbtn{width:18px;height:18px;border-radius:50%;cursor:pointer;border:1.5px solid rgba(0,0,0,.15);flex-shrink:0;transition:transform .1s}
+.title-colbtn:hover{transform:scale(1.25)}
+.title-cpick{position:absolute;top:calc(100% + 4px);right:0;background:#fff;border-radius:10px;padding:6px;display:flex;gap:4px;box-shadow:0 6px 20px rgba(0,0,0,.14);z-index:300;border:1px solid rgba(0,0,0,.06);flex-wrap:wrap;width:130px}
+.title-csw{width:20px;height:20px;border-radius:6px;cursor:pointer;border:1.5px solid rgba(0,0,0,.1);transition:transform .1s;flex-shrink:0}
+.title-csw:hover{transform:scale(1.2)}
+.title-csw.sel-c{outline:2px solid #4A90E2;outline-offset:2px}
+.title-del{width:18px;height:18px;border:none;background:rgba(0,0,0,.07);border-radius:5px;cursor:pointer;font-size:11px;color:#888;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.title-del:hover{background:rgba(210,60,60,.15);color:#d44}
+/* ── NOTE RICH TEXT ─────────────────────────────── */
+.note-toolbar{display:none;gap:3px;padding:4px 6px 2px;border-bottom:1px solid rgba(0,0,0,.06);flex-wrap:wrap}
+.card:focus-within .note-toolbar{display:flex}
+.ntb{border:none;background:rgba(0,0,0,.06);border-radius:4px;padding:2px 6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:11px;color:#444;transition:background .1s;line-height:1.4}
+.ntb:hover{background:rgba(0,0,0,.12)}
+.ntb.active{background:#4A90E2;color:#fff}
+.note-body{flex:1;padding:4px 10px 10px;outline:none;min-height:60px;font-family:'DM Sans',sans-serif;font-size:13.5px;line-height:1.65;color:#2a2a2a;cursor:text;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.note-body:empty::before{content:attr(data-placeholder);color:#C5C2B8;pointer-events:none}
+/* ── LINK WIDGET NOTE ───────────────────────────── */
+.lwcard-notes{width:100%;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;color:#555;outline:none;resize:none;padding:0 12px 10px;line-height:1.5;min-height:32px}
+.lwcard-notes::placeholder{color:#C5C2B8}
 
-/* ghost connect wire */
-#ghost-line{display:none;fill:none;stroke:#4A90E2;stroke-width:1.8;stroke-dasharray:6 4;opacity:.7;pointer-events:none}
 /* empty canvas state */
 #empty-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);text-align:center;color:#C5C2B8;pointer-events:none;display:none}
 #empty-hint-icon{font-size:44px;margin-bottom:12px;opacity:.5}
@@ -2108,7 +2144,6 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'DM Sans',sans-serif;b
     <img id=&quot;logo-img&quot; src=&quot;&quot; alt=&quot;logo&quot;>
     <span id=&quot;logo-txt&quot;>MyBoard</span>
   </div>
-  <button id=&quot;logo-upload-btn&quot; title=&quot;Subir logo&quot; onclick=&quot;uploadLogo(event)&quot;>🖼</button>
   <div id=&quot;nav-div&quot;></div>
   <div id=&quot;bc&quot;></div>
   <div id=&quot;nav-r&quot;>
@@ -2133,6 +2168,7 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'DM Sans',sans-serif;b
     <button class=&quot;tbtn&quot; id=&quot;b-pan&quot; tip=&quot;Mover canvas (H)&quot; onclick=&quot;setMode('pan')&quot;>✋</button>
     <div class=&quot;sep&quot;></div>
     <button class=&quot;tbtn&quot; id=&quot;b-note&quot; tip=&quot;Nota (N)&quot; onclick=&quot;setMode('note')&quot;>📝</button>
+    <button class=&quot;tbtn&quot; id=&quot;b-title&quot; tip=&quot;Título (X)&quot; onclick=&quot;setMode('title')&quot;>𝐓</button>
     <button class=&quot;tbtn&quot; id=&quot;b-todo&quot; tip=&quot;Lista (T)&quot; onclick=&quot;setMode('todo')&quot;>☑️</button>
     <button class=&quot;tbtn&quot; id=&quot;b-img&quot; tip=&quot;Imagen (I)&quot; onclick=&quot;setMode('img')&quot;>🖼</button>
     <button class=&quot;tbtn&quot; id=&quot;b-link&quot; tip=&quot;Link preview (L)&quot; onclick=&quot;setMode('link')&quot;>🔗</button>
@@ -2151,7 +2187,7 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'DM Sans',sans-serif;b
     <div id=&quot;rubberband&quot;></div>
     <div id=&quot;empty-hint&quot;>
       <div id=&quot;empty-hint-icon&quot;>✦</div>
-      <p>Este board está vacío.<br><strong>N</strong> para nota · <strong>T</strong> para lista · <strong>L</strong> para enlace<br>o pegá una URL con <strong>Ctrl+V</strong></p>
+      <p>Este board está vacío.<br><strong>N</strong> para nota · <strong>X</strong> para título · <strong>T</strong> para lista · <strong>L</strong> para enlace<br>o pegá una URL con <strong>Ctrl+V</strong></p>
     </div>
   </div>
   <div id=&quot;snap-badge&quot;>⊞ Snap ON</div>
@@ -2168,7 +2204,7 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'DM Sans',sans-serif;b
 
 <div id=&quot;mbg&quot; onclick=&quot;if(event.target===this)closeModal()&quot;>
   <div id=&quot;modal&quot;>
-    <h2>Nuevo board</h2>
+    <h2 id=&quot;modal-title-text&quot;>Nuevo board</h2>
     <div class=&quot;ml&quot;>Nombre</div>
     <input class=&quot;mi&quot; id=&quot;mname&quot; type=&quot;text&quot; placeholder=&quot;Mi board…&quot; maxlength=&quot;40&quot;>
     <div class=&quot;ml&quot;>Ícono</div>
@@ -2177,14 +2213,15 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'DM Sans',sans-serif;b
     <div class=&quot;cgrid&quot; id=&quot;cgrid&quot;></div>
     <div class=&quot;mft&quot;>
       <button class=&quot;mbtn cn&quot; onclick=&quot;closeModal()&quot;>Cancelar</button>
-      <button class=&quot;mbtn ok&quot; onclick=&quot;confirmModal()&quot;>Crear</button>
+      <button class=&quot;mbtn ok&quot; id=&quot;modal-confirm-btn&quot; onclick=&quot;confirmModal()&quot;>Crear</button>
     </div>
   </div>
 </div>
 
 <div id=&quot;ctx&quot;>
   <div class=&quot;cxi&quot; id=&quot;cxi-open&quot;>↗ Abrir board</div>
-  <div class=&quot;cxi&quot; id=&quot;cxi-ren&quot;>✏️ Renombrar</div>
+  <div class=&quot;cxi&quot; id=&quot;cxi-edit&quot;>✏️ Editar nombre e ícono</div>
+  <div class=&quot;cxi&quot; id=&quot;cxi-ren&quot; style=&quot;display:none&quot;>✏️ Renombrar</div>
   <div class=&quot;cxi&quot; id=&quot;cxi-dup&quot;>⧉ Duplicar</div>
   <div class=&quot;cxs&quot;></div>
   <div class=&quot;cxi dm&quot; id=&quot;cxi-del&quot;>🗑 Eliminar</div>
@@ -2306,9 +2343,41 @@ function renderHome(){
   document.getElementById('home-ttl').textContent=db.boards[parent].name;
   const q=(document.getElementById('search-inp').value||'').toLowerCase().trim();
   const grid=document.getElementById('grid'); grid.innerHTML='';
-  Object.values(db.boards)
-    .filter(b=>b.parentId===parent&amp;&amp;(!q||b.name.toLowerCase().includes(q)))
-    .forEach(b=>grid.appendChild(mkTile(b)));
+
+  // Get boards in stored order, or default order
+  let boards=Object.values(db.boards).filter(b=>b.parentId===parent&amp;&amp;(!q||b.name.toLowerCase().includes(q)));
+  if(!q &amp;&amp; db.boardOrder &amp;&amp; db.boardOrder[parent]){
+    const order=db.boardOrder[parent];
+    boards.sort((a,b)=>{const ia=order.indexOf(a.id),ib=order.indexOf(b.id);if(ia===-1)return 1;if(ib===-1)return-1;return ia-ib;});
+  }
+  boards.forEach(b=>{
+    const tile=mkTile(b);
+    tile.draggable=true;
+    tile.addEventListener('dragstart',e=>{
+      e.dataTransfer.setData('text/plain',b.id);
+      tile.style.opacity='.4';
+    });
+    tile.addEventListener('dragend',()=>{tile.style.opacity='';});
+    tile.addEventListener('dragover',e=>{e.preventDefault();tile.style.outline='2px solid #4A90E2';});
+    tile.addEventListener('dragleave',()=>{tile.style.outline='';});
+    tile.addEventListener('drop',e=>{
+      e.preventDefault(); tile.style.outline='';
+      const fromId=e.dataTransfer.getData('text/plain');
+      if(fromId===b.id)return;
+      // Reorder
+      if(!db.boardOrder)db.boardOrder={};
+      if(!db.boardOrder[parent]){
+        db.boardOrder[parent]=Object.values(db.boards).filter(x=>x.parentId===parent).map(x=>x.id);
+      }
+      const order=db.boardOrder[parent];
+      const fi=order.indexOf(fromId), ti=order.indexOf(b.id);
+      if(fi!==-1)order.splice(fi,1);
+      const ni=order.indexOf(b.id); order.splice(ti!==-1?ti:order.length,0,fromId);
+      scheduleSave(); renderHome();
+    });
+    grid.appendChild(tile);
+  });
+
   if(!q){
     const add=document.createElement('div'); add.className='add-tile';
     add.innerHTML='<span>📁</span>Nuevo board';
@@ -2400,9 +2469,11 @@ function renderBCard(card){
 // ─────────────────────────────────────────────────
 // REGULAR CARDS
 function mkCard(type,x,y){
-  const card={id:db.nid++,type,x:snap(x),y:snap(y),w:type==='img'?230:220,h:type==='note'?150:type==='todo'?160:110,color:'yellow'};
-  if(type==='note')card.text=''; if(type==='todo')card.todos=[{text:'',done:false}];
+  const card={id:db.nid++,type,x:snap(x),y:snap(y),w:type==='img'?230:type==='title'?280:220,h:type==='note'?150:type==='todo'?160:type==='title'?54:110,color:'yellow'};
+  if(type==='note'){card.text='';card.html='';}
+  if(type==='todo')card.todos=[{text:'',done:false}];
   if(type==='img'){card.src='';card.cap='';} if(type==='link'){card.url='';card.desc='';}
+  if(type==='title'){card.text='';card.color='white';}
   pushUndo(); cCards().push(card); renderCard(card); scheduleSave(); updateEmptyHint(); return card;
 }
 
@@ -2435,10 +2506,101 @@ function renderCard(card){
   const bd=document.createElement('div'); bd.className='card-bd';
 
   if(card.type==='note'){
-    const ta=document.createElement('textarea'); ta.className='nta'; ta.placeholder='Escribí algo…'; ta.value=card.text||'';
-    ta.addEventListener('input',()=>{card.text=ta.value;aH(ta);scheduleSave();});
-    ta.addEventListener('mousedown',e=>e.stopPropagation());
-    bd.appendChild(ta); setTimeout(()=>aH(ta),0);
+    // ── Rich text toolbar
+    const ntbar=document.createElement('div'); ntbar.className='note-toolbar';
+    const boldBtn=document.createElement('button'); boldBtn.className='ntb'; boldBtn.innerHTML='<b>B</b>'; boldBtn.title='Negrita';
+    boldBtn.addEventListener('mousedown',e=>{e.preventDefault();document.execCommand('bold');});
+    const italicBtn=document.createElement('button'); italicBtn.className='ntb'; italicBtn.innerHTML='<i>I</i>'; italicBtn.title='Cursiva';
+    italicBtn.addEventListener('mousedown',e=>{e.preventDefault();document.execCommand('italic');});
+    const szS=document.createElement('button'); szS.className='ntb'; szS.textContent='S'; szS.title='Pequeño';
+    szS.addEventListener('mousedown',e=>{e.preventDefault();document.execCommand('fontSize',false,'2');});
+    const szM=document.createElement('button'); szM.className='ntb'; szM.textContent='M'; szM.title='Mediano';
+    szM.addEventListener('mousedown',e=>{e.preventDefault();document.execCommand('fontSize',false,'3');});
+    const szL=document.createElement('button'); szL.className='ntb'; szL.textContent='L'; szL.title='Grande';
+    szL.addEventListener('mousedown',e=>{e.preventDefault();document.execCommand('fontSize',false,'5');});
+    ntbar.appendChild(boldBtn); ntbar.appendChild(italicBtn);
+    const sep2=document.createElement('span'); sep2.style.cssText='width:1px;height:14px;background:rgba(0,0,0,.1);margin:0 2px;display:inline-block;align-self:center'; ntbar.appendChild(sep2);
+    ntbar.appendChild(szS); ntbar.appendChild(szM); ntbar.appendChild(szL);
+    hd.appendChild(ntbar);
+    // ── Editable note body
+    const nb=document.createElement('div'); nb.className='note-body'; nb.contentEditable='true';
+    nb.setAttribute('data-placeholder','Escribí algo…');
+    if(card.html)nb.innerHTML=card.html;
+    else if(card.text)nb.textContent=card.text;
+    nb.addEventListener('input',()=>{card.html=nb.innerHTML;card.text=nb.innerText;scheduleSave();});
+    nb.addEventListener('mousedown',e=>e.stopPropagation());
+    nb.addEventListener('keydown',e=>e.stopPropagation());
+    bd.appendChild(nb);
+
+  }else if(card.type==='title'){
+    const TITLE_COLORS={transparent:'transparent',yellow:'#FFF9C4',blue:'#DCEEFF',green:'#E2F5E9',pink:'#FFE4F0',lavender:'#EEE8FF',peach:'#FFE9D6',dark:'#2a2a2a'};
+    const bgColor=TITLE_COLORS[card.tcolor||'transparent']||'transparent';
+    // Override card element — full flex layout
+    el.className='card title-card';
+    el.style.cssText=`left:${card.x}px;top:${card.y}px;width:${card.w||280}px;background:${bgColor};padding:0`;
+    // Fix text color for dark bg
+    const isDark=card.tcolor==='dark';
+
+    // Drag handle strip (left side)
+    const dragH=document.createElement('div'); dragH.className='title-drag'; dragH.textContent='⋮⋮';
+    dragH.addEventListener('mousedown',e=>{if(mode!=='con')startDrag(e,card);});
+    el.appendChild(dragH);
+
+    // Main area
+    const tmain=document.createElement('div'); tmain.className='title-main';
+
+    // Top bar: color picker + delete
+    const tbar=document.createElement('div'); tbar.className='title-bar';
+
+    // Color picker button + popover
+    const cpwrap=document.createElement('div'); cpwrap.className='title-cpick-wrap';
+    const curBg=bgColor==='transparent'?'#E8E8E8':bgColor;
+    const colBtn=document.createElement('div'); colBtn.className='title-colbtn'; colBtn.style.background=curBg; colBtn.title='Color de fondo';
+    colBtn.addEventListener('mousedown',e=>{e.stopPropagation();});
+    colBtn.addEventListener('click',e=>{
+      e.stopPropagation();
+      const existing=cpwrap.querySelector('.title-cpick');
+      if(existing){existing.remove();return;}
+      const pick=document.createElement('div'); pick.className='title-cpick';
+      Object.entries(TITLE_COLORS).forEach(([name,hex])=>{
+        const sw=document.createElement('div'); sw.className='title-csw'+(card.tcolor===name?' sel-c':'');
+        sw.style.background=hex==='transparent'?'linear-gradient(135deg,#fff 45%,#f00 45%,#f00 55%,#fff 55%)':hex;
+        sw.title=name; sw.style.border=hex==='transparent'?'1.5px solid #ddd':'1.5px solid rgba(0,0,0,.1)';
+        sw.addEventListener('mousedown',ev=>{ev.stopPropagation();});
+        sw.addEventListener('click',ev=>{
+          ev.stopPropagation(); card.tcolor=name;
+          const newBg=TITLE_COLORS[name]; const newDark=name==='dark';
+          el.style.background=newBg;
+          ti.style.color=newDark?'#fff':'#1a1a1a';
+          colBtn.style.background=newBg==='transparent'?'#E8E8E8':newBg;
+          document.querySelectorAll('.title-csw').forEach(s=>s.classList.remove('sel-c')); sw.classList.add('sel-c');
+          pick.remove(); scheduleSave();
+        });
+        pick.appendChild(sw);
+      });
+      cpwrap.appendChild(pick);
+      setTimeout(()=>document.addEventListener('click',()=>pick.remove(),{once:true}),10);
+    });
+    cpwrap.appendChild(colBtn); tbar.appendChild(cpwrap);
+
+    // Delete button
+    const delBtn=document.createElement('button'); delBtn.className='title-del'; delBtn.textContent='×'; delBtn.title='Eliminar';
+    delBtn.addEventListener('mousedown',e=>e.stopPropagation());
+    delBtn.addEventListener('click',e=>{e.stopPropagation();rmCard(card.id);});
+    tbar.appendChild(delBtn);
+    tmain.appendChild(tbar);
+
+    // Text input
+    const ti=document.createElement('input'); ti.type='text'; ti.className='title-inp';
+    ti.placeholder='Título…'; ti.value=card.text||'';
+    ti.style.color=isDark?'#fff':'#1a1a1a';
+    ti.addEventListener('input',()=>{card.text=ti.value;scheduleSave();});
+    ti.addEventListener('mousedown',e=>e.stopPropagation());
+    ti.addEventListener('keydown',e=>e.stopPropagation());
+    tmain.appendChild(ti);
+    el.appendChild(tmain);
+    // Hide the standard card-hd and card-bd that were already added
+    hd.style.display='none'; bd.style.display='none';
 
   }else if(card.type==='todo'){
     const ttl=document.createElement('div'); ttl.className='ct'; ttl.textContent='Lista'; bd.appendChild(ttl);
@@ -2496,8 +2658,8 @@ function renderCard(card){
 
   el.appendChild(bd);
 
-  // resize handle (not for linkwidget)
-  if(card.type!=='linkwidget'){
+  // resize handle (not for linkwidget or title)
+  if(card.type!=='linkwidget'&&card.type!=='title'){
     const rh=document.createElement('div'); rh.className='rh';
     rh.addEventListener('mousedown',e=>startResize(e,card)); el.appendChild(rh);
   }
@@ -2505,7 +2667,9 @@ function renderCard(card){
   // Sel mode bubble listener
   el.addEventListener('mousedown',e=>{
     if(mode==='con') return;
-    if(e.target.closest('.cbtns')||e.target.closest('.cdot'))return;
+    if(e.target.closest('.cbtns,.cdot,.title-drag,.title-bar,.title-colbtn,.title-cpick,.title-del'))return;
+    // For title card, dragging from the title input is prevented — drag from elsewhere on el
+    if(card.type==='title'&&e.target===el){startDrag(e,card);}
     selCard(card.id,e.shiftKey);
   });
   el.addEventListener('contextmenu',e=>{e.preventDefault();openCardCtx(e,card);});
@@ -2537,7 +2701,7 @@ function aH(ta){ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';}
 function isURL(s){try{const u=new URL(s.trim());return u.protocol==='http:'||u.protocol==='https:';}catch{return false;}}
 
 async function mkLinkWidget(url,x,y){
-  const card={id:db.nid++,type:'linkwidget',url,x:snap(x),y:snap(y),w:260,h:220,color:'white',preview:null};
+  const card={id:db.nid++,type:'linkwidget',url,x:snap(x),y:snap(y),w:268,h:240,color:'white',preview:null,notes:''};
   pushUndo(); cCards().push(card); renderCard(card); scheduleSave(); updateEmptyHint();
   try{
     const res=await fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}`);
@@ -2560,23 +2724,52 @@ function renderLW(card,el,bd){
   bd.style.padding='0'; el.style.overflow='hidden'; el.style.background='#fff';
   const prev=card.preview;
   if(!prev){
-    bd.innerHTML=`<div class=&quot;lwcard-loading&quot;><span class=&quot;lw-dot&quot;>●</span><span class=&quot;lw-dot&quot;>●</span><span class=&quot;lw-dot&quot;>●</span><div style=&quot;margin-top:8px;font-size:10.5px;color:#CCC;word-break:break-all&quot;>${card.url}</div></div>`;
+    bd.innerHTML=`<div class=&quot;lwcard&quot;><div class=&quot;lwcard-loading&quot;><span class=&quot;lw-dot&quot;>●</span><span class=&quot;lw-dot&quot;>●</span><span class=&quot;lw-dot&quot;>●</span><div style=&quot;margin-top:8px;font-size:10.5px;word-break:break-all&quot;>${card.url}</div></div></div>`;
     return;
   }
   const safe=s=>(s||'').replace(/</g,'&amp;lt;').replace(/>/g,'&amp;gt;').replace(/&quot;/g,'&amp;quot;');
-  let html=`<div class=&quot;lwcard&quot;>`;
-  if(prev.image) html+=`<img class=&quot;lwcard-hero&quot; src=&quot;${safe(prev.image)}&quot; onerror=&quot;this.style.display='none'&quot;>`;
-  else html+=`<div class=&quot;lwcard-hero-ph&quot;>🔗</div>`;
-  html+=`<div class=&quot;lwcard-body&quot;><div class=&quot;lwcard-site&quot;>`;
+  const openUrl=safe(prev.url||card.url);
+  const dispUrl=(prev.url||card.url).replace(/^https?:\/\//,'').replace(/\/$/,'').substring(0,40);
+
+  let html=`<div class=&quot;lwcard&quot;><div class=&quot;lwcard-row&quot;>`;
+  // Thumbnail (left)
+  html+=`<div class=&quot;lwcard-thumb&quot;>`;
+  if(prev.image) html+=`<img src=&quot;${safe(prev.image)}&quot; onerror=&quot;this.parentNode.innerHTML='<div class=\&quot;lwcard-thumb-ph\&quot;>🔗</div>'&quot;>`;
+  else html+=`<div class=&quot;lwcard-thumb-ph&quot;>🔗</div>`;
+  html+=`</div>`;
+  // Content (right)
+  html+=`<div class=&quot;lwcard-content&quot;>`;
+  html+=`<div class=&quot;lwcard-site&quot;>`;
   if(prev.logo) html+=`<img class=&quot;lwcard-fav&quot; src=&quot;${safe(prev.logo)}&quot; onerror=&quot;this.remove()&quot;>`;
   html+=`<span class=&quot;lwcard-pub&quot;>${safe(prev.pub)}</span></div>`;
   if(prev.title) html+=`<div class=&quot;lwcard-title&quot;>${safe(prev.title)}</div>`;
   if(prev.desc) html+=`<div class=&quot;lwcard-desc&quot;>${safe(prev.desc)}</div>`;
-  html+=`<button class=&quot;lwcard-link&quot; onclick=&quot;window.open('${safe(prev.url||card.url)}','_blank');event.stopPropagation()&quot;>↗ ${(prev.url||card.url).replace(/^https?:\/\//,'').substring(0,44)}</button>`;
-  html+=`<div class=&quot;lwcard-url-bar&quot;>URL: <input class=&quot;lwcard-url-inp&quot; value=&quot;${safe(card.url)}&quot; onmousedown=&quot;event.stopPropagation()&quot;><button class=&quot;lwcard-reload&quot; onclick=&quot;card_reload(${card.id})&quot;>↻</button></div>`;
   html+=`</div></div>`;
+  // Footer: URL + open button
+  html+=`<div class=&quot;lwcard-footer&quot;>`;
+  html+=`<a class=&quot;lwcard-link&quot; href=&quot;${openUrl}&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;>${dispUrl}</a>`;
+  html+=`<a class=&quot;lwcard-open-btn&quot; href=&quot;${openUrl}&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;>↗ Abrir</a>`;
+  html+=`</div>`;
+  // Edit URL bar (hover)
+  html+=`<div class=&quot;lwcard-url-bar&quot;><input class=&quot;lwcard-url-inp&quot; value=&quot;${safe(card.url)}&quot; onmousedown=&quot;event.stopPropagation()&quot;><button class=&quot;lwcard-reload&quot; onclick=&quot;card_reload(${card.id})&quot;>↻ recargar</button></div>`;
+  html+=`</div>`;
   bd.innerHTML=html;
-  // attach reload handler after render
+
+  // Stop drag on all interactive link elements
+  bd.querySelectorAll('.lwcard-link,.lwcard-open-btn').forEach(a=>{
+    a.addEventListener('mousedown',e=>e.stopPropagation());
+    a.addEventListener('click',e=>e.stopPropagation());
+  });
+
+  // Notes textarea
+  const notesTA=document.createElement('textarea');
+  notesTA.className='lwcard-notes'; notesTA.placeholder='Notas…'; notesTA.rows=2;
+  notesTA.value=card.notes||'';
+  notesTA.addEventListener('input',()=>{card.notes=notesTA.value;scheduleSave();});
+  notesTA.addEventListener('mousedown',e=>e.stopPropagation());
+  bd.appendChild(notesTA);
+
+  // URL input change handler
   const inp=bd.querySelector('.lwcard-url-inp');
   if(inp) inp.addEventListener('change',()=>{card.url=inp.value.trim();card.preview=null;renderCard(card);if(isURL(card.url))refetchLW(card);});
 }
@@ -2722,7 +2915,7 @@ function rstV(){px=0;py=0;zoom=1;applyT();}
 
 // ─────────────────────────────────────────────────
 // MODE
-const modeHints={sel:'Seleccionar · Shift+clic para multi-selección · Arrastrá el fondo para selección múltiple',pan:'Arrastrá el canvas · También: Alt+arrastrar',note:'Clic para crear nota',todo:'Clic para lista de chequeo',img:'Clic para imagen',link:'Clic para link preview',board:'Clic para crear sub-board',con:'Clic en un punto ● → luego en otra tarjeta'};
+const modeHints={sel:'Seleccionar · Shift+clic para multi-selección · Arrastrá el fondo para selección múltiple',pan:'Arrastrá el canvas · También: Alt+arrastrar',note:'Clic para crear nota',title:'Clic para crear título',todo:'Clic para lista de chequeo',img:'Clic para imagen',link:'Clic para link preview',board:'Clic para crear sub-board',con:'Clic en un punto ● → luego en otra tarjeta'};
 function setMode(m){
   mode=m; sel.clear(); renderSel(); conFrom=null; renderConFrom();
   document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
@@ -2731,7 +2924,7 @@ function setMode(m){
   wrap.className='';
   if(m==='pan') wrap.classList.add('pan');
   else if(m==='con') wrap.classList.add('cross');
-  else if(['note','todo','img','link','board'].includes(m)) wrap.classList.add('cell');
+  else if(['note','todo','img','link','board','title'].includes(m)) wrap.classList.add('cell');
   cv.classList.toggle('cm',m==='con');
   showHint(modeHints[m]||'');
 }
@@ -2774,10 +2967,10 @@ wrap.addEventListener('mousedown',e=>{
     rb.style.cssText=`display:block;left:${e.clientX}px;top:${e.clientY-NAVH}px;width:0;height:0`;
     e.preventDefault();
   }
-  if(onBg&amp;&amp;['note','todo','img'].includes(mode)){
+  if(onBg&amp;&amp;['note','todo','img','title'].includes(mode)){
     const p=toCV(e.clientX,e.clientY);
     const card=mkCard(mode,p.x,p.y); setMode('sel'); selCard(card.id,false);
-    setTimeout(()=>{const el=document.getElementById('c'+card.id);if(el){const f=el.querySelector('textarea');if(f){f.focus();f.click();}}},40);
+    setTimeout(()=>{const el=document.getElementById('c'+card.id);if(el){const f=el.querySelector('input,textarea,[contenteditable]');if(f){f.focus();}}},40);
   }
   if(onBg&amp;&amp;mode==='link'){
     const p=toCV(e.clientX,e.clientY);
@@ -2866,7 +3059,13 @@ document.addEventListener('mouseup',e=>{
 
 wrap.addEventListener('wheel',e=>{
   e.preventDefault();
-  adjZ(-e.deltaY*.001,e.clientX,e.clientY);
+  if(e.ctrlKey||e.metaKey){
+    // Ctrl/Cmd + scroll = zoom
+    adjZ(-e.deltaY*.001,e.clientX,e.clientY);
+  } else {
+    // Regular scroll = pan (trackpad: deltaX horizontal, deltaY vertical)
+    px-=e.deltaX; py-=e.deltaY; applyT();
+  }
 },{passive:false});
 
 document.addEventListener('click',()=>document.getElementById('ctx').classList.remove('on'));
@@ -2931,12 +3130,13 @@ canvasEl.addEventListener('drop',e=>{
 // ─────────────────────────────────────────────────
 // KEYBOARD
 document.addEventListener('keydown',e=>{
-  const inInput=e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT';
+  const inInput=e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT'||e.target.isContentEditable;
   if((e.ctrlKey||e.metaKey)&amp;&amp;e.key.toLowerCase()==='z'&amp;&amp;!inInput){e.preventDefault();undo();return;}
   if((e.ctrlKey||e.metaKey)&amp;&amp;e.key.toLowerCase()==='d'&amp;&amp;!inInput){e.preventDefault();if(sel.size){pushUndo();sel.forEach(id=>dupCard(id,true));}return;}
   if(inInput)return;
   const k=e.key.toLowerCase();
   if(k==='v')setMode('sel'); if(k==='h')setMode('pan'); if(k==='n')setMode('note');
+  if(k==='x')setMode('title');
   if(k==='t')setMode('todo'); if(k==='i')setMode('img'); if(k==='l')setMode('link');
   if(k==='b')setMode('board'); if(k==='c')setMode('con'); if(k==='g')toggleSnap();
   if(k==='delete'||k==='backspace')delSel();
@@ -2965,6 +3165,7 @@ document.addEventListener('keydown',e=>{
 
 // ─────────────────────────────────────────────────
 // MODAL
+let modalEditId=null; // null = create mode, board id = edit mode
 function buildModal(){
   const eg=document.getElementById('egrid');
   EMOJIS.forEach(em=>{const b=document.createElement('button');b.className='eo'+(em===mEmoji?' s':'');b.textContent=em;b.addEventListener('click',()=>{mEmoji=em;document.querySelectorAll('.eo').forEach(x=>x.classList.remove('s'));b.classList.add('s');});eg.appendChild(b);});
@@ -2972,14 +3173,38 @@ function buildModal(){
   BCOLORS.forEach(col=>{const d=document.createElement('div');d.className='co'+(col===mColor?' s':'');d.style.background=col;d.addEventListener('click',()=>{mColor=col;document.querySelectorAll('.co').forEach(x=>x.classList.remove('s'));d.classList.add('s');});cg.appendChild(d);});
 }
 function openModal(parentId,cb){
-  mParent=parentId||'root'; mCb=cb;
+  modalEditId=null; mParent=parentId||'root'; mCb=cb;
+  document.getElementById('modal-title-text').textContent='Nuevo board';
+  document.getElementById('modal-confirm-btn').textContent='Crear';
   document.getElementById('mname').value='';
+  // reset emoji/color selections to defaults
+  mEmoji='📝'; mColor='#4A90E2';
+  document.querySelectorAll('.eo').forEach(b=>{b.classList.toggle('s',b.textContent===mEmoji);});
+  document.querySelectorAll('.co').forEach(d=>{d.classList.toggle('s',d.style.background===mColor||d.dataset.col===mColor);});
   document.getElementById('mbg').classList.add('on');
   setTimeout(()=>document.getElementById('mname').focus(),50);
 }
-function closeModal(){document.getElementById('mbg').classList.remove('on');}
+function openEditModal(bid){
+  const board=db.boards[bid]; if(!board)return;
+  modalEditId=bid; mParent=board.parentId; mCb=null;
+  mEmoji=board.emoji; mColor=board.color;
+  document.getElementById('modal-title-text').textContent='Editar board';
+  document.getElementById('modal-confirm-btn').textContent='Guardar';
+  document.getElementById('mname').value=board.name;
+  document.querySelectorAll('.eo').forEach(b=>{b.classList.toggle('s',b.textContent===mEmoji);});
+  document.querySelectorAll('.co').forEach(d=>{d.classList.toggle('s',d.style.backgroundColor===mColor||d.style.background===mColor);});
+  document.getElementById('mbg').classList.add('on');
+  setTimeout(()=>document.getElementById('mname').focus(),50);
+}
+function closeModal(){document.getElementById('mbg').classList.remove('on');modalEditId=null;}
 function confirmModal(){
   const name=document.getElementById('mname').value.trim()||'Nuevo board';
+  if(modalEditId){
+    // Edit existing board
+    const board=db.boards[modalEditId]; if(!board)return;
+    board.name=name; board.emoji=mEmoji; board.color=mColor;
+    pushUndo(); scheduleSave(); closeModal(); render(); return;
+  }
   const id='b'+db.nid++;
   pushUndo();
   db.boards[id]={id,name,emoji:mEmoji,color:mColor,parentId:mParent,cards:[],conns:[],pan:{x:0,y:0,z:1}};
@@ -2993,13 +3218,12 @@ document.getElementById('mname').addEventListener('keydown',e=>{if(e.key==='Ente
 function openCtx(e,bid){
   e.stopPropagation(); ctxId=bid;
   document.getElementById('cxi-open').style.display='';
-  document.getElementById('cxi-ren').style.display='';
+  document.getElementById('cxi-edit').style.display='';
+  document.getElementById('cxi-ren').style.display='none';
   document.getElementById('cxi-open').onclick=()=>{navigate(bid);document.getElementById('ctx').classList.remove('on');};
-  document.getElementById('cxi-ren').onclick=()=>{
-    if(!ctxId)return;
-    const b=db.boards[ctxId]; const n=prompt('Nuevo nombre:',b.name);
-    if(n&amp;&amp;n.trim()){pushUndo();b.name=n.trim();render();scheduleSave();}
+  document.getElementById('cxi-edit').onclick=()=>{
     document.getElementById('ctx').classList.remove('on');
+    openEditModal(ctxId);
   };
   document.getElementById('cxi-dup').onclick=()=>{
     if(!ctxId)return; const s=db.boards[ctxId]; const nid='b'+db.nid++;
@@ -3039,7 +3263,6 @@ function applyLogo(){
   const img=document.getElementById('logo-img'),txt=document.getElementById('logo-txt');
   if(db.logo){img.src=db.logo;img.style.display='block';txt.style.display='none';}
   else{img.style.display='none';txt.style.display='block';}
-  document.getElementById('logo-upload-btn').title=db.logo?'Cambiar logo':'Subir logo';
 }
 
 // ─────────────────────────────────────────────────
@@ -3939,17 +4162,21 @@ function saveCliente() {
   } catch(_fbrE) { console.warn('Larry OS: error en bridge Fin→CRM', _fbrE); }
   // ─────────────────────────────────────────────────────────────
   closeModal('modal-cliente');renderClientes();renderDashboard();
-  // Fix 4: auto-completar si el cobro lleva a 100%
+  // Auto-completar estado si el cobro llega a 100%
+  let _shownCompletado = false;
   if(editingClienteId){
     const c=appData.clientes.find(x=>x.id===editingClienteId);
     if(c && c.precio>0 && totalCobrado(c)>=Number(c.precio) && c.estado!=='completado'){
       c.estado='completado'; save();
       showToast(`✅ ${c.nombre} — 100% cobrado. Estado → Completado`);
+      _shownCompletado = true;
     }
   }
-  if(cobroMonto>0&&pendienteReal>0) showToast(`✓ Cliente guardado · Cobrado ${fmt(cobroMonto)} · Próx. cobro ${proxFecha?fmtDate(proxFecha):'sin fecha'}`);
-  else if(cobroMonto>0) showToast(`✓ Cliente guardado · Pago completo ${fmt(cobroMonto)}`);
-  else showToast(editingClienteId?'Cliente actualizado':'Cliente creado ✓');
+  if(!_shownCompletado){
+    if(cobroMonto>0&&pendienteReal>0) showToast(`✓ Cliente guardado · Cobrado ${fmt(cobroMonto)} · Próx. cobro ${proxFecha?fmtDate(proxFecha):'sin fecha'}`);
+    else if(cobroMonto>0) showToast(`✓ Cliente guardado · Pago completo ${fmt(cobroMonto)}`);
+    else showToast(editingClienteId?'Cliente actualizado':'Cliente creado ✓');
+  }
 }
 function deleteCliente(id){customConfirm('¿Eliminar este cliente? Esta acción no se puede deshacer.',function(){appData.clientes=appData.clientes.filter(c=>c.id!==id);save();renderClientes();renderDashboard();renderBalance();showToast('Cliente eliminado');},'Eliminar');}
 
@@ -4106,9 +4333,50 @@ function savePago() {
     toastMsg = `✅ ${c.nombre} — pago completo. Estado → Completado`;
   }
   save();
+  // ─── BRIDGE: sync pagado → larryCRM_v2 ───────────────────────
+  try {
+    const _spTotalCobrado = c.pagos.reduce((s,p)=>s+Number(p.monto),0);
+    const _spRaw = localStorage.getItem('larryCRM_v2');
+    if (_spRaw && c.clId) {
+      const _spList = JSON.parse(_spRaw);
+      const _spIdx  = _spList.findIndex(x => x.id === c.clId);
+      if (_spIdx >= 0) {
+        _spList[_spIdx].pagado = String(_spTotalCobrado);
+        if (c.estado === 'completado') _spList[_spIdx].etapa = 3;
+        localStorage.setItem('larryCRM_v2', JSON.stringify(_spList));
+        if (typeof window.clReload === 'function') window.clReload();
+      }
+    }
+  } catch(_spE) {}
+  // ─────────────────────────────────────────────────────────────
   openModalPago(editingPagoClienteId);renderClientes();renderDashboard();showToast(toastMsg);
 }
-function deletePago(clienteId,pagoId){const c=appData.clientes.find(x=>x.id===clienteId);c.pagos=c.pagos.filter(p=>p.id!==pagoId);save();openModalPago(clienteId);renderClientes();renderDashboard();showToast('Pago eliminado');}
+function deletePago(clienteId,pagoId){
+  const c=appData.clientes.find(x=>x.id===clienteId);
+  if(!c){showToast('⚠️ Cliente no encontrado');return;}
+  c.pagos=c.pagos.filter(p=>p.id!==pagoId);
+  save();
+  // ─── BRIDGE: sync pagado reducido → larryCRM_v2 ──────────────
+  try {
+    const _dpTotal = (c.pagos||[]).reduce((s,p)=>s+Number(p.monto),0);
+    const _dpRaw   = localStorage.getItem('larryCRM_v2');
+    if (_dpRaw && c.clId) {
+      const _dpList = JSON.parse(_dpRaw);
+      const _dpIdx  = _dpList.findIndex(x => x.id === c.clId);
+      if (_dpIdx >= 0) {
+        _dpList[_dpIdx].pagado = String(_dpTotal);
+        // Si bajó de 100%, restaurar etapa a En Revisión si estaba Terminado
+        if (c.estado !== 'completado' && parseInt(_dpList[_dpIdx].etapa) >= 3) {
+          _dpList[_dpIdx].etapa = 2;
+        }
+        localStorage.setItem('larryCRM_v2', JSON.stringify(_dpList));
+        if (typeof window.clReload === 'function') window.clReload();
+      }
+    }
+  } catch(_dpE) {}
+  // ─────────────────────────────────────────────────────────────
+  openModalPago(clienteId);renderClientes();renderDashboard();showToast('Pago eliminado');
+}
 
 // ─── GASTOS ───────────────────────────────────────────────────
 function renderGastos() {
@@ -4140,7 +4408,11 @@ function openModalGasto(id=null){
 function deleteGastoFromModal(){
   const id=document.getElementById('g-id').value;
   if(!id)return;
-  customConfirm('¿Eliminar este gasto?',function(){const g2=document.getElementById('g-id').value;if(!g2)return;appData.gastos=appData.gastos.filter(g=>g.id!==g2);save();closeModal('modal-gasto');renderGastos();renderDashboard();showToast('Gasto eliminado');},'Eliminar');
+  customConfirm('¿Eliminar este gasto?',function(){
+    // Usar 'id' capturado antes del confirm (no releer del DOM, el modal puede haberse cerrado)
+    appData.gastos=appData.gastos.filter(g=>g.id!==id);
+    save();closeModal('modal-gasto');renderGastos();renderDashboard();showToast('Gasto eliminado');
+  },'Eliminar');
 }
 function saveGasto(){
   const desc=document.getElementById('g-desc').value.trim();
